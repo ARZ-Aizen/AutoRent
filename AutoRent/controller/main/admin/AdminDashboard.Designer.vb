@@ -193,7 +193,7 @@ Partial Class AdminDashboard
         Me.btnMenuOverview.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuOverview.Size = New Size(212, 46)
         Me.btnMenuOverview.Tag = "Overview Dashboard"
-        Me.btnMenuOverview.Text = "▦   Overview Dashboard"
+        Me.btnMenuOverview.Text = "▦  Overview Dashboard"
         Me.btnMenuOverview.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuOverview.UseMnemonic = False
         Me.btnMenuOverview.UseVisualStyleBackColor = False
@@ -211,7 +211,7 @@ Partial Class AdminDashboard
         Me.btnMenuFleet.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuFleet.Size = New Size(212, 46)
         Me.btnMenuFleet.Tag = "Fleet Inventory"
-        Me.btnMenuFleet.Text = "🚗   Fleet Inventory"
+        Me.btnMenuFleet.Text = "🚗  Fleet Inventory"
         Me.btnMenuFleet.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuFleet.UseMnemonic = False
         Me.btnMenuFleet.UseVisualStyleBackColor = False
@@ -229,7 +229,7 @@ Partial Class AdminDashboard
         Me.btnMenuMaintenance.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuMaintenance.Size = New Size(212, 46)
         Me.btnMenuMaintenance.Tag = "Maintenance & Service"
-        Me.btnMenuMaintenance.Text = "🔧   Maintenance & Service"
+        Me.btnMenuMaintenance.Text = "🔧  Maintenance & Service"
         Me.btnMenuMaintenance.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuMaintenance.UseMnemonic = False
         Me.btnMenuMaintenance.UseVisualStyleBackColor = False
@@ -247,7 +247,7 @@ Partial Class AdminDashboard
         Me.btnMenuRates.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuRates.Size = New Size(212, 46)
         Me.btnMenuRates.Tag = "Rate Configuration"
-        Me.btnMenuRates.Text = "🏷   Rate Configuration"
+        Me.btnMenuRates.Text = "🏷  Rate Configuration"
         Me.btnMenuRates.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuRates.UseMnemonic = False
         Me.btnMenuRates.UseVisualStyleBackColor = False
@@ -265,7 +265,7 @@ Partial Class AdminDashboard
         Me.btnMenuRevenue.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuRevenue.Size = New Size(212, 46)
         Me.btnMenuRevenue.Tag = "Revenue Reports"
-        Me.btnMenuRevenue.Text = "📈   Revenue Reports"
+        Me.btnMenuRevenue.Text = "📈  Revenue Reports"
         Me.btnMenuRevenue.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuRevenue.UseMnemonic = False
         Me.btnMenuRevenue.UseVisualStyleBackColor = False
@@ -283,7 +283,7 @@ Partial Class AdminDashboard
         Me.btnMenuDispatch.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuDispatch.Size = New Size(212, 46)
         Me.btnMenuDispatch.Tag = "Dispatch Reports"
-        Me.btnMenuDispatch.Text = "🚚   Dispatch Reports"
+        Me.btnMenuDispatch.Text = "🚚  Dispatch Reports"
         Me.btnMenuDispatch.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuDispatch.UseMnemonic = False
         Me.btnMenuDispatch.UseVisualStyleBackColor = False
@@ -301,7 +301,7 @@ Partial Class AdminDashboard
         Me.btnMenuUsers.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuUsers.Size = New Size(212, 46)
         Me.btnMenuUsers.Tag = "User Management"
-        Me.btnMenuUsers.Text = "👥   User Management"
+        Me.btnMenuUsers.Text = "👥  User Management"
         Me.btnMenuUsers.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuUsers.UseMnemonic = False
         Me.btnMenuUsers.UseVisualStyleBackColor = False
@@ -319,7 +319,7 @@ Partial Class AdminDashboard
         Me.btnMenuAccess.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuAccess.Size = New Size(212, 46)
         Me.btnMenuAccess.Tag = "Access Permissions"
-        Me.btnMenuAccess.Text = "🛡   Access Permissions"
+        Me.btnMenuAccess.Text = "🛡  Access Permissions"
         Me.btnMenuAccess.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuAccess.UseMnemonic = False
         Me.btnMenuAccess.UseVisualStyleBackColor = False
@@ -337,7 +337,7 @@ Partial Class AdminDashboard
         Me.btnMenuAudit.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuAudit.Size = New Size(212, 46)
         Me.btnMenuAudit.Tag = "Audit Logs"
-        Me.btnMenuAudit.Text = "📋   Audit Logs"
+        Me.btnMenuAudit.Text = "📋  Audit Logs"
         Me.btnMenuAudit.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuAudit.UseMnemonic = False
         Me.btnMenuAudit.UseVisualStyleBackColor = False
@@ -355,7 +355,7 @@ Partial Class AdminDashboard
         Me.btnMenuSettings.Padding = New Padding(14, 0, 0, 0)
         Me.btnMenuSettings.Size = New Size(212, 46)
         Me.btnMenuSettings.Tag = "System Settings"
-        Me.btnMenuSettings.Text = "⚙   System Settings"
+        Me.btnMenuSettings.Text = "⚙  System Settings"
         Me.btnMenuSettings.TextAlign = ContentAlignment.MiddleLeft
         Me.btnMenuSettings.UseMnemonic = False
         Me.btnMenuSettings.UseVisualStyleBackColor = False
@@ -421,14 +421,6 @@ Partial Class AdminDashboard
         Me.lblLogout.Text = "➜  Logout"
         Me.lblLogout.UseMnemonic = False
         '
-        'pnlContent
-        '
-        Me.pnlContent.Dock = DockStyle.Fill
-        Me.pnlContent.BackColor = Color.FromArgb(245, 244, 242)
-        Me.pnlContent.Location = New Point(0, 92)
-        Me.pnlContent.Name = "pnlContent"
-        Me.pnlContent.Size = New Size(1160, 768)
-        '
         'pnlTopBar
         '
         Me.pnlTopBar.Dock = DockStyle.Top
@@ -445,6 +437,17 @@ Partial Class AdminDashboard
         Me.pnlTopBar.Controls.Add(Me.lblBell)
         Me.pnlTopBar.Controls.Add(Me.lblTopAvatar)
         Me.pnlTopBar.Controls.Add(Me.lblChevron)
+        '
+        '
+        'pnlContent
+        '
+        Me.pnlContent.BackColor = Color.FromArgb(248, 249, 250)
+        Me.pnlContent.Dock = DockStyle.Fill
+        Me.pnlContent.Location = New Point(0, 92)
+        Me.pnlContent.Name = "pnlContent"
+        Me.pnlContent.Size = New Size(1160, 768)
+        Me.pnlContent.TabIndex = 1
+        Me.pnlContent.Visible = True
         '
         'pnlTopLine
         '
