@@ -1,169 +1,191 @@
-﻿Public Class ucAccessPermissions
+﻿Imports System.Drawing.Drawing2D
+
+' Access Permissions Matrix. Needs SK.vb and ucVehicleDetails.vb (FiCard).
+Public Class ucPermissionMatrix
     Inherits UserControl
 
-    ' ---- Custom Events ----
-    Public Event ReviewChangesRequested As EventHandler
-    Public Event ConfirmSensitiveChangeRequested As EventHandler
-    Public Event CancelChangeRequested As EventHandler
+    Public Event ReviewClicked()
+    Public Event CellClicked(rowIndex As Integer, colIndex As Integer)
+    Public Event ConfirmClicked()
+    Public Event CancelChangeClicked()
 
-    ' ---- Theme Colors ----
-    Private ReadOnly CardBgColor As Color = Color.White
-    Private ReadOnly BorderColor As Color = Color.FromArgb(225, 225, 225)
-    Private ReadOnly PrimaryRed As Color = Color.FromArgb(122, 0, 16)
-    Private ReadOnly TextDark As Color = Color.FromArgb(30, 30, 30)
-    Private ReadOnly TextMuted As Color = Color.FromArgb(110, 110, 110)
+    ' ---- header / banner ----
+    Public ReadOnly lblSubtitle As New Label
+    Public ReadOnly btnReview As New Button
+    Public ReadOnly lblGuardTitle As New Label
+    Public ReadOnly lblGuardNote As New Label
 
-    ' ---- Buttons ----
-    Public ReadOnly btnReviewChanges As New Button With {.Text = "Review permission changes", .Width = 160, .Height = 32, .FlatStyle = FlatStyle.Flat, .BackColor = Color.FromArgb(122, 0, 16), .ForeColor = Color.White, .Cursor = Cursors.Hand}
-    Public ReadOnly btnCancelChange As New Button With {.Text = "Cancel change", .Width = 110, .Height = 30, .FlatStyle = FlatStyle.Standard, .Cursor = Cursors.Hand}
-    Public ReadOnly btnConfirmChange As New Button With {.Text = "Confirm sensitive change", .Width = 160, .Height = 30, .FlatStyle = FlatStyle.Standard, .Cursor = Cursors.Hand}
-
-    ' ---- Controls ----
+    ' ---- matrix ----
+    Public ReadOnly lblMatrixTitle As New Label
+    Public ReadOnly lblMatrixSub As New Label
+    Public ReadOnly lblLegend As New Label
     Public ReadOnly dgvMatrix As New DataGridView
-    Public ReadOnly txtAuditReason As New TextBox With {.Font = New Font("Segoe UI", 9.5F), .BorderStyle = BorderStyle.FixedSingle, .Multiline = True, .Height = 40}
-    Public ReadOnly chkReviewBounds As New CheckBox With {.Text = "I have reviewed branch scope and permission bounds", .Font = New Font("Segoe UI", 9), .AutoSize = True, .Checked = True}
+
+    ' ---- confirm card ----
+    Public ReadOnly lblDraftTitle As New Label
+    Public ReadOnly lblDraftSub As New Label
+    Public ReadOnly lblBefore As New Label
+    Public ReadOnly lblAfter As New Label
+    Public ReadOnly txtReason As New TextBox
+    Public ReadOnly chkReviewed As New CheckBox
+    Public ReadOnly btnCancel As New Button
+    Public ReadOnly btnConfirm As New Button
+    Public ReadOnly lblAuditTitle As New Label
+    Public ReadOnly lblAuditNote As New Label
+
+    Private cGuard As Panel
+    Private cMatrix, cConfirm As FiCard
+    Private capBefore, capAfter, capReason As Label
+    Private lblPageTitle As Label
+    Private ReadOnly pnl As New Panel
 
     Public Sub New()
-        Try
-            Me.BackColor = Color.FromArgb(248, 249, 250)
-            Me.Dock = DockStyle.Fill
-
-            Dim root As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 1, .RowCount = 3, .Padding = New Padding(16)}
-            root.RowStyles.Add(New RowStyle(SizeType.Absolute, 115)) ' Header & Guardrail Banner
-            root.RowStyles.Add(New RowStyle(SizeType.Percent, 55))  ' Role Permission Matrix Grid
-            root.RowStyles.Add(New RowStyle(SizeType.Percent, 45))  ' Confirm Sensitive Change & Info
-
-            ' Wire events
-            AddHandler btnReviewChanges.Click, Sub(s, e) RaiseEvent ReviewChangesRequested(Me, EventArgs.Empty)
-            AddHandler btnCancelChange.Click, Sub(s, e) RaiseEvent CancelChangeRequested(Me, EventArgs.Empty)
-            AddHandler btnConfirmChange.Click, Sub(s, e) RaiseEvent ConfirmSensitiveChangeRequested(Me, EventArgs.Empty)
-
-            ' ==========================================
-            ' ROW 0: Header & Anti-Lockout Guardrail Banner
-            ' ==========================================
-            Dim headerPanel As New Panel With {.Dock = DockStyle.Fill}
-            Dim lblTitle As New Label With {.Text = "Access Permissions Matrix", .Font = New Font("Segoe UI", 16, FontStyle.Bold), .ForeColor = TextDark, .AutoSize = True, .Location = New Point(0, 0)}
-            Dim lblSubTitle As New Label With {.Text = "Role policy · HQ branch · changes restricted to the System Administrator", .Font = New Font("Segoe UI", 8.5F), .ForeColor = TextMuted, .AutoSize = True, .Location = New Point(0, 28)}
-
-            btnReviewChanges.Anchor = AnchorStyles.Right Or AnchorStyles.Top
-            btnReviewChanges.Top = 0
-            btnReviewChanges.Left = headerPanel.Width - btnReviewChanges.Width
-            headerPanel.Controls.Add(btnReviewChanges)
-            headerPanel.Controls.Add(lblTitle)
-            headerPanel.Controls.Add(lblSubTitle)
-
-            ' Guardrail Banner
-            Dim pnlGuardrail As New Panel With {.BackColor = Color.FromArgb(254, 242, 242), .Padding = New Padding(10), .Height = 44, .Dock = DockStyle.Bottom}
-            Dim lblGuardText As New Label With {.Text = "Protected authority · anti-lockout guardrail" & vbCrLf & "Server-side authorization must validate every protected route and action. You cannot grant beyond your authority or remove critical Manage Users / Change Permissions access from the final active administrator.", .Font = New Font("Segoe UI", 8.0F), .ForeColor = Color.FromArgb(180, 40, 40), .Dock = DockStyle.Fill}
-            pnlGuardrail.Controls.Add(lblGuardText)
-            AddHandler pnlGuardrail.Paint, AddressOf DrawAlertBorder
-
-            Dim topPanel As New Panel With {.Dock = DockStyle.Fill}
-            topPanel.Controls.Add(pnlGuardrail)
-            topPanel.Controls.Add(headerPanel)
-            root.Controls.Add(topPanel, 0, 0)
-
-            ' ==========================================
-            ' ROW 1: Role Permission Matrix Card
-            ' ==========================================
-            Dim cardMatrix As New Panel With {.Dock = DockStyle.Fill, .BackColor = CardBgColor, .Padding = New Padding(12), .Margin = New Padding(0, 4, 0, 4)}
-            AddHandler cardMatrix.Paint, AddressOf DrawCardBorder
-
-            Dim lblMatrixTitle As New Label With {.Text = "Role permission matrix", .Dock = DockStyle.Top, .Height = 22, .Font = New Font("Segoe UI", 11, FontStyle.Bold), .ForeColor = TextDark}
-            Dim lblMatrixLegend As New Label With {.Text = "Allowed = action access · Read-only = view without mutation · Restricted = no access", .Dock = DockStyle.Top, .Height = 18, .Font = New Font("Segoe UI", 8.0F), .ForeColor = TextMuted}
-
-            FormatGrid(dgvMatrix)
-            cardMatrix.Controls.Add(dgvMatrix)
-            cardMatrix.Controls.Add(lblMatrixLegend)
-            cardMatrix.Controls.Add(lblMatrixTitle)
-            root.Controls.Add(cardMatrix, 0, 1)
-
-            ' ==========================================
-            ' ROW 2: Split Bottom Cards (Confirm Change / Auditable Info)
-            ' ==========================================
-            Dim bottomSplit As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 2, .RowCount = 1, .Padding = New Padding(0, 4, 0, 0)}
-            bottomSplit.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 65))
-            bottomSplit.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 35))
-
-            ' Left: Confirm Sensitive Permission Change Card
-            Dim cardConfirm As New Panel With {.Dock = DockStyle.Fill, .BackColor = CardBgColor, .Padding = New Padding(12), .Margin = New Padding(0, 0, 8, 0)}
-            AddHandler cardConfirm.Paint, AddressOf DrawCardBorder
-
-            Dim lblConfTitle As New Label With {.Text = "Confirm sensitive permission change", .Dock = DockStyle.Top, .Height = 22, .Font = New Font("Segoe UI", 11, FontStyle.Bold), .ForeColor = TextDark}
-            Dim lblConfSub As New Label With {.Text = "Draft example · Export Reports for Dispatch Officer", .Dock = DockStyle.Top, .Height = 18, .Font = New Font("Segoe UI", 8.0F), .ForeColor = TextMuted}
-
-            Dim pnlDiff As New FlowLayoutPanel With {.Dock = DockStyle.Top, .Height = 36, .FlowDirection = FlowDirection.LeftToRight}
-            pnlDiff.Controls.Add(New Label With {.Text = "BEFORE: -- Restricted", .Font = New Font("Segoe UI", 8.5F), .ForeColor = TextMuted, .Width = 180})
-            pnlDiff.Controls.Add(New Label With {.Text = "AFTER - PENDING CONFIRMATION: ● Read-only", .Font = New Font("Segoe UI", 8.5F, FontStyle.Bold), .ForeColor = TextDark, .Width = 260})
-
-            Dim confForm As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .WrapContents = False}
-            confForm.Controls.Add(New Label With {.Text = "Audit reason *", .Font = New Font("Segoe UI", 8.5F), .ForeColor = TextMuted, .AutoSize = True})
-            txtAuditReason.Width = 440
-            confForm.Controls.Add(txtAuditReason)
-            confForm.Controls.Add(New Label With {.Height = 4})
-            confForm.Controls.Add(hwndCheckboxFix())
-            confForm.Controls.Add(New Label With {.Height = 6})
-
-            Dim confActions As New FlowLayoutPanel With {.AutoSize = True, .FlowDirection = FlowDirection.LeftToRight}
-            btnCancelChange.Margin = New Padding(0, 0, 8, 0)
-            confActions.Controls.Add(btnCancelChange)
-            confActions.Controls.Add(btnConfirmChange)
-            confForm.Controls.Add(confActions)
-
-            cardConfirm.Controls.Add(confForm)
-            cardConfirm.Controls.Add(pnlDiff)
-            cardConfirm.Controls.Add(lblConfSub)
-            cardConfirm.Controls.Add(lblConfTitle)
-            bottomSplit.Controls.Add(cardConfirm, 0, 0)
-
-            ' Right: Permission changes are auditable Card
-            Dim cardAuditable As New Panel With {.Dock = DockStyle.Fill, .BackColor = CardBgColor, .Padding = New Padding(12), .Margin = New Padding(8, 0, 0, 0)}
-            AddHandler cardAuditable.Paint, AddressOf DrawCardBorder
-
-            Dim lblAuditTitle As New Label With {.Text = "Permission changes are auditable", .Dock = DockStyle.Top, .Height = 22, .Font = New Font("Segoe UI", 11, FontStyle.Bold), .ForeColor = TextDark}
-            Dim lblAuditBody As New Label With {.Text = "The published matrix remains unchanged until confirmation. Before/after states, branch scope, actor and authorization context are retained. Read-only Export Reports permits report viewing, never downloadable exports.", .Font = New Font("Segoe UI", 8.5F), .ForeColor = TextMuted, .Dock = DockStyle.Fill}
-
-            cardAuditable.Controls.Add(lblAuditBody)
-            cardAuditable.Controls.Add(lblAuditTitle)
-            bottomSplit.Controls.Add(cardAuditable, 1, 0)
-
-            root.Controls.Add(bottomSplit, 0, 2)
-
-            Me.Controls.Add(root)
-        Catch ex As Exception
-            MessageBox.Show("Error initializing Access Permissions UI: " & ex.Message, "UI Exception", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
+        Me.BackColor = SK.PageBg
+        BuildUI()
     End Sub
 
-    Private Function hwndCheckboxFix() As CheckBox
-        Return chkReviewBounds
-    End Function
-
-    Private Sub FormatGrid(dgv As DataGridView)
-        dgv.Dock = DockStyle.Fill
-        dgv.BackgroundColor = Color.White
-        dgv.BorderStyle = BorderStyle.None
-        dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        dgv.RowHeadersVisible = False
-        dgv.AllowUserToAddRows = False
-        dgv.ReadOnly = True
-        dgv.AutoGenerateColumns = True
-        dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-        dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect
-        dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 247, 250)
-        dgv.ColumnHeadersDefaultCellStyle.Font = New Font("Segoe UI", 8.5F, FontStyle.Bold)
-        dgv.ColumnHeadersDefaultCellStyle.ForeColor = TextMuted
-        dgv.EnableHeadersVisualStyles = False
+    ' ---------------- public ----------------
+    Public Sub SetRoles(roles As IEnumerable(Of String))
+        dgvMatrix.Columns.Clear()
+        SK.AddCol(dgvMatrix, "colPerm", "Permission", 16)
+        Dim i As Integer = 0
+        For Each r As String In roles
+            SK.AddCol(dgvMatrix, "colRole" & i, r, 16)
+            i += 1
+        Next
     End Sub
 
-    Private Sub DrawCardBorder(sender As Object, e As PaintEventArgs)
-        Dim p = DirectCast(sender, Panel)
-        ControlPaint.DrawBorder(e.Graphics, p.ClientRectangle, BorderColor, ButtonBorderStyle.Solid)
+    Public Sub ShowDraft(subtitle As String, before As String, after As String)
+        lblDraftSub.Text = subtitle
+        lblBefore.Text = before
+        lblAfter.Text = after & " · pending confirmation"
     End Sub
 
-    Private Sub DrawAlertBorder(sender As Object, e As PaintEventArgs)
-        Dim p = DirectCast(sender, Panel)
-        ControlPaint.DrawBorder(e.Graphics, p.ClientRectangle, Color.FromArgb(245, 200, 200), ButtonBorderStyle.Solid)
+    Public Sub ClearDraft()
+        lblDraftSub.Text = "" : lblBefore.Text = "" : lblAfter.Text = ""
+        txtReason.Text = "" : chkReviewed.Checked = False
     End Sub
 
+    Public Sub FocusDraft()
+        pnl.ScrollControlIntoView(cConfirm)
+        txtReason.Focus()
+    End Sub
+
+    ' ---------------- layout ----------------
+    Private Sub Arrange()
+        Dim w As Integer = Math.Max(pnl.ClientSize.Width, 900) - 48
+        btnReview.Location = New Point(24 + w - btnReview.Width, 18)
+        cGuard.SetBounds(24, 88, w, 50)
+        lblGuardTitle.SetBounds(14, 6, w - 28, 18)
+        lblGuardNote.SetBounds(14, 26, w - 28, 18)
+
+        cMatrix.SetBounds(24, 152, w, 70 + 34 + 11 * 34 + 14)
+        lblLegend.SetBounds(w - 16 - 320, 16, 320, 16)
+        dgvMatrix.SetBounds(12, 60, w - 24, 34 + 11 * 34)
+
+        Dim y As Integer = 152 + cMatrix.Height + 16
+        Dim cw As Integer = CInt(w * 0.58)
+        cConfirm.SetBounds(24, y, cw, 196)
+        lblDraftTitle.SetBounds(16, 10, cw - 32, 20)
+        lblDraftSub.SetBounds(16, 30, cw - 32, 16)
+        Dim half As Integer = (cw - 32) \ 2
+        capBefore.SetBounds(16, 54, half, 14) : capAfter.SetBounds(16 + half, 54, half, 14)
+        lblBefore.SetBounds(16, 70, half, 16) : lblAfter.SetBounds(16 + half, 70, half, 16)
+        capReason.SetBounds(16, 96, 200, 16)
+        txtReason.SetBounds(16, 114, cw - 32, 24)
+        chkReviewed.SetBounds(16, 142, cw - 32, 20)
+        btnCancel.Location = New Point(16, 166)
+        btnConfirm.Location = New Point(16 + btnCancel.Width + 8, 166)
+        lblAuditTitle.SetBounds(24 + cw + 16, y + 4, w - cw - 16, 18)
+        lblAuditNote.SetBounds(24 + cw + 16, y + 24, w - cw - 16, 70)
+        pnl.AutoScrollMinSize = New Size(900, y + 196 + 30)
+    End Sub
+
+    Private Sub BuildUI()
+        Me.SuspendLayout()
+        pnl.Dock = DockStyle.Fill : pnl.BackColor = SK.PageBg : pnl.AutoScroll = True
+        Controls.Add(pnl)
+
+        lblPageTitle = SK.Cap("Access Permissions Matrix", SK.F(20, FontStyle.Bold), SK.Ink, 22, 14)
+        pnl.Controls.Add(lblPageTitle)
+        SK.Spot(lblSubtitle, SK.F(9), SK.Muted) : lblSubtitle.SetBounds(26, 58, 800, 18)
+        pnl.Controls.Add(lblSubtitle)
+        SK.StyleBtn(btnReview, "Review permission changes", 200, 36, True)
+        pnl.Controls.Add(btnReview)
+
+        ' guardrail banner
+        cGuard = New Panel With {.BackColor = Color.FromArgb(250, 232, 234)}
+        SK.Spot(lblGuardTitle, SK.F(8.5!, FontStyle.Bold), SK.Maroon)
+        SK.Spot(lblGuardNote, SK.F(8), SK.Muted)
+        cGuard.Controls.AddRange(New Control() {lblGuardTitle, lblGuardNote})
+        pnl.Controls.Add(cGuard)
+
+        ' matrix card
+        cMatrix = New FiCard
+        SK.Spot(lblMatrixTitle, SK.F(10.5!, FontStyle.Bold), SK.Ink) : lblMatrixTitle.SetBounds(16, 10, 500, 20)
+        SK.Spot(lblMatrixSub, SK.F(8), SK.Muted) : lblMatrixSub.SetBounds(16, 31, 600, 16)
+        SK.Spot(lblLegend, SK.F(8), SK.Muted, ContentAlignment.TopRight)
+        lblLegend.Text = "✓ Allowed     ● Read-only     — Restricted"
+        SK.StyleGrid(dgvMatrix, 34)
+        dgvMatrix.Cursor = Cursors.Hand
+        cMatrix.Controls.AddRange(New Control() {lblMatrixTitle, lblMatrixSub, lblLegend, dgvMatrix})
+        pnl.Controls.Add(cMatrix)
+
+        ' confirm card
+        cConfirm = New FiCard
+        SK.Spot(lblDraftTitle, SK.F(10.5!, FontStyle.Bold), SK.Ink) : lblDraftTitle.Text = "Confirm sensitive permission change"
+        SK.Spot(lblDraftSub, SK.F(8), SK.Muted)
+        capBefore = SK.Cap("BEFORE", SK.F(7.5!), SK.Muted, 0, 0) : capAfter = SK.Cap("AFTER · PENDING CONFIRMATION", SK.F(7.5!), SK.Muted, 0, 0)
+        capBefore.AutoSize = False : capAfter.AutoSize = False
+        capAfter.Text = "AFTER"
+        SK.Spot(lblBefore, SK.F(8.5!), SK.Ink) : SK.Spot(lblAfter, SK.F(8.5!), SK.Ink)
+        capReason = SK.Cap("Audit reason *", SK.F(8, FontStyle.Bold), SK.Ink, 0, 0) : capReason.AutoSize = False
+        SK.StyleText(txtReason)
+        chkReviewed.Text = "I have reviewed branch scope and permission bounds"
+        chkReviewed.AutoSize = False : chkReviewed.BackColor = Color.Transparent : chkReviewed.Font = SK.F(8)
+        SK.StyleBtn(btnCancel, "Cancel change", 110, 28, False)
+        SK.StyleBtn(btnConfirm, "Confirm sensitive change", 170, 28, False)
+        btnConfirm.ForeColor = SK.Maroon : btnConfirm.FlatAppearance.BorderColor = SK.Maroon
+        cConfirm.Controls.AddRange(New Control() {lblDraftTitle, lblDraftSub, capBefore, capAfter, lblBefore, lblAfter,
+                                                  capReason, txtReason, chkReviewed, btnCancel, btnConfirm})
+        pnl.Controls.Add(cConfirm)
+
+        SK.Spot(lblAuditTitle, SK.F(8.5!, FontStyle.Bold), SK.Muted)
+        SK.Spot(lblAuditNote, SK.F(8), SK.Muted)
+        pnl.Controls.AddRange(New Control() {lblAuditTitle, lblAuditNote})
+
+        AddHandler pnl.Resize, Sub(s, e) Arrange()
+        AddHandler btnReview.Click, Sub(s, e) RaiseEvent ReviewClicked()
+        AddHandler btnConfirm.Click, Sub(s, e) RaiseEvent ConfirmClicked()
+        AddHandler btnCancel.Click, Sub(s, e) RaiseEvent CancelChangeClicked()
+        AddHandler dgvMatrix.CellPainting, AddressOf Grid_CellPainting
+        AddHandler dgvMatrix.CellMouseClick, Sub(s, e)
+                                                 If e.RowIndex >= 0 AndAlso e.ColumnIndex > 0 Then RaiseEvent CellClicked(e.RowIndex, e.ColumnIndex)
+                                             End Sub
+        Me.ResumeLayout(False)
+        Arrange()
+    End Sub
+
+    ' ---------------- grid painting ----------------
+    Private Sub Grid_CellPainting(sender As Object, e As DataGridViewCellPaintingEventArgs)
+        If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then Return
+        Dim txt As String = Convert.ToString(e.Value)
+        Dim pending As Boolean = (Convert.ToString(dgvMatrix.Rows(e.RowIndex).Cells(e.ColumnIndex).Tag) = "pending")
+        e.Paint(e.CellBounds, DataGridViewPaintParts.Border)
+        Using br As New SolidBrush(If(pending, Color.FromArgb(253, 244, 225), Color.White))
+            e.Graphics.FillRectangle(br, New Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width, e.CellBounds.Height - 1))
+        End Using
+        Dim flags As TextFormatFlags = TextFormatFlags.VerticalCenter Or TextFormatFlags.Left Or TextFormatFlags.NoPadding
+        Dim r As New Rectangle(e.CellBounds.Left + 8, e.CellBounds.Top, e.CellBounds.Width - 8, e.CellBounds.Height)
+        If e.ColumnIndex = 0 Then
+            TextRenderer.DrawText(e.Graphics, txt, SK.F(8.5!, FontStyle.Bold), r, SK.Maroon, flags)
+        Else
+            Select Case txt
+                Case "Allowed" : TextRenderer.DrawText(e.Graphics, "✓ Allowed", SK.F(8), r, Color.FromArgb(46, 110, 60), flags)
+                Case "Read-only" : TextRenderer.DrawText(e.Graphics, "● Read-only", SK.F(8), r, Color.FromArgb(90, 90, 90), flags)
+                Case Else : TextRenderer.DrawText(e.Graphics, "— Restricted", SK.F(8), r, SK.Muted, flags)
+            End Select
+        End If
+        e.Handled = True
+    End Sub
 End Class

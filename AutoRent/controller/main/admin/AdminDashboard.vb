@@ -15,6 +15,19 @@ Public Class AdminDashboard
     Private _selectedMaintId As Integer = 0    ' maintenance record currently shown in details
     Private _revFrom As Date = Date.Today      ' revenue report range (inclusive)
     Private _revTo As Date = Date.Today
+    Private _editingUserId As Integer = 0
+    Private _selectedUserId As Integer = 0
+    Private _userBusy As Boolean = False
+    Private _auditReady As Boolean = False
+    Private _auditBusy As Boolean = False
+    Private _auditPage As Integer = 1
+    Private _actorId As Integer = -1
+    Private _pRow As Integer = -1
+    Private _pCol As Integer = 0
+    Private _pPerm As String = ""
+    Private _pRole As String = ""
+    Private _pBefore As String = ""
+    Private _pAfter As String = ""
     Private _revBusy As Boolean = False
     Private _dispBusy As Boolean = False
 
@@ -188,13 +201,41 @@ Public Class AdminDashboard
             AddHandler disp.PrintReportClicked, Sub() ExportGridCsv(disp.dgvDispatch, "dispatch-report")
             Return disp
         ElseIf btn Is btnMenuUsers Then
-            Return New ucUserManagement()
+            EnsureUserColumns()
+            Dim ua As New ucUserAccounts()
+            LoadUserLists(ua.Editor)
+            LoadUserFilters(ua)
+            LoadUsers(ua)
+            AddHandler ua.FilterChanged, Sub() If Not _userBusy Then LoadUsers(ua)
+            AddHandler ua.UserSelected, Sub(i) ShowSelectedUser(ua, i)
+            AddHandler ua.CreateUserClicked, Sub() _editingUserId = 0
+            AddHandler ua.EditUserRequested, Sub(i) LoadUserIntoForm(ua, i)
+            AddHandler ua.Editor.SaveClicked,
+                Sub()
+                    If SaveUser(ua.Editor) Then
+                        LoadUsers(ua)
+                        ua.ShowList()
+                    End If
+                End Sub
+            AddHandler ua.DeactivateClicked,
+                Sub()
+                    If _selectedUserId = 0 Then Return
+                    ToggleUserActive(_selectedUserId)
+                    LoadUsers(ua)
+                End Sub
+            AddHandler ua.SecureResetClicked,
+                Sub()
+                    If _selectedUserId = 0 Then Return
+                    MessageBox.Show("A single-use, expiring reset link will be issued. This action is audited.", "Secure password reset",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End Sub
+            Return ua
         ElseIf btn Is btnMenuAccess Then
-            Return New ucAccessPermissions()
+            Return BuildAccessPanel()
         ElseIf btn Is btnMenuAudit Then
-            Return New ucAuditLogs()
+            Return BuildAuditPanel()
         ElseIf btn Is btnMenuSettings Then
-            Return New ucSystemSettings()
+            Return BuildSettingsPanel()
         End If
         Return New UserControl()
     End Function
@@ -981,6 +1022,734 @@ Public Class AdminDashboard
             Catch
             End Try
         End If
+    End Sub
+
+    ' ---------------------------------------------------------------
+    '  User form
+    ' ---------------------------------------------------------------
+    Private Sub EnsureUserColumns()
+        Dim cols() As String = {"FullName TEXT(100)", "Username TEXT(50)", "Email TEXT(100)", "Phone TEXT(30)",
+                                "Branch TEXT(60)", "RoleName TEXT(40)", "AccountStatus TEXT(30)", "AccessMethod TEXT(30)",
+                                "RequireMfa YESNO", "ChangeReason TEXT(255)", "UpdatedBy TEXT(100)", "UpdatedAt DATETIME", "LastLogin DATETIME"}
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                For Each colDef As String In cols
+                    Try
+                        Using cmd As New OleDbCommand("ALTER TABLE Users ADD COLUMN " & colDef, conn)
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    Catch
+                    End Try
+                Next
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("EnsureUserColumns Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub LoadUserLists(uf As ucUserForm)
+        uf.cboRole.Items.AddRange(New Object() {"System Administrator", "Business Owner", "Branch Manager", "Front-Desk Staff", "Rental Clerk", "Dispatch Officer"})
+        uf.cboAccountStatus.Items.AddRange(New Object() {"Invitation pending", "Active", "Suspended", "Disabled"})
+    End Sub
+
+    Private Sub LoadUserFilters(ua As ucUserAccounts)
+        _userBusy = True
+        ua.cboRole.Items.Add("All roles")
+        ua.cboRole.Items.AddRange(New Object() {"System Administrator", "Business Owner", "Branch Manager", "Front-Desk Staff", "Rental Clerk", "Dispatch Officer"})
+        ua.cboBranch.Items.Add("All branches")
+        ua.Editor.cboBranch.Items.Add("HQ")
+        ua.cboStatus.Items.AddRange(New Object() {"All statuses", "Active", "Invitation pending", "Suspended", "Deactivated"})
+        ua.Editor.cboAccountStatus.Items.Add("Deactivated")
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT DISTINCT Branch FROM Users WHERE Branch IS NOT NULL", conn)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            Dim b As String = r(0).ToString()
+                            If b <> "" Then
+                                ua.cboBranch.Items.Add(b)
+                                If b <> "HQ" Then ua.Editor.cboBranch.Items.Add(b)
+                            End If
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("LoadUserFilters Error: " & ex.Message)
+        End Try
+        ua.cboRole.SelectedIndex = 0 : ua.cboBranch.SelectedIndex = 0 : ua.cboStatus.SelectedIndex = 0
+        _userBusy = False
+    End Sub
+
+    Private Sub LoadUsers(ua As ucUserAccounts)
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Dim total = CountP(conn, "SELECT COUNT(*) FROM Users")
+                Dim act = CountP(conn, "SELECT COUNT(*) FROM Users WHERE AccountStatus = 'Active'")
+                Dim pend = CountP(conn, "SELECT COUNT(*) FROM Users WHERE AccountStatus LIKE 'Invit*'")
+                Dim deact = CountP(conn, "SELECT COUNT(*) FROM Users WHERE AccountStatus = 'Deactivated'")
+                ua.lblSummary.Text = total & " staff accounts · " & act & " active · " & pend & " invitation pending · " & deact & " deactivated · passwords are never displayed"
+
+                Dim ps As New List(Of Object)
+                Dim sql As String = "SELECT UserID, FullName, Username, RoleName, Branch, AccountStatus, LastLogin FROM Users WHERE 1=1"
+                Dim term As String = ua.txtSearch.Text.Trim()
+                If term <> "" Then
+                    sql &= " AND (FullName LIKE ? OR Username LIKE ?)"
+                    ps.Add("%" & term & "%") : ps.Add("%" & term & "%")
+                End If
+                If ua.cboRole.SelectedIndex > 0 Then sql &= " AND RoleName = ?" : ps.Add(ua.cboRole.Text)
+                If ua.cboBranch.SelectedIndex > 0 Then sql &= " AND Branch = ?" : ps.Add(ua.cboBranch.Text)
+                If ua.cboStatus.SelectedIndex > 0 Then sql &= " AND AccountStatus = ?" : ps.Add(ua.cboStatus.Text)
+                sql &= " ORDER BY UserID"
+
+                ua.dgvUsers.Rows.Clear()
+                Using cmd = MakeCmd(conn, sql, ps)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            Dim id As Integer = Convert.ToInt32(r.GetValue(0))
+                            Dim status As String = Txt(r, 5)
+                            Dim act2 As String = "Edit · Activity"
+                            If status = "Deactivated" Then act2 = "Reactivate · Activity"
+                            If status.StartsWith("Invit") Then act2 = "Edit · Resend invite"
+                            Dim idx As Integer = ua.dgvUsers.Rows.Add("USR-" & id.ToString("0000"), Txt(r, 1), Txt(r, 2), Txt(r, 3), Txt(r, 4), status,
+                                If(r.IsDBNull(6), "—", Convert.ToDateTime(r.GetValue(6)).ToString("dd MMM · HH:mm")), act2)
+                            ua.dgvUsers.Rows(idx).Tag = id
+                        End While
+                    End Using
+                End Using
+                ua.lblShowing.Text = "Showing " & ua.dgvUsers.Rows.Count & " of " & total & " accounts · access restricted to authorized administrators"
+                ua.lblPage.Text = "Page 1 of 1 · All records shown"
+                ua.lblLifecycleTitle.Text = "Secure account lifecycle"
+                ua.lblLifecycleNote.Text = "Deactivation revokes access but preserves attribution. Password resets use a single-use expiring link, never a stored password. Role changes require server-side authorization and an audit entry."
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("LoadUsers Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Function UserIdOfRow(ua As ucUserAccounts, rowIndex As Integer) As Integer
+        If rowIndex < 0 OrElse rowIndex >= ua.dgvUsers.Rows.Count Then Return 0
+        Dim t = ua.dgvUsers.Rows(rowIndex).Tag
+        Return If(t Is Nothing, 0, Convert.ToInt32(t))
+    End Function
+
+    Private Sub ShowSelectedUser(ua As ucUserAccounts, rowIndex As Integer)
+        Dim id As Integer = UserIdOfRow(ua, rowIndex)
+        _selectedUserId = id
+        If id = 0 Then Return
+        Dim row = ua.dgvUsers.Rows(rowIndex)
+        ua.lblSelTitle.Text = "Selected account · " & Convert.ToString(row.Cells(1).Value)
+        ua.lblSelSub.Text = Convert.ToString(row.Cells(0).Value) & " · " & Convert.ToString(row.Cells(5).Value)
+        ua.lblSelRole.Text = Convert.ToString(row.Cells(3).Value)
+        ua.lblSelLastActivity.Text = Convert.ToString(row.Cells(6).Value)
+        ua.lblSelAuthority.Text = Convert.ToString(row.Cells(4).Value) & " branch only"
+        ua.lblSelInvitation.Text = "—"
+        ua.btnDeactivate.Text = If(Convert.ToString(row.Cells(5).Value) = "Deactivated", "Reactivate", "Deactivate")
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT AccessMethod, UpdatedAt FROM Users WHERE UserID = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.Integer).Value = id
+                    Using r = cmd.ExecuteReader()
+                        If r.Read() AndAlso Not r.IsDBNull(1) Then
+                            ua.lblSelInvitation.Text = Txt(r, 0) & " · " & Convert.ToDateTime(r.GetValue(1)).ToString("dd MMM · HH:mm")
+                        End If
+                    End Using
+                End Using
+            End Using
+        Catch
+        End Try
+    End Sub
+
+    Private Sub ToggleUserActive(id As Integer)
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("UPDATE Users SET AccountStatus = IIf(AccountStatus = 'Deactivated', 'Active', 'Deactivated'), UpdatedBy = ?, UpdatedAt = ? WHERE UserID = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _fullName
+                    cmd.Parameters.Add("?", OleDbType.Date).Value = Date.Now
+                    cmd.Parameters.Add("?", OleDbType.Integer).Value = id
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("ToggleUserActive Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub LoadUserIntoForm(ua As ucUserAccounts, rowIndex As Integer)
+        Dim id As Integer = UserIdOfRow(ua, rowIndex)
+        If id = 0 Then Return
+        _editingUserId = id
+        Dim f As ucUserForm = ua.Editor
+        f.ClearForm()
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT FullName, Username, Email, Phone, Branch, RoleName, AccountStatus, AccessMethod, RequireMfa, UpdatedBy, UpdatedAt, LastLogin FROM Users WHERE UserID = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.Integer).Value = id
+                    Using r = cmd.ExecuteReader()
+                        If Not r.Read() Then Return
+                        f.txtFullName.Text = Txt(r, 0) : f.txtUsername.Text = Txt(r, 1)
+                        f.txtEmail.Text = Txt(r, 2) : f.txtPhone.Text = Txt(r, 3)
+                        f.cboBranch.SelectedIndex = f.cboBranch.FindStringExact(Txt(r, 4))
+                        f.cboRole.SelectedIndex = f.cboRole.FindStringExact(Txt(r, 5))
+                        f.cboAccountStatus.SelectedIndex = f.cboAccountStatus.FindStringExact(Txt(r, 6))
+                        If Txt(r, 7) <> "" Then f.SelectMethod(Txt(r, 7))
+                        f.chkRequireMfa.Checked = Not r.IsDBNull(8) AndAlso Convert.ToBoolean(r.GetValue(8))
+                        f.lblUpdatedByValue.Text = Txt(r, 9)
+                        f.lblUpdatedAtValue.Text = If(r.IsDBNull(10), "—", Convert.ToDateTime(r.GetValue(10)).ToString("dd MMM · HH:mm"))
+                        f.lblLastLoginValue.Text = If(r.IsDBNull(11), "—", Convert.ToDateTime(r.GetValue(11)).ToString("dd MMM · HH:mm"))
+                        f.lblSubtitle.Text = "USR-" & id.ToString("0000") & " · " & Txt(r, 0)
+                    End Using
+                End Using
+            End Using
+            f.txtUserId.Text = "USR-" & id.ToString("0000")
+        Catch ex As Exception
+            MessageBox.Show("LoadUserIntoForm Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Function SaveUser(uf As ucUserForm) As Boolean
+        Dim missing As New List(Of String)
+        If uf.txtFullName.Text.Trim() = "" Then missing.Add("Full name")
+        If uf.txtUsername.Text.Trim() = "" Then missing.Add("Username")
+        If uf.cboBranch.Text.Trim() = "" Then missing.Add("Branch")
+        If uf.cboRole.SelectedIndex < 0 Then missing.Add("Role")
+        If uf.cboAccountStatus.SelectedIndex < 0 Then missing.Add("Account status")
+        If uf.txtReason.Text.Trim() = "" Then missing.Add("Change reason")
+        If missing.Count > 0 Then
+            MessageBox.Show("Please complete: " & String.Join(", ", missing), "Missing information", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return False
+        End If
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Dim sql As String
+                If _editingUserId > 0 Then
+                    sql = "UPDATE Users SET FullName=?, Username=?, Email=?, Phone=?, Branch=?, RoleName=?, AccountStatus=?, AccessMethod=?, RequireMfa=?, ChangeReason=?, UpdatedBy=?, UpdatedAt=? WHERE UserID=?"
+                Else
+                    sql = "INSERT INTO Users (FullName, Username, Email, Phone, Branch, RoleName, AccountStatus, AccessMethod, RequireMfa, ChangeReason, UpdatedBy, UpdatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                End If
+                Using cmd As New OleDbCommand(sql, conn)
+                    For Each v As String In New String() {uf.txtFullName.Text.Trim(), uf.txtUsername.Text.Trim(), uf.txtEmail.Text.Trim(),
+                                                          uf.txtPhone.Text.Trim(), uf.cboBranch.Text, uf.cboRole.Text, uf.cboAccountStatus.Text, uf.AccessMethod}
+                        cmd.Parameters.Add("?", OleDbType.VarWChar).Value = v
+                    Next
+                    cmd.Parameters.Add("?", OleDbType.Boolean).Value = uf.chkRequireMfa.Checked
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = uf.txtReason.Text.Trim()
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _fullName
+                    cmd.Parameters.Add("?", OleDbType.Date).Value = Date.Now
+                    If _editingUserId > 0 Then cmd.Parameters.Add("?", OleDbType.Integer).Value = _editingUserId
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+            WriteAudit(If(_editingUserId > 0, "User modified", "User created"), uf.txtUsername.Text.Trim(), "Success", "", uf.cboRole.Text, uf.txtReason.Text.Trim())
+            uf.ShowBanner("Saved", "User record saved " & Date.Now.ToString("dd MMM yyyy HH:mm"))
+            _editingUserId = 0
+            Return True
+        Catch ex As Exception
+            MessageBox.Show("SaveUser Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+        Return False
+    End Function
+
+
+    ' ---------------------------------------------------------------
+    '  Audit trail (AuditEvents) + shared helpers
+    ' ---------------------------------------------------------------
+    Private Sub EnsureAuditTable()
+        If _auditReady Then Return
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Try
+                    Using cmd As New OleDbCommand(
+                        "CREATE TABLE AuditEvents (EventID COUNTER PRIMARY KEY, EventTime DATETIME, ActorID LONG, Username TEXT(80), " &
+                        "RoleName TEXT(60), ActionName TEXT(80), AffectedRecord TEXT(80), ResultText TEXT(20), SourceText TEXT(60), " &
+                        "RefCode TEXT(30), ReasonText TEXT(255), BeforeValue TEXT(255), AfterValue TEXT(255), ContextText TEXT(255))", conn)
+                        cmd.ExecuteNonQuery()
+                    End Using
+                Catch ex2 As Exception
+                    If ex2.Message.IndexOf("already exists", StringComparison.OrdinalIgnoreCase) < 0 Then
+                        MessageBox.Show("Could not create AuditEvents: " & ex2.Message)
+                    End If
+                End Try
+            End Using
+            _auditReady = True
+        Catch ex As Exception
+            MessageBox.Show("EnsureAuditTable Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Function CurrentUserId() As Integer
+        If _actorId >= 0 Then Return _actorId
+        _actorId = 0
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT UserID FROM Users WHERE FullName = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _fullName
+                    Dim o = cmd.ExecuteScalar()
+                    If o IsNot Nothing AndAlso Not IsDBNull(o) Then _actorId = Convert.ToInt32(o)
+                End Using
+            End Using
+        Catch
+        End Try
+        Return _actorId
+    End Function
+
+    Private Sub WriteAudit(action As String, record As String, result As String, before As String, after As String, reason As String)
+        EnsureAuditTable()
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand(
+                    "INSERT INTO AuditEvents (EventTime, ActorID, Username, RoleName, ActionName, AffectedRecord, ResultText, SourceText, RefCode, ReasonText, BeforeValue, AfterValue, ContextText) " &
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", conn)
+                    cmd.Parameters.Add("?", OleDbType.Date).Value = Date.Now
+                    cmd.Parameters.Add("?", OleDbType.Integer).Value = CurrentUserId()
+                    For Each v As String In New String() {_fullName, _role, action, record, result, "HQ · " & Environment.MachineName,
+                                                          "REQ-" & Date.Now.ToString("HHmmss"), reason, before, after,
+                                                          "Server-side decision recorded for " & _role}
+                        cmd.Parameters.Add("?", OleDbType.VarWChar).Value = If(v, "")
+                    Next
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("WriteAudit Error: " & ex.Message)
+        End Try
+    End Sub
+
+    ' ---------------------------------------------------------------
+    '  Access permissions matrix
+    ' ---------------------------------------------------------------
+    Private Shared ReadOnly PermRoles() As String = {"System Administrator", "Business Owner / Branch Manager", "Front-Desk Staff", "Rental Clerk", "Dispatch Officer"}
+    Private Shared ReadOnly PermNames() As String = {"View Dashboard", "View Fleet Inventory", "Add/Edit Vehicles", "Retire Vehicles", "Manage Maintenance",
+                                                     "Configure Rates", "View Revenue", "Export Reports", "Manage Users", "Change Permissions", "View Audit Logs"}
+    Private Shared ReadOnly PermSeed() As String = {"RRRRR", "RRRRR", "AAXXX", "AAXXX", "AAXXA", "AAXXX", "RRXXX", "AAXXX", "AXXXX", "AXXXX", "RXXXX"}
+
+    Private Sub EnsureRolePermissions()
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Try
+                    Using cmd As New OleDbCommand("CREATE TABLE RolePermissions (PermKey TEXT(60), RoleName TEXT(60), Access TEXT(20))", conn)
+                        cmd.ExecuteNonQuery()
+                    End Using
+                Catch
+                End Try
+                If CountP(conn, "SELECT COUNT(*) FROM RolePermissions") > 0 Then Return
+                For i As Integer = 0 To PermNames.Length - 1
+                    For j As Integer = 0 To PermRoles.Length - 1
+                        Dim a As String = If(PermSeed(i)(j) = "A", "Allowed", If(PermSeed(i)(j) = "R", "Read-only", "Restricted"))
+                        Using cmd As New OleDbCommand("INSERT INTO RolePermissions (PermKey, RoleName, Access) VALUES (?,?,?)", conn)
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = PermNames(i)
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = PermRoles(j)
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = a
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    Next
+                Next
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("EnsureRolePermissions Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Function BuildAccessPanel() As UserControl
+        EnsureRolePermissions()
+        EnsureAuditTable()
+        _pRow = -1
+        Dim pm As New ucPermissionMatrix()
+        pm.SetRoles(PermRoles)
+        pm.lblSubtitle.Text = "Role policy · changes restricted to the System Administrator"
+        pm.lblGuardTitle.Text = "Protected authority · anti-lockout guardrail"
+        pm.lblGuardNote.Text = "Every protected action is validated on the server. Manage Users / Change Permissions cannot be removed from the System Administrator."
+        pm.lblMatrixTitle.Text = "Role permission matrix"
+        pm.lblMatrixSub.Text = "Allowed = action access · Read-only = view without changes · Restricted = no access · click a cell to draft a change"
+        pm.lblAuditTitle.Text = "Permission changes are auditable"
+        pm.lblAuditNote.Text = "Before / after states, actor and reason are recorded in Audit Logs. Nothing changes until it is confirmed."
+        LoadPermissionMatrix(pm)
+        AddHandler pm.CellClicked, Sub(r, c) DraftPermission(pm, r, c)
+        AddHandler pm.CancelChangeClicked, Sub() CancelPermissionDraft(pm)
+        AddHandler pm.ConfirmClicked, Sub() ConfirmPermission(pm)
+        AddHandler pm.ReviewClicked,
+            Sub()
+                If _pRow < 0 Then
+                    MessageBox.Show("No pending permission change. Click a cell in the matrix to draft one.", "Review permission changes",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Else
+                    pm.FocusDraft()
+                End If
+            End Sub
+        Return pm
+    End Function
+
+    Private Sub LoadPermissionMatrix(pm As ucPermissionMatrix)
+        Dim map As New Dictionary(Of String, String)
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT PermKey, RoleName, Access FROM RolePermissions", conn)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            map(r(0).ToString() & "|" & r(1).ToString()) = r(2).ToString()
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("LoadPermissionMatrix Error: " & ex.Message)
+        End Try
+        pm.dgvMatrix.Rows.Clear()
+        For Each perm As String In PermNames
+            Dim cells(PermRoles.Length) As Object
+            cells(0) = perm
+            For j As Integer = 0 To PermRoles.Length - 1
+                Dim k As String = perm & "|" & PermRoles(j)
+                cells(j + 1) = If(map.ContainsKey(k), map(k), "Restricted")
+            Next
+            pm.dgvMatrix.Rows.Add(cells)
+        Next
+        pm.ClearDraft()
+        _pRow = -1
+    End Sub
+
+    Private Sub CancelPermissionDraft(pm As ucPermissionMatrix)
+        If _pRow >= 0 AndAlso _pRow < pm.dgvMatrix.Rows.Count Then
+            Dim cell = pm.dgvMatrix.Rows(_pRow).Cells(_pCol)
+            cell.Value = _pBefore
+            cell.Tag = Nothing
+            pm.dgvMatrix.InvalidateCell(cell)
+        End If
+        _pRow = -1
+        pm.ClearDraft()
+    End Sub
+
+    Private Sub DraftPermission(pm As ucPermissionMatrix, r As Integer, c As Integer)
+        If _pRow >= 0 Then CancelPermissionDraft(pm)
+        Dim perm As String = Convert.ToString(pm.dgvMatrix.Rows(r).Cells(0).Value)
+        Dim role As String = pm.dgvMatrix.Columns(c).HeaderText
+        Dim before As String = Convert.ToString(pm.dgvMatrix.Rows(r).Cells(c).Value)
+        Dim after As String = If(before = "Allowed", "Read-only", If(before = "Read-only", "Restricted", "Allowed"))
+        If role = "System Administrator" AndAlso (perm = "Manage Users" OrElse perm = "Change Permissions") AndAlso after <> "Allowed" Then
+            MessageBox.Show("Anti-lockout guardrail: the System Administrator must keep " & perm & " access.", "Change blocked",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            WriteAudit("Permission change blocked", perm, "Denied", before, after, "Anti-lockout guardrail")
+            Return
+        End If
+        _pRow = r : _pCol = c : _pPerm = perm : _pRole = role : _pBefore = before : _pAfter = after
+        Dim cell = pm.dgvMatrix.Rows(r).Cells(c)
+        cell.Value = after
+        cell.Tag = "pending"
+        pm.dgvMatrix.InvalidateCell(cell)
+        pm.ShowDraft("Draft: " & perm & " for " & role, before, after)
+    End Sub
+
+    Private Sub ConfirmPermission(pm As ucPermissionMatrix)
+        If _pRow < 0 Then
+            MessageBox.Show("Click a matrix cell to draft a change first.", "Nothing to confirm", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Return
+        End If
+        If pm.txtReason.Text.Trim() = "" Then
+            MessageBox.Show("Enter an audit reason.", "Missing information", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+        If Not pm.chkReviewed.Checked Then
+            MessageBox.Show("Tick the review confirmation first.", "Missing confirmation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("UPDATE RolePermissions SET Access = ? WHERE PermKey = ? AND RoleName = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _pAfter
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _pPerm
+                    cmd.Parameters.Add("?", OleDbType.VarWChar).Value = _pRole
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+            WriteAudit("Permission updated", _pPerm & " / " & _pRole, "Success", _pBefore, _pAfter, pm.txtReason.Text.Trim())
+            LoadPermissionMatrix(pm)
+        Catch ex As Exception
+            MessageBox.Show("ConfirmPermission Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' ---------------------------------------------------------------
+    '  Audit logs viewer
+    ' ---------------------------------------------------------------
+    Private Function BuildAuditPanel() As UserControl
+        EnsureAuditTable()
+        _auditPage = 1
+        _auditBusy = True
+        Dim av As New ucAuditViewer()
+        av.lblSubtitle.Text = "Access-controlled, immutable administrative event register · read-only by design"
+        av.cboRange.Items.AddRange(New Object() {"Today", "Last 7 days", "Last 30 days", "All time"})
+        av.cboRange.SelectedIndex = 3
+        av.cboType.Items.Add("All actions")
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT DISTINCT ActionName FROM AuditEvents", conn)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            av.cboType.Items.Add(r(0).ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch
+        End Try
+        av.cboType.SelectedIndex = 0
+        av.cboResult.Items.AddRange(New Object() {"All results", "Success", "Denied"})
+        av.cboResult.SelectedIndex = 0
+        av.lblImmutableTitle.Text = "Immutable history"
+        av.lblImmutableNote.Text = "No modification or deletion is offered. Sensitive metadata is visible only to authorized roles."
+        _auditBusy = False
+        LoadAudit(av)
+        AddHandler av.FilterChanged, Sub()
+                                         If _auditBusy Then Return
+                                         _auditPage = 1
+                                         LoadAudit(av)
+                                     End Sub
+        AddHandler av.PageRequested, Sub(p)
+                                         _auditPage = p
+                                         LoadAudit(av)
+                                     End Sub
+        AddHandler av.EventSelected, Sub(i) ShowAuditDetail(av, i)
+        Return av
+    End Function
+
+    Private Sub LoadAudit(av As ucAuditViewer)
+        Const PageSize As Integer = 13
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Dim ps As New List(Of Object)
+                Dim where As String = " WHERE 1=1"
+                Select Case av.cboRange.SelectedIndex
+                    Case 0 : where &= " AND EventTime >= ?" : ps.Add(Date.Today)
+                    Case 1 : where &= " AND EventTime >= ?" : ps.Add(Date.Today.AddDays(-6))
+                    Case 2 : where &= " AND EventTime >= ?" : ps.Add(Date.Today.AddDays(-29))
+                End Select
+                Dim term As String = av.txtSearch.Text.Trim()
+                If term <> "" Then
+                    where &= " AND (Username LIKE ? OR ActionName LIKE ? OR AffectedRecord LIKE ?)"
+                    ps.Add("%" & term & "%") : ps.Add("%" & term & "%") : ps.Add("%" & term & "%")
+                End If
+                If av.cboType.SelectedIndex > 0 Then where &= " AND ActionName = ?" : ps.Add(av.cboType.Text)
+                If av.cboResult.SelectedIndex > 0 Then where &= " AND ResultText = ?" : ps.Add(av.cboResult.Text)
+
+                Dim total As Integer = CountP(conn, "SELECT COUNT(*) FROM AuditEvents" & where, ps.ToArray())
+                Dim pages As Integer = Math.Max(1, CInt(Math.Ceiling(total / PageSize)))
+                _auditPage = Math.Max(1, Math.Min(_auditPage, pages))
+
+                av.dgvEvents.Rows.Clear()
+                Dim skip As Integer = (_auditPage - 1) * PageSize
+                Dim n As Integer = 0
+                Using cmd = MakeCmd(conn, "SELECT EventID, EventTime, ActorID, Username, RoleName, ActionName, AffectedRecord, ResultText FROM AuditEvents" &
+                                    where & " ORDER BY EventID DESC", ps)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            n += 1
+                            If n <= skip Then Continue While
+                            If av.dgvEvents.Rows.Count >= PageSize Then Exit While
+                            Dim id As Integer = Convert.ToInt32(r.GetValue(0))
+                            Dim actor As Integer = If(r.IsDBNull(2), 0, Convert.ToInt32(r.GetValue(2)))
+                            Dim idx As Integer = av.dgvEvents.Rows.Add("EV-" & id.ToString("0000"),
+                                If(r.IsDBNull(1), "", Convert.ToDateTime(r.GetValue(1)).ToString("dd MMM HH:mm")),
+                                If(actor > 0, "USR-" & actor.ToString("0000"), "—"), Txt(r, 3), Txt(r, 4), Txt(r, 5), Txt(r, 6), Txt(r, 7))
+                            av.dgvEvents.Rows(idx).Tag = id
+                        End While
+                    End Using
+                End Using
+                av.lblRegisterSub.Text = "Timestamps in local time · newest first"
+                av.lblCount.Text = av.dgvEvents.Rows.Count & " of " & total.ToString("N0") & " events"
+                av.SetPaging(_auditPage, pages)
+                If av.dgvEvents.Rows.Count = 0 Then
+                    av.lblEvTitle.Text = "" : av.lblEvSub.Text = "No event selected"
+                End If
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("LoadAudit Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub ShowAuditDetail(av As ucAuditViewer, rowIndex As Integer)
+        If rowIndex < 0 OrElse rowIndex >= av.dgvEvents.Rows.Count Then Return
+        Dim t = av.dgvEvents.Rows(rowIndex).Tag
+        If t Is Nothing Then Return
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT EventTime, Username, RoleName, ActionName, AffectedRecord, ResultText, SourceText, RefCode, ReasonText, BeforeValue, AfterValue, ContextText FROM AuditEvents WHERE EventID = ?", conn)
+                    cmd.Parameters.Add("?", OleDbType.Integer).Value = Convert.ToInt32(t)
+                    Using r = cmd.ExecuteReader()
+                        If Not r.Read() Then Return
+                        Dim id As String = "EV-" & Convert.ToInt32(t).ToString("0000")
+                        av.lblEvTitle.Text = id & " · " & Txt(r, 3)
+                        av.lblEvSub.Text = "Selected event metadata"
+                        av.lblEvResult.Text = Txt(r, 5)
+                        Dim denied As Boolean = (Txt(r, 5) = "Denied")
+                        av.lblEvResult.ForeColor = If(denied, Color.FromArgb(122, 0, 16), Color.FromArgb(46, 110, 60))
+                        av.lblEvResult.BackColor = If(denied, Color.FromArgb(250, 228, 230), Color.FromArgb(232, 240, 233))
+                        av.lblActor.Text = Txt(r, 1)
+                        av.lblRole.Text = Txt(r, 2)
+                        av.lblRecord.Text = Txt(r, 4)
+                        av.lblOccurred.Text = If(r.IsDBNull(0), "", Convert.ToDateTime(r.GetValue(0)).ToString("dd MMM · HH:mm:ss"))
+                        av.lblSource.Text = Txt(r, 6)
+                        av.lblReference.Text = Txt(r, 7)
+                        Dim b As String = Txt(r, 9), a As String = Txt(r, 10)
+                        av.lblChange.Text = If(b = "" AndAlso a = "", "—", If(b = "", "", b & " → ") & a)
+                        av.lblReason.Text = If(Txt(r, 8) = "", "", "Reason: " & Txt(r, 8))
+                        av.lblCtxTitle.Text = "Authorization context"
+                        av.lblCtxNote.Text = Txt(r, 11)
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("ShowAuditDetail Error: " & ex.Message)
+        End Try
+    End Sub
+
+    ' ---------------------------------------------------------------
+    '  System settings
+    ' ---------------------------------------------------------------
+    Private Sub EnsureSettingsTable()
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Try
+                    Using cmd As New OleDbCommand("CREATE TABLE SystemSettings (SettingKey TEXT(60) PRIMARY KEY, SettingValue TEXT(255))", conn)
+                        cmd.ExecuteNonQuery()
+                    End Using
+                Catch
+                End Try
+                Dim defaults As New Dictionary(Of String, String) From {
+                    {"ConfigVersion", "1"}, {"Currency", "USD"}, {"BillingRule", "24-hour blocks · daily rounding"}, {"GracePeriod", "60"},
+                    {"Timezone", "UTC"}, {"ContractTemplate", "Executive rental agreement · v4"},
+                    {"ReportFormat", "A4 landscape · USD · ISO dates"}, {"Watermark", "1"}, {"NotifMaintenance", "1"},
+                    {"NotifOverdue", "1"}, {"NotifExpiry", "1"}, {"NotifDigest", "1"}, {"NotifSensitive", "1"}, {"QuietHours", "20:00-08:00"}}
+                For Each kv In defaults
+                    Try
+                        Using cmd As New OleDbCommand("INSERT INTO SystemSettings (SettingKey, SettingValue) VALUES (?,?)", conn)
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Key
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Value
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    Catch
+                        ' already present
+                    End Try
+                Next
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("EnsureSettingsTable Error: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Function BuildSettingsPanel() As UserControl
+        EnsureSettingsTable()
+        EnsureAuditTable()
+        Dim sp As New ucSettingsPage()
+        sp.lblSubtitle.Text = "Agency and branch configuration · authorized changes are versioned and attributed"
+        sp.lblAgencySub.Text = "Branch configuration"
+        sp.lblBillingNote.Text = "The branch timezone determines billing dates, reports and all effective-time boundaries. Grace period is in minutes."
+        sp.lblWarnTitle.Text = "New eligible contracts only"
+        sp.lblWarnNote.Text = "Billing rules cannot silently alter finalized contracts. Review the effect on late-return calculations before saving."
+        sp.lblHistNote.Text = "Saving requires the settings authority. Before / after values are retained in Audit Logs."
+        LoadSettings(sp)
+        AddHandler sp.SaveClicked, Sub() SaveSettings(sp)
+        AddHandler sp.DiscardClicked, Sub() LoadSettings(sp)
+        Return sp
+    End Function
+
+    Private Sub LoadSettings(sp As ucSettingsPage)
+        Dim d As New Dictionary(Of String, String)
+        Try
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Using cmd As New OleDbCommand("SELECT SettingKey, SettingValue FROM SystemSettings", conn)
+                    Using r = cmd.ExecuteReader()
+                        While r.Read()
+                            d(r(0).ToString()) = If(IsDBNull(r(1)), "", r(1).ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("LoadSettings Error: " & ex.Message)
+        End Try
+        sp.SetValues(d)
+        sp.lblVersion.Text = "CFG-v" & If(d.ContainsKey("ConfigVersion"), d("ConfigVersion"), "1")
+        sp.lblSavedBy.Text = If(d.ContainsKey("ConfigSavedBy"), d("ConfigSavedBy"), "—")
+        sp.lblSavedAt.Text = If(d.ContainsKey("ConfigSavedAt"), d("ConfigSavedAt"), "—")
+    End Sub
+
+    Private Sub SaveSettings(sp As ucSettingsPage)
+        Dim ch As List(Of String) = sp.ChangedKeys()
+        If ch.Count = 0 Then Return
+        Dim v As Dictionary(Of String, String) = sp.GetValues()
+        Dim missing As New List(Of String)
+        For Each k As String In New String() {"AgencyName", "BranchName", "BranchCode", "BranchAddress"}
+            If v(k).Trim() = "" Then missing.Add(sp.FriendlyName(k))
+        Next
+        Dim grace As Integer
+        If Not Integer.TryParse(v("GracePeriod"), grace) OrElse grace < 0 OrElse grace > 1440 Then missing.Add("Return grace period (0–1440 minutes)")
+        If missing.Count > 0 Then
+            MessageBox.Show("Please complete: " & String.Join(", ", missing), "Missing information", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+        If sp.NeedsReview() AndAlso Not sp.chkReviewed.Checked Then
+            MessageBox.Show("Tick the review box before saving billing or timezone changes.", "Confirm sensitive change",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+        Try
+            Dim newVer As Integer = 1
+            Using conn As New OleDbConnection(DbHelper.ConnectionString)
+                conn.Open()
+                Dim cur As String = ""
+                Using cmd As New OleDbCommand("SELECT SettingValue FROM SystemSettings WHERE SettingKey = 'ConfigVersion'", conn)
+                    Dim o = cmd.ExecuteScalar()
+                    If o IsNot Nothing AndAlso Not IsDBNull(o) Then cur = o.ToString()
+                End Using
+                Dim n As Integer
+                If Integer.TryParse(cur, n) Then newVer = n + 1
+                Dim toWrite As New Dictionary(Of String, String)
+                For Each k As String In ch : toWrite(k) = v(k) : Next
+                toWrite("ConfigVersion") = newVer.ToString()
+                toWrite("ConfigSavedBy") = _fullName
+                toWrite("ConfigSavedAt") = Date.Now.ToString("dd MMM · HH:mm")
+                For Each kv In toWrite
+                    Dim rows As Integer
+                    Using cmd As New OleDbCommand("UPDATE SystemSettings SET SettingValue = ? WHERE SettingKey = ?", conn)
+                        cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Value
+                        cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Key
+                        rows = cmd.ExecuteNonQuery()
+                    End Using
+                    If rows = 0 Then
+                        Using cmd As New OleDbCommand("INSERT INTO SystemSettings (SettingKey, SettingValue) VALUES (?,?)", conn)
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Key
+                            cmd.Parameters.Add("?", OleDbType.VarWChar).Value = kv.Value
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    End If
+                Next
+            End Using
+            Dim before As String = String.Join("; ", ch.Select(Function(k) sp.FriendlyName(k) & " = " & sp.BaselineValue(k)))
+            Dim after As String = String.Join("; ", ch.Select(Function(k) sp.FriendlyName(k) & " = " & v(k)))
+            WriteAudit("Setting changed", "CFG-v" & newVer, "Success", before, after, "System settings saved")
+            LoadSettings(sp)
+            MessageBox.Show("Settings saved (version " & newVer & ").", "System Settings", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Catch ex As Exception
+            MessageBox.Show("SaveSettings Error: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ' ---------------------------------------------------------------
