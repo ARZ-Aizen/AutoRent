@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>AutoRent</RootNamespace>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.OleDb" Version="10.0.0" />
+    <None Update="Resources\Data\AutoRent.accdb.accdb" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Import Include="System.Windows" />
+    <Import Include="System.Windows.Controls" />
+    <Import Include="System.Windows.Data" />
+    <Import Include="System.Windows.Documents" />
+    <Import Include="System.Windows.Input" />
+    <Import Include="System.Windows.Media" />
+    <Import Include="System.Windows.Media.Imaging" />
+    <Import Include="System.Windows.Navigation" />
+    <Import Include="System.Windows.Shapes" />
+  </ItemGroup>
+
+  <!-- Folder Structure -->
+  <ItemGroup>
+    <!-- Presentation Layer -->
+    <Folder Include="Presentation\ViewModels\" />
+
+    <!-- Business Logic Layer -->
+    <Folder Include="Business\Services\" />
+    <Folder Include="Business\Interfaces\" />
+
+    <!-- Data Access Layer -->
+    <Folder Include="Data\Models\" />
+
+    <!-- Common/Shared -->
+    <Folder Include="Common\Constants\" />
+    <Folder Include="Common\Exceptions\" />
+
+    <!-- API Layer -->
+    <Folder Include="API\Controllers\" />
+    <Folder Include="API\DTOs\" />
+    <Folder Include="Resources\Config\" />
+
+    <!-- Tests -->
+    <Folder Include="Tests\UnitTests\" />
+    <Folder Include="Tests\IntegrationTests\" />
+
+    <!-- Resources -->
+    <Folder Include="Resources\Images\" />
+  </ItemGroup>
+
+</Project>
