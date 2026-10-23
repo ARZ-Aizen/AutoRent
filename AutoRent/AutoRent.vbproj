@@ -34,7 +34,6 @@
     <Folder Include="Business\Interfaces\" />
 
     <!-- Data Access Layer -->
-    <Folder Include="Data\Models\" />
 
     <!-- Common/Shared -->
     <Folder Include="Common\Constants\" />
@@ -43,6 +42,7 @@
     <!-- API Layer -->
     <Folder Include="API\Controllers\" />
     <Folder Include="API\DTOs\" />
+    <Folder Include="Presentation\Views\" />
     <Folder Include="Resources\Config\" />
 
     <!-- Tests -->

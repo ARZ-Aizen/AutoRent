@@ -1,12 +1,149 @@
-﻿<Window x:Class="MainWindow"
+<Window x:Class="MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoRent"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="AutoRent - Fleet &amp; Dispatch Management" 
+        Height="800" Width="1240"
+        MinHeight="660" MinWidth="1020"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F3F1"
+        FontFamily="Manrope, Segoe UI">
 
+    <Window.Resources>
+        <SolidColorBrush x:Key="Maroon" Color="#70000F"/>
+        <SolidColorBrush x:Key="MaroonDark" Color="#58000C"/>
+        <SolidColorBrush x:Key="MaroonSubtle" Color="#F7E9EB"/>
+        <SolidColorBrush x:Key="Ink" Color="#242120"/>
+        <SolidColorBrush x:Key="Muted" Color="#7A7570"/>
+        <SolidColorBrush x:Key="TopBarBorder" Color="#E4E0DC"/>
+
+        <!-- Car Icon Geometry -->
+        <Geometry x:Key="CarIcon">M18.92,6.01C18.72,5.42 18.16,5 17.5,5H6.5C5.84,5 5.29,5.42 5.08,6.01L3,12V20A1,1 0 0,0 4,21H5A1,1 0 0,0 6,20V19H18V20A1,1 0 0,0 19,21H20A1,1 0 0,0 21,20V12L18.92,6.01M6.5,16A1.5,1.5 0 0,1 5,14.5A1.5,1.5 0 0,1 6.5,13A1.5,1.5 0 0,1 8,14.5A1.5,1.5 0 0,1 6.5,16M17.5,16A1.5,1.5 0 0,1 16,14.5A1.5,1.5 0 0,1 17.5,13A1.5,1.5 0 0,1 19,14.5A1.5,1.5 0 0,1 17.5,16M5,11L6.5,6.5H17.5L19,11H5Z</Geometry>
+
+        <!-- Top Bar Action Button -->
+        <Style x:Key="TopBarButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#DCD7D1"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#EAE6E1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Logout Button -->
+        <Style x:Key="LogoutButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#70000F"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#EAD2D6"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource MaroonSubtle}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Global Top Navigation Header -->
+        <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource TopBarBorder}" BorderThickness="0,0,0,1">
+            <Grid Margin="24,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Brand Logo & Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="{StaticResource MaroonSubtle}" CornerRadius="8" Width="38" Height="38" Margin="0,0,12,0">
+                        <Path Data="{StaticResource CarIcon}" Fill="{StaticResource Maroon}" Stretch="Uniform" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="AUTORENT" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource Maroon}"/>
+                            <!-- Active View Tag -->
+                            <Border x:Name="CurrentViewBadge" Background="{StaticResource MaroonSubtle}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                <TextBlock x:Name="CurrentViewBadgeText" Text="ADMIN CONSOLE" FontSize="9" FontWeight="Bold" Foreground="{StaticResource Maroon}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="FLEET &amp; DISPATCH MANAGEMENT" FontSize="8.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right: Admin View Switcher, User Details, and Logout -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <!-- Switch View Button (Visible for Admins to preview Client View) -->
+                    <Button x:Name="SwitchViewButton" Style="{StaticResource TopBarButton}" Margin="0,0,16,0" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="SwitchIcon" Text="&#xE8AB;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="SwitchText" Text="Preview Client View" FontSize="11.5" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="24" Fill="{StaticResource TopBarBorder}" Margin="0,0,16,0"/>
+
+                    <!-- User Identity Badge -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Border Background="#ECE9E4" CornerRadius="17" Width="34" Height="34" Margin="0,0,10,0">
+                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{StaticResource Ink}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="UsernameDisplay" Text="User" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource Ink}"/>
+                            <TextBlock x:Name="UserRoleDisplay" Text="ROLE" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Sign Out Button -->
+                    <Button x:Name="LogoutButton" Style="{StaticResource LogoutButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xF3B1;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Sign Out" FontSize="11.5" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Dynamic Main Content Area -->
+        <ContentControl x:Name="MainContentHost" Grid.Row="1" Focusable="False" 
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
     </Grid>
 </Window>

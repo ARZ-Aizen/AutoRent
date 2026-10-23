@@ -227,7 +227,7 @@
                                HorizontalAlignment="Center" Margin="0,8,0,0"/>
 
                     <!-- Username -->
-                    <TextBlock Text="USERNAME OR USER ID" Style="{StaticResource FieldLabel}" Margin="0,40,0,8"/>
+                    <TextBlock Text="USERNAME" Style="{StaticResource FieldLabel}" Margin="0,40,0,8"/>
                     <Border Style="{StaticResource FieldBorderStyle}">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -236,7 +236,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#B5B5B5"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="UsernamePlaceholder" Grid.Column="1" Text="Enter your username or user ID"
+                            <TextBlock x:Name="UsernamePlaceholder" Grid.Column="1" Text="Enter your username"
                                        Foreground="{StaticResource PlaceholderBrush}" FontSize="13"
                                        VerticalAlignment="Center" IsHitTestVisible="False"/>
                             <TextBox x:Name="UsernameTextBox" Grid.Column="1" Style="{StaticResource BareTextBox}"/>
@@ -268,14 +268,10 @@
                         </Grid>
                     </Border>
 
-                    <!-- Remember / Forgot -->
+                    <!-- Remember Me -->
                     <Grid Margin="0,22,0,0">
                         <CheckBox x:Name="RememberMeCheckBox" Content="Remember Me" Style="{StaticResource SquareCheck}"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Hyperlink x:Name="ForgotPasswordLink" Foreground="{StaticResource Maroon}"
-                                       TextDecorations="None" FontSize="11.5" FontWeight="SemiBold">Forgot Password?</Hyperlink>
-                        </TextBlock>
                     </Grid>
 
                     <!-- Sign in -->
@@ -287,10 +283,6 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <!-- Error message -->
-                    <TextBlock x:Name="ErrorMessage" Text="" Foreground="#C62828" FontSize="12"
-                               TextAlignment="Center" TextWrapping="Wrap" Margin="0,12,0,0"/>
 
                     <!-- Kept so existing code-behind still compiles; hidden in this design -->
                     <TextBlock Visibility="Collapsed">

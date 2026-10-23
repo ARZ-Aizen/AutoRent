@@ -2,6 +2,7 @@ Imports System.Data.OleDb
 Imports System.Security.Cryptography
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
+Imports AutoRent.Data.Models
 
 Namespace Data.Repositories
     Public NotInheritable Class UserRepository
@@ -17,6 +18,67 @@ Namespace Data.Repositories
                     Return Convert.ToInt32(command.ExecuteScalar()) > 0
                 End Using
             End Using
+        End Function
+
+        Public Shared Function Authenticate(username As String, password As String) As User
+            If String.IsNullOrWhiteSpace(username) OrElse String.IsNullOrEmpty(password) Then Return Nothing
+
+            Dim userId As Integer
+            Dim storedUsername As String
+            Dim passwordHash As String
+            Dim roleName As String
+            Dim isActive As Boolean
+            Dim isDeleted As Boolean
+            Dim createdAt As DateTime
+
+            Using connection = AccessDatabaseConnection.CreateConnection()
+                connection.Open()
+
+                Using command = connection.CreateCommand()
+                    command.CommandText = "SELECT [user_id], [username], [password_hash], [role], [is_active], [is_deleted], [created_at] FROM [Users] WHERE [username] = ?"
+                    command.Parameters.Add("username", OleDbType.VarWChar, 100).Value = username.Trim()
+
+                    Using reader = command.ExecuteReader()
+                        If Not reader.Read() Then Return Nothing
+
+                        userId = Convert.ToInt32(reader("user_id"))
+                        storedUsername = Convert.ToString(reader("username"))
+                        passwordHash = Convert.ToString(reader("password_hash"))
+                        roleName = Convert.ToString(reader("role"))
+                        isActive = Convert.ToBoolean(reader("is_active"))
+                        isDeleted = Convert.ToBoolean(reader("is_deleted"))
+                        createdAt = Convert.ToDateTime(reader("created_at"))
+                    End Using
+                End Using
+            End Using
+
+            If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse Not isActive OrElse isDeleted Then Return Nothing
+
+            Dim userRole As UserRole
+            If Not System.Enum.TryParse(Of UserRole)(roleName, True, userRole) OrElse Not System.Enum.IsDefined(GetType(UserRole), userRole) Then Return Nothing
+
+            Dim loginTime = DateTime.Now
+            Using connection = AccessDatabaseConnection.CreateConnection()
+                connection.Open()
+
+                Using command = connection.CreateCommand()
+                    command.CommandText = "UPDATE [Users] SET [last_login] = ? WHERE [user_id] = ? AND [is_active] = True AND [is_deleted] = False"
+                    command.Parameters.Add("last_login", OleDbType.Date).Value = loginTime
+                    command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
+                    If command.ExecuteNonQuery() <> 1 Then Return Nothing
+                End Using
+            End Using
+
+            Return New User With {
+                .UserId = userId,
+                .Username = storedUsername,
+                .PasswordHash = passwordHash,
+                .Role = userRole,
+                .IsActive = isActive,
+                .IsDeleted = isDeleted,
+                .LastLogin = loginTime,
+                .CreatedAt = createdAt
+            }
         End Function
 
         Public Shared Function SeedAdminIfEmpty() As String
