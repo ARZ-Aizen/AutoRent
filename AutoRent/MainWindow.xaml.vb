@@ -25,6 +25,7 @@ Class MainWindow
 
     Private _currentViewIsAdmin As Boolean = False
     Private _isExpanded As Boolean = False   ' starts collapsed
+    Private _clientView As ClientView        ' created once, reused
 
     Public Sub New()
         InitializeComponent()
@@ -87,14 +88,15 @@ Class MainWindow
         LogoutLabel.Visibility = v
         SwitchText.Visibility = v
 
-        ' Tells the nav item template to show/hide titles (and enable tooltips)
         NavList.Tag = If(visible, "Expanded", "Collapsed")
     End Sub
 
-    ' ---------- Menus ----------
+    ' ---------- ADMIN VIEW (uses the MainWindow sidebar) ----------
 
     Private Sub LoadAdminView()
         _currentViewIsAdmin = True
+        Sidebar.Visibility = Visibility.Visible       ' show the admin sidebar
+
         CurrentViewBadgeText.Text = "ADMIN CONSOLE"
         CurrentViewBadgeText.Foreground = New SolidColorBrush(Color.FromRgb(192, 57, 75))
         SwitchText.Text = "Preview Client View"
@@ -110,49 +112,62 @@ Class MainWindow
         NavList.SelectedIndex = 0   ' fires SelectionChanged -> loads first page
     End Sub
 
+    ' ---------- CLIENT VIEW (ClientView has its own sidebar) ----------
+
     Private Sub LoadClientView()
         _currentViewIsAdmin = False
-        CurrentViewBadgeText.Text = "CLIENT PORTAL"
-        CurrentViewBadgeText.Foreground = New SolidColorBrush(Color.FromRgb(111, 168, 232))
-        SwitchText.Text = "Switch to Admin Console"
+        Sidebar.Visibility = Visibility.Collapsed     ' hide the MainWindow sidebar
 
-        NavList.ItemsSource = New List(Of NavItem) From {
-            New NavItem(ChrW(&HE80F), "Browse Cars", "ClientBrowse"),
-            New NavItem(ChrW(&HE787), "My Reservations", "ClientReservations"),
-            New NavItem(ChrW(&HE8C7), "Billing", "ClientBilling"),
-            New NavItem(ChrW(&HE81C), "Rental History", "ClientHistory")
-        }
-        NavList.SelectedIndex = 0
+        If _clientView Is Nothing Then
+            _clientView = New ClientView()
+            AddHandler _clientView.SwitchToAdminRequested, AddressOf ClientView_SwitchToAdmin
+            AddHandler _clientView.SettingsRequested, AddressOf ClientView_Settings
+            AddHandler _clientView.SignOutRequested, AddressOf ClientView_SignOut
+        End If
+
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        Dim currentUser = app.CurrentUser
+        If currentUser IsNot Nothing Then
+            _clientView.UserName = currentUser.Username
+            _clientView.UserRole = currentUser.Role.ToString()
+            _clientView.CanSwitchToAdmin = (currentUser.Role = UserRole.Admin)
+        Else
+            _clientView.CanSwitchToAdmin = False
+        End If
+
+        MainContentHost.Content = _clientView
     End Sub
 
-    ' ---------- Navigation ----------
+    Private Sub ClientView_SwitchToAdmin(sender As Object, e As EventArgs)
+        LoadAdminView()
+    End Sub
+
+    Private Sub ClientView_Settings(sender As Object, e As EventArgs)
+        SettingsButton_Click(sender, New RoutedEventArgs())
+    End Sub
+
+    Private Sub ClientView_SignOut(sender As Object, e As EventArgs)
+        LogoutButton_Click(sender, New RoutedEventArgs())
+    End Sub
+
+    ' ---------- Navigation (admin sidebar only) ----------
 
     Private Sub NavList_SelectionChanged(sender As Object, e As SelectionChangedEventArgs) Handles NavList.SelectionChanged
         Dim item = TryCast(NavList.SelectedItem, NavItem)
         If item Is Nothing Then Return
+        If Not _currentViewIsAdmin Then Return
 
-        If _currentViewIsAdmin Then
-            Select Case item.Key
-                ' Uncomment each line as you create the UserControl
-                ' Case "Home"        : MainContentHost.Content = New HomeDashboardView()
-                ' Case "Fleet"       : MainContentHost.Content = New FleetManagementView()
-                ' Case "Maintenance" : MainContentHost.Content = New MaintenanceSchedulesView()
-                ' Case "Rates"       : MainContentHost.Content = New RateManagementView()
-                ' Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
-                ' Case "Users"       : MainContentHost.Content = New UserManagementView()
-                Case Else
-                    MainContentHost.Content = New AdminView()   ' temporary fallback
-            End Select
-        Else
-            Select Case item.Key
-                ' Case "ClientBrowse"       : MainContentHost.Content = New ClientBrowseView()
-                ' Case "ClientReservations" : MainContentHost.Content = New ClientReservationsView()
-                ' Case "ClientBilling"      : MainContentHost.Content = New ClientBillingView()
-                ' Case "ClientHistory"      : MainContentHost.Content = New ClientHistoryView()
-                Case Else
-                    MainContentHost.Content = New ClientView()  ' temporary fallback
-            End Select
-        End If
+        Select Case item.Key
+            ' Uncomment each line as you create the UserControl
+            ' Case "Home"        : MainContentHost.Content = New HomeDashboardView()
+            ' Case "Fleet"       : MainContentHost.Content = New FleetManagementView()
+            ' Case "Maintenance" : MainContentHost.Content = New MaintenanceSchedulesView()
+            ' Case "Rates"       : MainContentHost.Content = New RateManagementView()
+            ' Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
+            ' Case "Users"       : MainContentHost.Content = New UserManagementView()
+            Case Else
+                MainContentHost.Content = New AdminView()   ' temporary fallback
+        End Select
     End Sub
 
     Private Sub SwitchViewButton_Click(sender As Object, e As RoutedEventArgs) Handles SwitchViewButton.Click
