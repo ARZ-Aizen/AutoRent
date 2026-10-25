@@ -2,7 +2,10 @@ Imports System.Collections.ObjectModel
 Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
+Imports System.Data
 Imports System.Windows.Media
+Imports System.Windows.Media.Animation
+Imports AutoRent.Data.Repositories
 
 Namespace Presentation.Views
     Partial Public Class ClientView
@@ -13,8 +16,9 @@ Namespace Presentation.Views
         Public Event SettingsRequested As EventHandler
         Public Event SignOutRequested As EventHandler
 
-        ' ===================== SAMPLE DATA MODELS =====================
+        ' ===================== VIEW MODELS (loaded from the Access database) =====================
         Public Class FleetItem
+            Public Property DbId As Integer
             Public Property Plate As String
             Public Property Model As String
             Public Property Category As String
@@ -37,6 +41,7 @@ Namespace Presentation.Views
         End Class
 
         Public Class CustomerItem
+            Public Property DbId As Integer
             Public Property Name As String
             Public Property Phone As String
             Public Property Email As String
@@ -51,6 +56,8 @@ Namespace Presentation.Views
         End Class
 
         Public Class ReservationItem
+            Public Property DbId As Integer
+            Public Property VehicleId As Integer
             Public Property Id As String
             Public Property Customer As String
             Public Property Vehicle As String
@@ -74,6 +81,9 @@ Namespace Presentation.Views
         End Class
 
         Public Class DispatchItem
+            Public Property DbId As Integer
+            Public Property ReservationId As Integer
+            Public Property VehicleId As Integer
             Public Property Time As String
             Public Property DispatchType As String
             Public Property Customer As String
@@ -120,7 +130,6 @@ Namespace Presentation.Views
         Private ReadOnly _dispatch As New ObservableCollection(Of DispatchItem)
         Private ReadOnly _inspections As New ObservableCollection(Of InspectionItem)
 
-        Private _nextReservationNo As Integer = 1006
         Private _currentActiveButton As Button = Nothing
         Private _initialized As Boolean = False
 
@@ -156,8 +165,7 @@ Namespace Presentation.Views
         ' ===================== STARTUP =====================
         Public Sub New()
             InitializeComponent()
-
-            SeedSampleData()
+            SetLabelsVisible(False)
 
             DgFleet.ItemsSource = _fleet
             DgCustomers.ItemsSource = _customers
@@ -180,41 +188,90 @@ Namespace Presentation.Views
             End If
         End Sub
 
-        Private Sub SeedSampleData()
-            Dim today As Date = Date.Today
+        ' ===================== DATABASE LOADING =====================
+        Private Shared Function Txt(row As DataRow, column As String) As String
+            If IsDBNull(row(column)) Then Return String.Empty
+            Return Convert.ToString(row(column))
+        End Function
 
-            _fleet.Add(New FleetItem("NBC 4821", "Toyota Vios 2023", "Sedan", 1800D, "Rented"))
-            _fleet.Add(New FleetItem("ABX 1932", "Honda City 2022", "Sedan", 1900D, "Rented"))
-            _fleet.Add(New FleetItem("TRK 7710", "Toyota Innova 2023", "MPV", 2800D, "Available"))
-            _fleet.Add(New FleetItem("CDE 5521", "Mitsubishi Xpander 2022", "MPV", 2600D, "Reserved"))
-            _fleet.Add(New FleetItem("SUV 3308", "Toyota Fortuner 2023", "SUV", 4200D, "Rented"))
-            _fleet.Add(New FleetItem("PLM 9045", "Ford Ranger 2022", "Pickup", 3800D, "Available"))
-            _fleet.Add(New FleetItem("HYD 2276", "Hyundai Accent 2021", "Sedan", 1700D, "Maintenance"))
-            _fleet.Add(New FleetItem("NSN 6683", "Nissan Navara 2022", "Pickup", 3600D, "Available"))
-            _fleet.Add(New FleetItem("KIA 1459", "Kia Seltos 2023", "SUV", 3000D, "Reserved"))
-            _fleet.Add(New FleetItem("HND 8812", "Honda BR-V 2022", "MPV", 2400D, "Available"))
+        Private Shared Function Num(row As DataRow, column As String) As Integer
+            If IsDBNull(row(column)) Then Return 0
+            Return Convert.ToInt32(row(column))
+        End Function
 
-            _customers.Add(New CustomerItem("Juan Dela Cruz", "0917 555 0101", "juan.delacruz@email.com", "N01-23-456789"))
-            _customers.Add(New CustomerItem("Maria Santos", "0918 555 0102", "maria.santos@email.com", "N02-34-567890"))
-            _customers.Add(New CustomerItem("Carlo Reyes", "0919 555 0103", "carlo.reyes@email.com", "N03-45-678901"))
-            _customers.Add(New CustomerItem("Angela Lim", "0920 555 0104", "angela.lim@email.com", "N04-56-789012"))
-            _customers.Add(New CustomerItem("Paolo Garcia", "0921 555 0105", "paolo.garcia@email.com", "N05-67-890123"))
+        Private Shared Function Money(row As DataRow, column As String) As Decimal
+            If IsDBNull(row(column)) Then Return 0D
+            Return Convert.ToDecimal(row(column))
+        End Function
 
-            ' Newest first
-            _reservations.Add(New ReservationItem("R-1005", "Juan Dela Cruz", "NBC 4821 - Toyota Vios 2023", "NBC 4821", today, today.AddDays(2), 3600D, "Active"))
-            _reservations.Add(New ReservationItem("R-1004", "Paolo Garcia", "KIA 1459 - Kia Seltos 2023", "KIA 1459", today, today.AddDays(3), 9000D, "Confirmed"))
-            _reservations.Add(New ReservationItem("R-1003", "Angela Lim", "CDE 5521 - Mitsubishi Xpander 2022", "CDE 5521", today, today.AddDays(2), 5200D, "Confirmed"))
-            _reservations.Add(New ReservationItem("R-1002", "Carlo Reyes", "SUV 3308 - Toyota Fortuner 2023", "SUV 3308", today.AddDays(-3), today, 12600D, "Active"))
-            _reservations.Add(New ReservationItem("R-1001", "Maria Santos", "ABX 1932 - Honda City 2022", "ABX 1932", today.AddDays(-2), today.AddDays(1), 5700D, "Active"))
-            _reservations.Add(New ReservationItem("R-1000", "Angela Lim", "HND 8812 - Honda BR-V 2022", "HND 8812", today.AddDays(-10), today.AddDays(-8), 4800D, "Completed"))
+        Private Shared Function Stamp(row As DataRow, column As String) As Date
+            If IsDBNull(row(column)) Then Return Date.MinValue
+            Return Convert.ToDateTime(row(column))
+        End Function
 
-            _dispatch.Add(New DispatchItem("07:45 AM", "Pickup", "Juan Dela Cruz", "Toyota Vios 2023", "NBC 4821", "Main Branch", "Completed"))
-            _dispatch.Add(New DispatchItem("08:30 AM", "Pickup", "Angela Lim", "Mitsubishi Xpander 2022", "CDE 5521", "Main Branch", "Scheduled"))
-            _dispatch.Add(New DispatchItem("10:00 AM", "Return", "Carlo Reyes", "Toyota Fortuner 2023", "SUV 3308", "Main Branch", "Scheduled"))
-            _dispatch.Add(New DispatchItem("01:30 PM", "Pickup", "Paolo Garcia", "Kia Seltos 2023", "KIA 1459", "Airport Branch", "Scheduled"))
+        ' Builds a label like "Toyota Vios 2023" from the Vehicles columns
+        Private Shared Function VehicleName(row As DataRow) As String
+            Dim parts As New List(Of String)
+            For Each col In {"make", "model", "model_year"}
+                Dim part = Txt(row, col).Trim()
+                If part <> "" Then parts.Add(part)
+            Next
+            Return String.Join(" ", parts)
+        End Function
 
-            _inspections.Add(New InspectionItem(today.AddDays(-1).AddHours(14), "HYD 2276 - Hyundai Accent 2021", "Ramon Dizon", "1/2", "Brakes", "Needs Attention"))
-            _inspections.Add(New InspectionItem(today.AddDays(-2).AddHours(9), "HND 8812 - Honda BR-V 2022", "Ramon Dizon", "Full", "All checks passed", "Pass"))
+        Private Shared Function VehicleLabel(row As DataRow) As String
+            Dim plate = Txt(row, "plate")
+            If plate = "" Then Return "(vehicle removed)"
+            Return plate & " - " & VehicleName(row)
+        End Function
+
+        Private Sub ReloadData()
+            Try
+                Dim fleet = ClientRepository.GetFleet()
+                Dim customers = ClientRepository.GetCustomers()
+                Dim reservations = ClientRepository.GetReservations()
+                Dim dispatch = ClientRepository.GetDispatchBoard()
+                Dim inspections = ClientRepository.GetInspections()
+
+                _fleet.Clear()
+                For Each r As DataRow In fleet.Rows
+                    _fleet.Add(New FleetItem(Txt(r, "plate"), VehicleName(r), Txt(r, "category"), Money(r, "daily_rate"),
+                                             If(Txt(r, "status") = "", "Available", Txt(r, "status"))) With {.DbId = Num(r, "vehicle_id")})
+                Next
+
+                _customers.Clear()
+                For Each r As DataRow In customers.Rows
+                    _customers.Add(New CustomerItem(Txt(r, "full_name"), Txt(r, "phone"), Txt(r, "email"), Txt(r, "license_no")) With {.DbId = Num(r, "customer_id")})
+                Next
+
+                _reservations.Clear()
+                For Each r As DataRow In reservations.Rows
+                    Dim id = Num(r, "reservation_id")
+                    _reservations.Add(New ReservationItem("R-" & id.ToString("0000"), Txt(r, "customer_name"), VehicleLabel(r), Txt(r, "plate"),
+                                                          Stamp(r, "pickup_date"), Stamp(r, "return_date"), Money(r, "total"), Txt(r, "status")) With {.DbId = id, .VehicleId = Num(r, "vehicle_id")})
+                Next
+
+                _dispatch.Clear()
+                For Each r As DataRow In dispatch.Rows
+                    Dim at = Stamp(r, "scheduled_at")
+                    Dim timeText = If(at.Date = Date.Today, at.ToString("hh:mm tt"), at.ToString("MMM d, hh:mm tt"))
+                    _dispatch.Add(New DispatchItem(timeText, Txt(r, "dispatch_type"), Txt(r, "customer_name"), VehicleName(r), Txt(r, "plate"),
+                                                   Txt(r, "branch"), Txt(r, "status")) With {.DbId = Num(r, "dispatch_id"), .ReservationId = Num(r, "reservation_id"), .VehicleId = Num(r, "vehicle_id")})
+                Next
+
+                _inspections.Clear()
+                For Each r As DataRow In inspections.Rows
+                    _inspections.Add(New InspectionItem(Stamp(r, "inspected_at"), VehicleLabel(r), Txt(r, "inspector"), Txt(r, "fuel"),
+                                                        Txt(r, "findings"), Txt(r, "inspection_result")))
+                Next
+            Catch ex As Exception
+                MessageBox.Show("Could not load data from the database: " & ex.Message, "AutoRent",
+                                MessageBoxButton.OK, MessageBoxImage.Error)
+            End Try
+        End Sub
+
+        Private Sub ShowDbError(action As String, ex As Exception)
+            MessageBox.Show($"Could not {action}: {ex.Message}", "AutoRent", MessageBoxButton.OK, MessageBoxImage.Error)
         End Sub
 
         ' ===================== NAVIGATION =====================
@@ -227,6 +284,7 @@ Namespace Presentation.Views
         Private Sub NavigateTo(optionName As String, clickedButton As Button)
             SetActiveButton(clickedButton)
             HideAllPages()
+            ReloadData()
 
             Select Case optionName
                 Case "Home (Dashboard)"
@@ -265,11 +323,100 @@ Namespace Presentation.Views
             If activeBtn Is Nothing Then Return
 
             If _currentActiveButton IsNot Nothing AndAlso _currentActiveButton IsNot activeBtn Then
-                _currentActiveButton.ClearValue(BackgroundProperty)
+                StyleNavButton(_currentActiveButton, False)
             End If
 
             _currentActiveButton = activeBtn
-            _currentActiveButton.Background = New SolidColorBrush(Color.FromRgb(58, 48, 50))
+            StyleNavButton(_currentActiveButton, True)
+        End Sub
+
+        Private Shared Sub StyleNavButton(btn As Button, active As Boolean)
+            If active Then
+                btn.Background = New SolidColorBrush(Color.FromRgb(&H36, &H33, &H31))
+                btn.Foreground = Brushes.White
+            Else
+                btn.ClearValue(BackgroundProperty)
+                btn.ClearValue(ForegroundProperty)
+            End If
+
+            btn.ApplyTemplate()
+            Dim indicator = TryCast(btn.Template.FindName("Indicator", btn), Border)
+            If indicator IsNot Nothing Then indicator.Visibility = If(active, Visibility.Visible, Visibility.Collapsed)
+
+            Dim panel = TryCast(btn.Content, StackPanel)
+            Dim icon = TryCast(panel?.Children(0), TextBlock)
+            If icon IsNot Nothing Then
+                If active Then
+                    icon.Foreground = New SolidColorBrush(Color.FromRgb(&HC0, &H39, &H4B))
+                Else
+                    icon.ClearValue(TextBlock.ForegroundProperty)
+                End If
+            End If
+        End Sub
+
+        ' ===================== SIDEBAR EXPAND / COLLAPSE =====================
+        Private Const ExpandedWidth As Double = 264
+        Private Const CollapsedWidth As Double = 72
+        Private _isExpanded As Boolean = False
+        Private _hoverExpanded As Boolean = False   ' expanded only because the mouse is over the sidebar
+
+        ' Hovering over the sidebar slides it open with the menu names; moving away closes it (unless pinned with the logo)
+        Private Sub ClientSidebar_MouseEnter(sender As Object, e As System.Windows.Input.MouseEventArgs)
+            If Not _isExpanded Then
+                _hoverExpanded = True
+                SetSidebarExpanded(True)
+            End If
+        End Sub
+
+        Private Sub ClientSidebar_MouseLeave(sender As Object, e As System.Windows.Input.MouseEventArgs)
+            If _hoverExpanded Then
+                _hoverExpanded = False
+                SetSidebarExpanded(False)
+            End If
+        End Sub
+
+        Private Sub LogoToggle_Click(sender As Object, e As RoutedEventArgs)
+            If _hoverExpanded Then
+                _hoverExpanded = False   ' keep it open (pinned)
+            Else
+                SetSidebarExpanded(Not _isExpanded)
+            End If
+        End Sub
+
+        Private Sub SetSidebarExpanded(expand As Boolean)
+            _isExpanded = expand
+
+            If Not _isExpanded Then SetLabelsVisible(False)
+
+            Dim anim As New DoubleAnimation With {
+                .To = If(_isExpanded, ExpandedWidth, CollapsedWidth),
+                .Duration = TimeSpan.FromMilliseconds(200),
+                .EasingFunction = New CubicEase With {.EasingMode = EasingMode.EaseInOut}
+            }
+            If _isExpanded Then
+                AddHandler anim.Completed, Sub(s, args) SetLabelsVisible(True)
+            End If
+            ClientSidebar.BeginAnimation(FrameworkElement.WidthProperty, anim)
+        End Sub
+
+        Private Sub SetLabelsVisible(visible As Boolean)
+            Dim v = If(visible, Visibility.Visible, Visibility.Collapsed)
+            BrandText.Visibility = v
+            UserText.Visibility = v
+
+            For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch,
+                             BtnVehicleInspection, BtnSwitchAdmin, BtnSettings, BtnSignOut}
+                Dim panel = TryCast(btn.Content, StackPanel)
+                If panel Is Nothing Then Continue For
+                For Each label In panel.Children.OfType(Of TextBlock)().Where(Function(t) Equals(t.Tag, "Label"))
+                    label.Visibility = v
+                Next
+            Next
+
+            ' Tooltips stand in for the labels while collapsed
+            For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch, BtnVehicleInspection}
+                btn.ToolTip = If(visible, Nothing, btn.Tag)
+            Next
         End Sub
 
         ' ===================== FOOTER BUTTONS =====================
@@ -348,7 +495,17 @@ Namespace Presentation.Views
                 Return
             End If
 
-            _customers.Add(New CustomerItem(name, phone, TxtCustEmail.Text.Trim(), TxtCustLicense.Text.Trim()))
+            Try
+                Dim problem = ClientRepository.AddCustomer(name, phone, TxtCustEmail.Text.Trim(), TxtCustLicense.Text.Trim())
+                If problem IsNot Nothing Then
+                    MessageBox.Show(problem, "Add Customer", MessageBoxButton.OK, MessageBoxImage.Warning)
+                    Return
+                End If
+            Catch ex As Exception
+                ShowDbError("save the customer", ex)
+                Return
+            End Try
+            ReloadData()
 
             TxtCustName.Clear()
             TxtCustPhone.Clear()
@@ -366,19 +523,21 @@ Namespace Presentation.Views
                 Return
             End If
 
-            Dim hasOpen = _reservations.Any(Function(r) r.Customer = selected.Name AndAlso
-                                                (r.Status = "Confirmed" OrElse r.Status = "Active"))
-            If hasOpen Then
-                MessageBox.Show($"{selected.Name} still has an open reservation and cannot be deleted.",
-                                "Delete Customer", MessageBoxButton.OK, MessageBoxImage.Warning)
-                Return
-            End If
-
             If MessageBox.Show($"Delete {selected.Name}?", "Delete Customer",
-                               MessageBoxButton.YesNo, MessageBoxImage.Question) = MessageBoxResult.Yes Then
-                _customers.Remove(selected)
-                ApplyCustomerFilter()
-            End If
+                               MessageBoxButton.YesNo, MessageBoxImage.Question) <> MessageBoxResult.Yes Then Return
+
+            Try
+                Dim problem = ClientRepository.DeleteCustomer(selected.DbId, selected.Name)
+                If problem IsNot Nothing Then
+                    MessageBox.Show(problem, "Delete Customer", MessageBoxButton.OK, MessageBoxImage.Warning)
+                    Return
+                End If
+            Catch ex As Exception
+                ShowDbError("delete the customer", ex)
+                Return
+            End Try
+            ReloadData()
+            ApplyCustomerFilter()
         End Sub
 
         ' ===================== 4. RESERVATIONS =====================
@@ -408,12 +567,20 @@ Namespace Presentation.Views
 
             Dim days As Integer = (dropoff - pickup).Days
             Dim total As Decimal = days * veh.DailyRate
-            Dim id As String = "R-" & _nextReservationNo.ToString()
-            _nextReservationNo += 1
 
-            _reservations.Insert(0, New ReservationItem(id, cust.Name, veh.Display, veh.Plate,
-                                                        pickup, dropoff, total, "Confirmed"))
-            veh.Status = "Reserved"
+            Try
+                Dim problem = ClientRepository.CreateReservation(cust.Name, veh.DbId, pickup, dropoff, total)
+                If problem IsNot Nothing Then
+                    MessageBox.Show(problem, "New Reservation", MessageBoxButton.OK, MessageBoxImage.Warning)
+                    ReloadData()
+                    RefreshReservationVehicles()
+                    Return
+                End If
+            Catch ex As Exception
+                ShowDbError("create the reservation", ex)
+                Return
+            End Try
+            ReloadData()
 
             CmbResCustomer.SelectedIndex = -1
             CmbResVehicle.SelectedIndex = -1
@@ -425,8 +592,7 @@ Namespace Presentation.Views
             Dim res = TryCast(DgReservations.SelectedItem, ReservationItem)
             If Not CanChangeReservation(res) Then Return
 
-            res.Status = "Cancelled"
-            SetVehicleStatus(res.Plate, "Available")
+            If Not CloseReservation(res, "Cancelled") Then Return
             RefreshReservationVehicles()
             DgReservations.Items.Refresh()
         End Sub
@@ -435,8 +601,7 @@ Namespace Presentation.Views
             Dim res = TryCast(DgReservations.SelectedItem, ReservationItem)
             If Not CanChangeReservation(res) Then Return
 
-            res.Status = "Completed"
-            SetVehicleStatus(res.Plate, "Available")
+            If Not CloseReservation(res, "Completed") Then Return
             RefreshReservationVehicles()
             DgReservations.Items.Refresh()
         End Sub
@@ -457,10 +622,16 @@ Namespace Presentation.Views
             Return True
         End Function
 
-        Private Sub SetVehicleStatus(plate As String, status As String)
-            Dim veh = _fleet.FirstOrDefault(Function(f) f.Plate = plate)
-            If veh IsNot Nothing Then veh.Status = status
-        End Sub
+        Private Function CloseReservation(res As ReservationItem, newStatus As String) As Boolean
+            Try
+                ClientRepository.CloseReservation(res.DbId, res.VehicleId, newStatus)
+            Catch ex As Exception
+                ShowDbError("update the reservation", ex)
+                Return False
+            End Try
+            ReloadData()
+            Return True
+        End Function
 
         ' ===================== 5. DAILY DISPATCH =====================
         Private Sub CmbDispatchType_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
@@ -490,8 +661,13 @@ Namespace Presentation.Views
 
             If item.Status = "Completed" Then Return
 
-            item.Status = "Completed"
-            SetVehicleStatus(item.Plate, If(item.DispatchType = "Pickup", "Rented", "Available"))
+            Try
+                ClientRepository.CompleteDispatch(item.DbId, item.ReservationId, item.VehicleId, item.DispatchType)
+            Catch ex As Exception
+                ShowDbError("update the dispatch", ex)
+                Return
+            End Try
+            ReloadData()
             ApplyDispatchFilter()
         End Sub
 
@@ -517,14 +693,18 @@ Namespace Presentation.Views
             Dim notes As String = TxtInspNotes.Text.Trim()
             If notes <> "" Then findings &= " | " & notes
 
-            _inspections.Insert(0, New InspectionItem(Date.Now, veh.Display, inspector, fuel, findings,
-                                                      If(passed, "Pass", "Needs Attention")))
+            Try
+                ClientRepository.AddInspection(veh.DbId, inspector, fuel, findings, passed)
+            Catch ex As Exception
+                ShowDbError("save the inspection", ex)
+                Return
+            End Try
+            ReloadData()
 
             If passed Then
                 MessageBox.Show("Inspection saved: Pass.", "Vehicle Inspection",
                                 MessageBoxButton.OK, MessageBoxImage.Information)
             Else
-                veh.Status = "Maintenance"
                 MessageBox.Show("Inspection saved: Needs Attention." & Environment.NewLine &
                                 "The vehicle was marked as Maintenance.", "Vehicle Inspection",
                                 MessageBoxButton.OK, MessageBoxImage.Warning)

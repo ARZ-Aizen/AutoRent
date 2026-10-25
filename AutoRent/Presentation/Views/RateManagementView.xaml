@@ -1,0 +1,82 @@
+<UserControl x:Class="Presentation.Views.RateManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="720" d:DesignWidth="1100"
+             FontFamily="Manrope, Segoe UI">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AutoRent;component/Presentation/UI/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Rate Management" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="Set prices per vehicle category. Every vehicle in a category uses that category's rates." Style="{StaticResource PageSubtitle}"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtCategory" Width="150" MaxLength="30"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="DAILY RATE" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtDaily" Width="110"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="WEEKLY RATE" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtWeekly" Width="110" ToolTip="Leave blank to use 6 x the daily rate"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="MONTHLY RATE" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtMonthly" Width="110" ToolTip="Leave blank to use 22 x the daily rate"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="DEPOSIT" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtDeposit" Width="110"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,10">
+                        <TextBlock Text="LATE FEE / DAY" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtLateFee" Width="110"/>
+                    </StackPanel>
+                </WrapPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <Button x:Name="BtnAdd" Content="Add Category" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+                    <Button x:Name="BtnSave" Content="Save Changes" Style="{StaticResource OutlineButton}" Margin="0,0,8,0" IsEnabled="False"/>
+                    <Button x:Name="BtnClear" Content="Clear" Style="{StaticResource OutlineButton}" Margin="0,0,8,0"/>
+                    <Button x:Name="BtnDelete" Content="Delete" Style="{StaticResource DangerButton}" IsEnabled="False"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" Text="Price List" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
+
+        <DataGrid x:Name="DgRates" Grid.Row="3">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Category" Binding="{Binding category}" Width="1.2*"/>
+                <DataGridTextColumn Header="Daily" Binding="{Binding daily_rate, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Weekly" Binding="{Binding weekly_rate, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Monthly" Binding="{Binding monthly_rate, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Deposit" Binding="{Binding deposit, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Late Fee / Day" Binding="{Binding late_fee_per_day, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Vehicles" Binding="{Binding vehicle_count}" Width="0.7*"/>
+                <DataGridTextColumn Header="Updated" Binding="{Binding updated_at, StringFormat='MMM dd, yyyy'}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

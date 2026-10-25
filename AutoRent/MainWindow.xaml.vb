@@ -25,6 +25,7 @@ Class MainWindow
 
     Private _currentViewIsAdmin As Boolean = False
     Private _isExpanded As Boolean = False   ' starts collapsed
+    Private _hoverExpanded As Boolean = False ' expanded only because the mouse is over the sidebar
     Private _clientView As ClientView        ' created once, reused
 
     Public Sub New()
@@ -56,7 +57,26 @@ Class MainWindow
     ' ---------- Sidebar expand / collapse ----------
 
     Private Sub LogoToggle_Click(sender As Object, e As RoutedEventArgs) Handles LogoToggle.Click
-        SetSidebarExpanded(Not _isExpanded)
+        If _hoverExpanded Then
+            _hoverExpanded = False   ' keep it open (pinned)
+        Else
+            SetSidebarExpanded(Not _isExpanded)
+        End If
+    End Sub
+
+    ' Hovering over the sidebar slides it open with the menu names; moving away closes it again (unless pinned with the logo)
+    Private Sub Sidebar_MouseEnter(sender As Object, e As MouseEventArgs) Handles Sidebar.MouseEnter
+        If Not _isExpanded Then
+            _hoverExpanded = True
+            SetSidebarExpanded(True)
+        End If
+    End Sub
+
+    Private Sub Sidebar_MouseLeave(sender As Object, e As MouseEventArgs) Handles Sidebar.MouseLeave
+        If _hoverExpanded Then
+            _hoverExpanded = False
+            SetSidebarExpanded(False)
+        End If
     End Sub
 
     Private Sub SetSidebarExpanded(expand As Boolean)
@@ -96,6 +116,7 @@ Class MainWindow
     Private Sub LoadAdminView()
         _currentViewIsAdmin = True
         Sidebar.Visibility = Visibility.Visible       ' show the admin sidebar
+        SidebarColumn.Width = New GridLength(CollapsedWidth)
 
         CurrentViewBadgeText.Text = "ADMIN CONSOLE"
         CurrentViewBadgeText.Foreground = New SolidColorBrush(Color.FromRgb(192, 57, 75))
@@ -117,6 +138,7 @@ Class MainWindow
     Private Sub LoadClientView()
         _currentViewIsAdmin = False
         Sidebar.Visibility = Visibility.Collapsed     ' hide the MainWindow sidebar
+        SidebarColumn.Width = New GridLength(0)
 
         If _clientView Is Nothing Then
             _clientView = New ClientView()
@@ -158,13 +180,12 @@ Class MainWindow
         If Not _currentViewIsAdmin Then Return
 
         Select Case item.Key
-            ' Uncomment each line as you create the UserControl
-            ' Case "Home"        : MainContentHost.Content = New HomeDashboardView()
-            ' Case "Fleet"       : MainContentHost.Content = New FleetManagementView()
-            ' Case "Maintenance" : MainContentHost.Content = New MaintenanceSchedulesView()
-            ' Case "Rates"       : MainContentHost.Content = New RateManagementView()
-            ' Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
-            ' Case "Users"       : MainContentHost.Content = New UserManagementView()
+            Case "Home"        : MainContentHost.Content = New HomeDashboardView()
+            Case "Fleet"       : MainContentHost.Content = New FleetManagementView()
+            Case "Maintenance" : MainContentHost.Content = New MaintenanceSchedulesView()
+            Case "Rates"       : MainContentHost.Content = New RateManagementView()
+            Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
+            Case "Users"       : MainContentHost.Content = New UserManagementView()
             Case Else
                 MainContentHost.Content = New AdminView()   ' temporary fallback
         End Select

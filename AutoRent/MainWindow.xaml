@@ -109,12 +109,12 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition x:Name="SidebarColumn" Width="72"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- ===================== SIDEBAR (Width animated: 264 <-> 72) ===================== -->
-        <Border x:Name="Sidebar" Grid.Column="0" Width="72" Background="{StaticResource SidebarBg}" ClipToBounds="True">
+        <Border x:Name="Sidebar" Grid.Column="0" Grid.ColumnSpan="2" Width="72" HorizontalAlignment="Left" Panel.ZIndex="10" Background="{StaticResource SidebarBg}" ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="88"/>   <!-- Brand -->

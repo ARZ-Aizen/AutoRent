@@ -9,25 +9,25 @@
 
     <UserControl.Resources>
 
-        <!-- ================= SIDEBAR STYLES ================= -->
+        <!-- ================= SIDEBAR STYLES (same look as the Admin sidebar) ================= -->
         <Style x:Key="SidebarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#D8D8D8"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="Margin" Value="8,4"/>
+            <Setter Property="Foreground" Value="#B5AFA9"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                CornerRadius="8" Padding="16,0">
-                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                        </Border>
+                        <Grid Background="Transparent">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Margin="8,0"/>
+                            <Border x:Name="Indicator" Width="3" HorizontalAlignment="Left"
+                                    Background="#70000F" Visibility="Collapsed"/>
+                            <ContentPresenter Margin="25,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#363030"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#363331"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -35,12 +35,47 @@
             </Setter>
         </Style>
 
-        <Style x:Key="FooterButtonStyle" TargetType="Button" BasedOn="{StaticResource SidebarButtonStyle}">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Margin" Value="8,0"/>
+        <Style x:Key="FooterButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#B5AFA9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" Padding="0,5">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
+        <Style x:Key="LogoButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="#70000F" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#8A0016"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Geometry x:Key="CarIcon">M18.92,6.01C18.72,5.42 18.16,5 17.5,5H6.5C5.84,5 5.29,5.42 5.08,6.01L3,12V20A1,1 0 0,0 4,21H5A1,1 0 0,0 6,20V19H18V20A1,1 0 0,0 19,21H20A1,1 0 0,0 21,20V12L18.92,6.01M6.5,16A1.5,1.5 0 0,1 5,14.5A1.5,1.5 0 0,1 6.5,13A1.5,1.5 0 0,1 8,14.5A1.5,1.5 0 0,1 6.5,16M17.5,16A1.5,1.5 0 0,1 16,14.5A1.5,1.5 0 0,1 17.5,13A1.5,1.5 0 0,1 19,14.5A1.5,1.5 0 0,1 17.5,16M5,11L6.5,6.5H17.5L19,11H5Z</Geometry>
 
         <!-- ================= PAGE STYLES ================= -->
         <Style x:Key="PageTitle" TargetType="TextBlock">
@@ -245,116 +280,112 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="72"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ================= SIDEBAR ================= -->
-        <Border Grid.Column="0" Background="#2A2A2A">
+        <!-- ================= SIDEBAR (width animated: 264 <-> 72) ================= -->
+        <Border x:Name="ClientSidebar" Grid.Column="0" Grid.ColumnSpan="2" Width="72" HorizontalAlignment="Left" Panel.ZIndex="10" MouseEnter="ClientSidebar_MouseEnter" MouseLeave="ClientSidebar_MouseLeave" Background="#2B2927" ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="88"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0">
-                    <StackPanel Orientation="Horizontal" Margin="18,24,18,20">
-                        <Border Width="48" Height="48" CornerRadius="10" Background="#7A0010">
-                            <TextBlock Text="🚗" FontFamily="Segoe UI Emoji" FontSize="22"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="AUTORENT" Foreground="White" FontSize="15" FontWeight="Bold"/>
-                            <TextBlock Text="CLIENT PORTAL" Foreground="#4A9BFF" FontSize="11"/>
+                <Border Grid.Row="0" BorderBrush="#3D3A37" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="17,0,0,0">
+                        <Button x:Name="LogoToggle" Style="{StaticResource LogoButton}" Width="38" Height="38" Margin="0,0,12,0"
+                                ToolTip="Expand / collapse sidebar" Click="LogoToggle_Click">
+                            <Path Data="{StaticResource CarIcon}" Fill="White" Stretch="Uniform"
+                                  Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+                        <StackPanel x:Name="BrandText" VerticalAlignment="Center" Visibility="Collapsed">
+                            <TextBlock Text="AUTORENT" FontSize="13" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock Text="CLIENT PORTAL" FontSize="9.5" FontWeight="SemiBold" Foreground="#C0394B" Margin="0,3,0,0"/>
                         </StackPanel>
                     </StackPanel>
-                    <Border Height="1" Background="#3A3A3A"/>
-                </StackPanel>
+                </Border>
 
                 <StackPanel Grid.Row="1" Margin="0,16,0,0">
                     <Button x:Name="BtnHome" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Home (Dashboard)" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🏠" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Home (Dashboard)"/>
+                            <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Home (Dashboard)" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnFleetAvailability" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Fleet Availability" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🚗" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Fleet Availability"/>
+                            <TextBlock Text="&#xE804;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Fleet Availability" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnCustomerManagement" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Customer Management" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="👥" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Customer Management"/>
+                            <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Customer Management" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnReservations" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Reservations" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📅" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Reservations"/>
+                            <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Reservations" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnDailyDispatch" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Daily Dispatch" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🚚" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Daily Dispatch"/>
+                            <TextBlock Text="&#xE81D;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Daily Dispatch" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnVehicleInspection" Style="{StaticResource SidebarButtonStyle}"
                             Tag="Vehicle Inspection" Click="SidebarOption_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🔍" FontFamily="Segoe UI Emoji" Width="30"/>
-                            <TextBlock Text="Vehicle Inspection"/>
+                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Vehicle Inspection" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
 
-                <StackPanel Grid.Row="2" Margin="0,0,0,12">
-                    <Button x:Name="BtnSwitchAdmin" Style="{StaticResource FooterButtonStyle}"
-                            Click="BtnSwitchAdmin_Click" Margin="8,0,8,10">
+                <StackPanel Grid.Row="2">
+                    <Button x:Name="BtnSwitchAdmin" Style="{StaticResource FooterButtonStyle}" Click="BtnSwitchAdmin_Click" ToolTip="Switch to Admin Console" Margin="19,0,0,10">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⇄" Width="30" FontSize="16"/>
-                            <TextBlock Text="Switch to Admin Console"/>
+                            <TextBlock Text="&#xE8AB;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="34" TextAlignment="Center" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Switch to Admin Console" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
-                    <Border Height="1" Background="#3A3A3A" Margin="0,0,0,14"/>
-
-                    <StackPanel Orientation="Horizontal" Margin="20,0,20,10">
-                        <Border Width="42" Height="42" CornerRadius="21" Background="#3F3F3F">
-                            <TextBlock Text="👤" FontFamily="Segoe UI Emoji" FontSize="18"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtUserName" Text="admin" Foreground="White"
-                                       FontWeight="Bold" FontSize="14"/>
-                            <TextBlock x:Name="TxtUserRole" Text="ADMIN" Foreground="#9A9A9A" FontSize="10"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <Button x:Name="BtnSettings" Style="{StaticResource FooterButtonStyle}"
-                            Click="BtnSettings_Click">
+                    <Border BorderBrush="#3D3A37" BorderThickness="0,1,0,0" Padding="19,16,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Border Background="#4A4643" CornerRadius="17" Width="34" Height="34" Margin="0,0,12,0">
+                                    <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel x:Name="UserText" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock x:Name="TxtUserName" Text="admin" FontSize="13" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock x:Name="TxtUserRole" Text="ADMIN" FontSize="9" FontWeight="SemiBold" Foreground="#8A847E" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                    <Button x:Name="BtnSettings" Style="{StaticResource FooterButtonStyle}" Click="BtnSettings_Click" ToolTip="Settings">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⚙" Width="30" FontSize="16"/>
-                            <TextBlock Text="Settings"/>
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="34" TextAlignment="Center" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Settings" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <Button x:Name="BtnSignOut" Style="{StaticResource FooterButtonStyle}"
-                            Foreground="#FF5C6C" FontWeight="SemiBold" Click="BtnSignOut_Click">
+                    <Button x:Name="BtnSignOut" Style="{StaticResource FooterButtonStyle}" Click="BtnSignOut_Click" ToolTip="Sign Out" Foreground="#E0707F">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⏻" Width="30" FontSize="16"/>
-                            <TextBlock Text="Sign Out"/>
+                            <TextBlock Text="&#xF3B1;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="34" TextAlignment="Center" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="Label" Text="Sign Out" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>

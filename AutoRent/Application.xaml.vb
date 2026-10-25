@@ -1,5 +1,6 @@
-﻿Imports System.Windows
+Imports System.Windows
 Imports AutoRent.Common.Utilities
+Imports AutoRent.Data.Context
 Imports AutoRent.Data.Models
 Imports AutoRent.Data.Repositories
 
@@ -8,6 +9,8 @@ Partial Public Class Application
 
     Private Sub Application_Startup(sender As Object, e As StartupEventArgs) Handles Me.Startup
         Try
+            DatabaseInitializer.EnsureSchema()
+
             Dim generatedPassword = UserRepository.SeedAdminIfEmpty()
             If generatedPassword IsNot Nothing Then
                 AlertUtil.ShowInformationWithCopy(
