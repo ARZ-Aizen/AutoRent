@@ -1,0 +1,57 @@
+﻿<UserControl x:Class="Presentation.Views.User.FleetAvailabilityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Manrope, Segoe UI">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ClientStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Fleet Availability" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="See which vehicles are available, reserved, rented, or in maintenance." Style="{StaticResource PageSubtitle}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,14">
+            <StackPanel>
+                <TextBlock Text="SEARCH" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="TxtFleetSearch" Width="260"
+                         ToolTip="Search by plate, model or category"
+                         TextChanged="TxtFleetSearch_TextChanged"/>
+            </StackPanel>
+            <StackPanel Margin="12,0,0,0">
+                <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}"/>
+                <ComboBox x:Name="CmbFleetStatus" Width="160" SelectedIndex="0"
+                          SelectionChanged="CmbFleetStatus_SelectionChanged">
+                    <ComboBoxItem Content="All"/>
+                    <ComboBoxItem Content="Available"/>
+                    <ComboBoxItem Content="Reserved"/>
+                    <ComboBoxItem Content="Rented"/>
+                    <ComboBoxItem Content="Maintenance"/>
+                </ComboBox>
+            </StackPanel>
+            <TextBlock x:Name="TxtFleetCount" VerticalAlignment="Bottom" Margin="16,0,0,8"
+                       Foreground="#7A746D" FontSize="12"/>
+        </StackPanel>
+
+        <DataGrid x:Name="DgFleet" Grid.Row="2">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Plate No." Binding="{Binding Plate}"/>
+                <DataGridTextColumn Header="Vehicle" Binding="{Binding Model}" Width="1.5*"/>
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}"/>
+                <DataGridTextColumn Header="Daily Rate" Binding="{Binding DailyRate, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" ElementStyle="{StaticResource StatusText}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,75 @@
+﻿<UserControl x:Class="Presentation.Views.User.ReservationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Manrope, Segoe UI">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ClientStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Reservations" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="Create new bookings and manage existing ones." Style="{StaticResource PageSubtitle}"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="CUSTOMER" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="CmbResCustomer" Width="190" DisplayMemberPath="Name"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="AVAILABLE VEHICLE" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="CmbResVehicle" Width="230" DisplayMemberPath="Display"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="PICKUP DATE" Style="{StaticResource FieldLabel}"/>
+                    <DatePicker x:Name="DpPickup" Width="130"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="RETURN DATE" Style="{StaticResource FieldLabel}"/>
+                    <DatePicker x:Name="DpReturn" Width="130"/>
+                </StackPanel>
+                <Button Content="Create" Style="{StaticResource PrimaryButton}"
+                        VerticalAlignment="Bottom" Click="BtnCreateReservation_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="All Reservations" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Cancel Selected" Style="{StaticResource OutlineButton}"
+                        Margin="0,0,8,0" Click="BtnCancelReservation_Click"/>
+                <Button Content="Mark Completed" Style="{StaticResource PrimaryButton}"
+                        Click="BtnCompleteReservation_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <DataGrid x:Name="DgReservations" Grid.Row="3">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="0.7*"/>
+                <DataGridTextColumn Header="Customer" Binding="{Binding Customer}" Width="1.2*"/>
+                <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}" Width="1.6*"/>
+                <DataGridTextColumn Header="Pickup" Binding="{Binding PickupDate, StringFormat='MMM dd, yyyy'}"/>
+                <DataGridTextColumn Header="Return" Binding="{Binding ReturnDate, StringFormat='MMM dd, yyyy'}"/>
+                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=N2}"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" ElementStyle="{StaticResource StatusText}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>
