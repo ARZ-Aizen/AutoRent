@@ -79,7 +79,7 @@ Namespace Data.Repositories
             username = If(username, "").Trim()
             fullName = If(fullName, "").Trim()
             branch = If(branch, "HQ").Trim()
-            role = If(role, "User").Trim()
+            role = If(role, "Rental Staff").Trim()
 
             If username.Length < 3 Then Return "Username must be at least 3 characters."
             If password Is Nothing OrElse password.Length < MinPasswordLength Then Return $"Password must be at least {MinPasswordLength} characters."
@@ -140,7 +140,7 @@ Namespace Data.Repositories
         Public Shared Function Update(userId As Integer, fullName As String, username As String, role As String, newPassword As String) As String
             username = If(username, "").Trim()
             fullName = If(fullName, "").Trim()
-            role = If(role, "Rental Clerk").Trim()
+            role = If(role, "Rental Staff").Trim()
 
             If username.Length < 3 Then Return "Username must be at least 3 characters."
             If String.IsNullOrWhiteSpace(fullName) Then Return "Full name cannot be blank."
