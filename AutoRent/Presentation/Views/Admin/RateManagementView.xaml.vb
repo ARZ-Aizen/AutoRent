@@ -1,16 +1,20 @@
-﻿Imports System.Data
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
+Imports System.Windows.Input
 Imports AutoRent.Common.Utilities
+Imports AutoRent.Data.Models
 Imports AutoRent.Data.Repositories
 
 Namespace Presentation.Views.Admin
     Partial Public Class RateManagementView
         Inherits UserControl
 
-        Private _selectedId As Integer = 0
-        Private _selectedCategory As String = ""
         Private _ready As Boolean = False
+        Private _selectedTier As RateTier = Nothing
+        Private _selectedRule As PricingRule = Nothing
 
         Public Sub New()
             InitializeComponent()
@@ -19,145 +23,263 @@ Namespace Presentation.Views.Admin
         Private Sub RateManagementView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
             If _ready Then Return
             _ready = True
-            LoadRates()
-            ClearForm()
+            LoadTiers()
+            LoadPricingRules()
         End Sub
 
-        Private Sub LoadRates()
+        Private Sub LoadTiers(Optional selectCategory As String = "")
             Try
-                DgRates.ItemsSource = RateRepository.GetAll().DefaultView
+                Dim tiers = RateRepository.GetAllTiers()
+                DgRateTiers.ItemsSource = tiers
+
+                If tiers.Count > 0 Then
+                    Dim target = If(Not String.IsNullOrEmpty(selectCategory),
+                                    tiers.FirstOrDefault(Function(t) t.Category.Equals(selectCategory, StringComparison.OrdinalIgnoreCase)),
+                                    Nothing)
+                    If target Is Nothing Then target = tiers.FirstOrDefault(Function(t) t.Category.Equals("Sedan", StringComparison.OrdinalIgnoreCase))
+                    If target Is Nothing Then target = tiers(0)
+                    DgRateTiers.SelectedItem = target
+                End If
             Catch ex As Exception
-                AlertUtil.ShowError($"Could not load rates: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
+                AlertUtil.ShowError($"Could not load rate tiers: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
             End Try
         End Sub
 
-        Private Sub ClearForm()
-            _selectedId = 0
-            _selectedCategory = ""
-            DgRates.SelectedItem = Nothing
-            TxtCategory.Clear()
-            TxtDaily.Clear()
-            TxtWeekly.Clear()
-            TxtMonthly.Clear()
-            TxtDeposit.Text = "0"
-            TxtLateFee.Text = "0"
-            BtnAdd.IsEnabled = True
-            BtnSave.IsEnabled = False
-            BtnDelete.IsEnabled = False
+        Private Sub LoadPricingRules()
+            Try
+                Dim rules = RateRepository.GetPricingRules()
+                DgPricingRules.ItemsSource = rules
+
+                Dim activeCount = rules.Where(Function(r) r.IsActive).Count()
+                Dim inactiveCount = rules.Where(Function(r) Not r.IsActive).Count()
+                TxtRulesSummary.Text = $"{activeCount} active / {inactiveCount} inactive"
+            Catch ex As Exception
+                AlertUtil.ShowError($"Could not load pricing rules: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
+            End Try
         End Sub
 
-        Private Sub DgRates_SelectionChanged(sender As Object, e As SelectionChangedEventArgs) Handles DgRates.SelectionChanged
-            Dim row = TryCast(DgRates.SelectedItem, DataRowView)
-            If row Is Nothing Then Return
+        Private Sub DgRateTiers_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            Dim tier = TryCast(DgRateTiers.SelectedItem, RateTier)
+            If tier Is Nothing Then Return
 
-            _selectedId = ViewHelpers.IntOf(row, "rate_id")
-            _selectedCategory = ViewHelpers.Str(row, "category")
-            TxtCategory.Text = _selectedCategory
-            TxtDaily.Text = ViewHelpers.DecOf(row, "daily_rate").ToString("0.##")
-            TxtWeekly.Text = ViewHelpers.DecOf(row, "weekly_rate").ToString("0.##")
-            TxtMonthly.Text = ViewHelpers.DecOf(row, "monthly_rate").ToString("0.##")
-            TxtDeposit.Text = ViewHelpers.DecOf(row, "deposit").ToString("0.##")
-            TxtLateFee.Text = ViewHelpers.DecOf(row, "late_fee_per_day").ToString("0.##")
-
-            BtnAdd.IsEnabled = False
-            BtnSave.IsEnabled = True
-            BtnDelete.IsEnabled = True
+            _selectedTier = tier
+            UpdatePreview(tier)
         End Sub
 
-        Private Function ReadForm(ByRef daily As Decimal, ByRef weekly As Decimal, ByRef monthly As Decimal,
-                                  ByRef deposit As Decimal, ByRef lateFee As Decimal) As String
-            If String.IsNullOrWhiteSpace(TxtCategory.Text) Then Return "Enter a category name."
-            If Not ViewHelpers.TryParseMoney(TxtDaily.Text, daily) OrElse daily <= 0D Then Return "Daily rate must be a number greater than 0."
+        Private Sub UpdatePreview(tier As RateTier)
+            If tier Is Nothing Then Return
 
-            If String.IsNullOrWhiteSpace(TxtWeekly.Text) Then
+            TxtPreviewSubtitle.Text = $"{tier.Category} · 17-19 Oct 2026 · 2 weekend days"
+            Dim daily = tier.DailyRate
+            Dim baseAmount = daily * 2D
+            Dim weekendUplift = baseAmount * 0.15D
+            Dim childSeat = 30D
+            Dim total = baseAmount + weekendUplift + childSeat
+
+            TxtPreviewBaseLabel.Text = $"Base · 2 × ${daily:N0}"
+            TxtPreviewBaseVal.Text = $"${baseAmount:N2}"
+            TxtPreviewUpliftLabel.Text = "Weekend uplift · ×1.15"
+            TxtPreviewUpliftVal.Text = $"+${weekendUplift:N2}"
+            TxtPreviewTotalVal.Text = $"${total:N2}"
+        End Sub
+
+        Private Sub BtnEditTiers_Click(sender As Object, e As RoutedEventArgs)
+            If _selectedTier Is Nothing AndAlso DgRateTiers.Items.Count > 0 Then
+                _selectedTier = TryCast(DgRateTiers.Items(0), RateTier)
+            End If
+
+            If _selectedTier Is Nothing Then
+                AlertUtil.ShowWarning("Please select a category tier to edit.", "Edit Tiers", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            TxtModalCategory.Text = _selectedTier.Category
+            TxtModalDaily.Text = _selectedTier.DailyRate.ToString("0.##")
+            TxtModalWeekly.Text = _selectedTier.WeeklyRate.ToString("0.##")
+            TxtModalMonthly.Text = _selectedTier.MonthlyRate.ToString("0.##")
+            TxtModalDeposit.Text = _selectedTier.Deposit.ToString("0.##")
+            TxtModalLateFee.Text = _selectedTier.LateFeePerDay.ToString("0.##")
+
+            EditTiersModal.Visibility = Visibility.Visible
+            TxtModalDaily.Focus()
+        End Sub
+
+        Private Sub BtnCloseTiersModal_Click(sender As Object, e As RoutedEventArgs)
+            EditTiersModal.Visibility = Visibility.Collapsed
+        End Sub
+
+        Private Sub BtnSaveTiers_Click(sender As Object, e As RoutedEventArgs)
+            If _selectedTier Is Nothing Then Return
+
+            Dim daily, weekly, monthly, deposit, lateFee As Decimal
+            If Not ViewHelpers.TryParseMoney(TxtModalDaily.Text, daily) OrElse daily <= 0D Then
+                AlertUtil.ShowWarning("Daily rate must be a number greater than 0.", "Edit Tiers", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If String.IsNullOrWhiteSpace(TxtModalWeekly.Text) Then
                 weekly = daily * 6D
-            ElseIf Not ViewHelpers.TryParseMoney(TxtWeekly.Text, weekly) Then
-                Return "Weekly rate must be a number (0 or more)."
+            ElseIf Not ViewHelpers.TryParseMoney(TxtModalWeekly.Text, weekly) Then
+                AlertUtil.ShowWarning("Weekly rate must be a valid number.", "Edit Tiers", ViewHelpers.Owner(Me))
+                Return
             End If
 
-            If String.IsNullOrWhiteSpace(TxtMonthly.Text) Then
-                monthly = daily * 22D
-            ElseIf Not ViewHelpers.TryParseMoney(TxtMonthly.Text, monthly) Then
-                Return "Monthly rate must be a number (0 or more)."
+            If String.IsNullOrWhiteSpace(TxtModalMonthly.Text) Then
+                monthly = daily * 24D
+            ElseIf Not ViewHelpers.TryParseMoney(TxtModalMonthly.Text, monthly) Then
+                AlertUtil.ShowWarning("Monthly rate must be a valid number.", "Edit Tiers", ViewHelpers.Owner(Me))
+                Return
             End If
 
-            If String.IsNullOrWhiteSpace(TxtDeposit.Text) Then
-                deposit = 0D
-            ElseIf Not ViewHelpers.TryParseMoney(TxtDeposit.Text, deposit) Then
-                Return "Deposit must be a number (0 or more)."
-            End If
+            If Not ViewHelpers.TryParseMoney(TxtModalDeposit.Text, deposit) Then deposit = 500D
+            If Not ViewHelpers.TryParseMoney(TxtModalLateFee.Text, lateFee) Then lateFee = 50D
 
-            If String.IsNullOrWhiteSpace(TxtLateFee.Text) Then
-                lateFee = 0D
-            ElseIf Not ViewHelpers.TryParseMoney(TxtLateFee.Text, lateFee) Then
-                Return "Late fee must be a number (0 or more)."
-            End If
-            Return Nothing
-        End Function
-
-        Private Sub BtnAdd_Click(sender As Object, e As RoutedEventArgs) Handles BtnAdd.Click
-            Dim daily, weekly, monthly, deposit, lateFee As Decimal
-            Dim problem = ReadForm(daily, weekly, monthly, deposit, lateFee)
-            If problem IsNot Nothing Then
-                AlertUtil.ShowWarning(problem, "Rate Management", ViewHelpers.Owner(Me))
+            If Not AlertUtil.Confirm($"Are you sure you want to update the base rate tier for '{_selectedTier.Category}'?", "Save Tiers", ViewHelpers.Owner(Me)) Then
                 Return
             End If
 
             Try
-                problem = RateRepository.Add(TxtCategory.Text, daily, weekly, monthly, deposit, lateFee)
+                Dim problem = RateRepository.Update(_selectedTier.RateId, _selectedTier.Category, _selectedTier.Category, daily, weekly, monthly, deposit, lateFee)
                 If problem IsNot Nothing Then
-                    AlertUtil.ShowWarning(problem, "Rate Management", ViewHelpers.Owner(Me))
+                    AlertUtil.ShowWarning(problem, "Edit Tiers", ViewHelpers.Owner(Me))
                     Return
                 End If
-                LoadRates()
-                ClearForm()
+
+                EditTiersModal.Visibility = Visibility.Collapsed
+                AlertUtil.ShowSuccess($"Rate tier for '{_selectedTier.Category}' was updated successfully.", "Edit Tiers", ViewHelpers.Owner(Me))
+                LoadTiers(_selectedTier.Category)
             Catch ex As Exception
-                AlertUtil.ShowError($"Could not add the category: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
+                AlertUtil.ShowError($"Could not update rate tier: {ex.Message}", "Edit Tiers", ViewHelpers.Owner(Me))
             End Try
         End Sub
 
-        Private Sub BtnSave_Click(sender As Object, e As RoutedEventArgs) Handles BtnSave.Click
-            If _selectedId = 0 Then Return
+        Private Sub BtnCreateRule_Click(sender As Object, e As RoutedEventArgs)
+            Dim rules = RateRepository.GetPricingRules()
+            Dim nextNum = rules.Count + 1
+            TxtNewRuleName.Text = $"RR-{nextNum:000} · Seasonal demand"
 
-            Dim daily, weekly, monthly, deposit, lateFee As Decimal
-            Dim problem = ReadForm(daily, weekly, monthly, deposit, lateFee)
-            If problem IsNot Nothing Then
-                AlertUtil.ShowWarning(problem, "Rate Management", ViewHelpers.Owner(Me))
+            Dim tiers = RateRepository.GetAllTiers()
+            Dim catList As New List(Of String) From {"All"}
+            catList.AddRange(tiers.Select(Function(t) t.Category))
+            CmbNewRuleCategory.ItemsSource = catList
+            CmbNewRuleCategory.SelectedIndex = 0
+
+            TxtNewRuleMultiplier.Text = "×1.20"
+            TxtNewRuleMethod.Text = "Base rate multiplier"
+            TxtNewRuleDates.Text = $"{DateTime.Now:dd MMM yyyy} / Ongoing"
+            ChkNewRuleActive.IsChecked = True
+
+            CreateRuleModal.Visibility = Visibility.Visible
+            TxtNewRuleName.Focus()
+        End Sub
+
+        Private Sub BtnCloseRuleModal_Click(sender As Object, e As RoutedEventArgs)
+            CreateRuleModal.Visibility = Visibility.Collapsed
+        End Sub
+
+        Private Sub BtnSaveNewRule_Click(sender As Object, e As RoutedEventArgs)
+            Dim ruleText = TxtNewRuleName.Text.Trim()
+            Dim cat = TryCast(CmbNewRuleCategory.SelectedItem, String)
+            Dim mult = TxtNewRuleMultiplier.Text.Trim()
+            Dim method = TxtNewRuleMethod.Text.Trim()
+            Dim dates = TxtNewRuleDates.Text.Trim()
+            Dim isActive = ChkNewRuleActive.IsChecked.GetValueOrDefault(True)
+
+            If String.IsNullOrWhiteSpace(ruleText) Then
+                AlertUtil.ShowWarning("Please specify a rule name.", "Create Rate Rule", ViewHelpers.Owner(Me))
                 Return
             End If
 
-            Try
-                problem = RateRepository.Update(_selectedId, _selectedCategory, TxtCategory.Text, daily, weekly, monthly, deposit, lateFee)
-                If problem IsNot Nothing Then
-                    AlertUtil.ShowWarning(problem, "Rate Management", ViewHelpers.Owner(Me))
-                    Return
-                End If
-                LoadRates()
-                ClearForm()
-            Catch ex As Exception
-                AlertUtil.ShowError($"Could not save the rates: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
-            End Try
+            If String.IsNullOrWhiteSpace(mult) Then
+                AlertUtil.ShowWarning("Please specify a rate or multiplier.", "Create Rate Rule", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If Not AlertUtil.Confirm($"Are you sure you want to create the pricing rule '{ruleText}'?", "Create Rate Rule", ViewHelpers.Owner(Me)) Then
+                Return
+            End If
+
+            Dim ruleId = "RR-000"
+            Dim namePart = ruleText
+            If ruleText.Contains("·") Then
+                Dim parts = ruleText.Split("·"c)
+                ruleId = parts(0).Trim()
+                namePart = parts(1).Trim()
+            Else
+                Dim rules = RateRepository.GetPricingRules()
+                ruleId = $"RR-{rules.Count + 1:000}"
+            End If
+
+            Dim newRule As New PricingRule With {
+                .RuleId = ruleId,
+                .RuleName = namePart,
+                .Category = If(String.IsNullOrEmpty(cat), "All", cat),
+                .CalculationMethod = If(String.IsNullOrEmpty(method), "Base rate multiplier", method),
+                .RateMultiplier = mult,
+                .EffectiveDates = If(String.IsNullOrEmpty(dates), $"{DateTime.Now:dd MMM yyyy} / Ongoing", dates),
+                .IsActive = isActive,
+                .LastModified = $"Admin · {DateTime.Now:dd MMM, HH:mm}"
+            }
+
+            RateRepository.AddPricingRule(newRule)
+            CreateRuleModal.Visibility = Visibility.Collapsed
+            AlertUtil.ShowSuccess($"Pricing rule '{ruleId}' created successfully.", "Create Rate Rule", ViewHelpers.Owner(Me))
+            LoadPricingRules()
         End Sub
 
-        Private Sub BtnClear_Click(sender As Object, e As RoutedEventArgs) Handles BtnClear.Click
-            ClearForm()
+        Private Sub DgPricingRules_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            Dim rule = TryCast(DgPricingRules.SelectedItem, PricingRule)
+            If rule Is Nothing Then Return
+
+            _selectedRule = rule
+            TxtInspectTitle.Text = $"{rule.RuleId} · {rule.RuleName}"
+            TxtInspectSubtitle.Text = $"Inspect and modify {rule.Category} category pricing rule"
+            TxtInspectRuleName.Text = rule.RuleName
+            TxtInspectCategory.Text = rule.Category
+            TxtInspectMultiplier.Text = rule.RateMultiplier
+            TxtInspectMethod.Text = rule.CalculationMethod
+            TxtInspectDates.Text = rule.EffectiveDates
+            ChkInspectActive.IsChecked = rule.IsActive
+
+            InspectRuleModal.Visibility = Visibility.Visible
         End Sub
 
-        Private Sub BtnDelete_Click(sender As Object, e As RoutedEventArgs) Handles BtnDelete.Click
-            If _selectedId = 0 Then Return
-            If Not AlertUtil.Confirm($"Delete the '{_selectedCategory}' category?", "Delete Category", ViewHelpers.Owner(Me)) Then Return
+        Private Sub BtnCloseInspectModal_Click(sender As Object, e As RoutedEventArgs)
+            InspectRuleModal.Visibility = Visibility.Collapsed
+            DgPricingRules.SelectedItem = Nothing
+        End Sub
 
-            Try
-                Dim problem = RateRepository.Delete(_selectedId, _selectedCategory)
-                If problem IsNot Nothing Then
-                    AlertUtil.ShowWarning(problem, "Rate Management", ViewHelpers.Owner(Me))
-                    Return
-                End If
-                LoadRates()
-                ClearForm()
-            Catch ex As Exception
-                AlertUtil.ShowError($"Could not delete the category: {ex.Message}", "Rate Management", ViewHelpers.Owner(Me))
-            End Try
+        Private Sub BtnSaveInspectRule_Click(sender As Object, e As RoutedEventArgs)
+            If _selectedRule Is Nothing Then Return
+
+            Dim name = TxtInspectRuleName.Text.Trim()
+            Dim cat = TxtInspectCategory.Text.Trim()
+            Dim mult = TxtInspectMultiplier.Text.Trim()
+            Dim method = TxtInspectMethod.Text.Trim()
+            Dim dates = TxtInspectDates.Text.Trim()
+            Dim isActive = ChkInspectActive.IsChecked.GetValueOrDefault(True)
+
+            If String.IsNullOrWhiteSpace(name) Then
+                AlertUtil.ShowWarning("Rule name cannot be blank.", "Save Rule", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If Not AlertUtil.Confirm($"Are you sure you want to save changes to rule '{_selectedRule.RuleId}'?", "Save Rule", ViewHelpers.Owner(Me)) Then
+                Return
+            End If
+
+            RateRepository.UpdatePricingRule(_selectedRule.RuleId, name, cat, method, mult, dates, isActive)
+            InspectRuleModal.Visibility = Visibility.Collapsed
+            DgPricingRules.SelectedItem = Nothing
+            AlertUtil.ShowSuccess($"Rule '{_selectedRule.RuleId}' updated successfully.", "Save Rule", ViewHelpers.Owner(Me))
+            LoadPricingRules()
+        End Sub
+
+        Private Sub ModalBackdrop_MouseDown(sender As Object, e As MouseButtonEventArgs)
+            EditTiersModal.Visibility = Visibility.Collapsed
+            CreateRuleModal.Visibility = Visibility.Collapsed
+            InspectRuleModal.Visibility = Visibility.Collapsed
+            DgPricingRules.SelectedItem = Nothing
         End Sub
     End Class
 End Namespace

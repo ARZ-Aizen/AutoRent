@@ -4,79 +4,377 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="720" d:DesignWidth="1100"
+             d:DesignHeight="900" d:DesignWidth="1180"
              FontFamily="Manrope, Segoe UI">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/AutoRent;component/Presentation/UI/AdminStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="TableHeaderStyle" TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#FAF9F8"/>
+                <Setter Property="Foreground" Value="#7A746D"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="BorderBrush" Value="#E8E5E1"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+
+            <Style x:Key="TableCellStyle" TargetType="DataGridCell">
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DataGridCell">
+                            <Border Background="{TemplateBinding Background}" BorderThickness="0" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#FBF4F5"/>
+                        <Setter Property="Foreground" Value="#2B2927"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="28">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid Background="#F7F6F4">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="28,24,28,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,18">
-            <TextBlock Text="Rate Management" Style="{StaticResource PageTitle}"/>
-            <TextBlock Text="Set prices per vehicle category. Every vehicle in a category uses that category's rates." Style="{StaticResource PageSubtitle}"/>
-        </StackPanel>
+                <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
+                    <StackPanel DockPanel.Dock="Left">
+                        <TextBlock Text="Rate Management" Style="{StaticResource PageTitle}"/>
+                        <TextBlock Text="Set prices per vehicle category. Every vehicle in a category uses that category's rates." Style="{StaticResource PageSubtitle}"/>
+                    </StackPanel>
 
-        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,16">
-            <StackPanel>
-                <WrapPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtCategory" Width="150" MaxLength="30"/>
+                    <Button x:Name="BtnCreateRule" DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}"
+                            VerticalAlignment="Center" Click="BtnCreateRule_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Create rate rule" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </DockPanel>
+
+                <Grid Grid.Row="1" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="18"/>
+                        <ColumnDefinition Width="380"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False" Margin="0,0,0,14">
+                                <TextBlock Text="Base rate tiers · USD" FontWeight="SemiBold" FontSize="14.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                <Button x:Name="BtnEditTiers" DockPanel.Dock="Right" Content="Edit tiers" Style="{StaticResource OutlineButton}"
+                                        Height="30" Padding="14,0" FontSize="12.5" Click="BtnEditTiers_Click"/>
+                            </DockPanel>
+
+                            <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8">
+                                <DataGrid x:Name="DgRateTiers" AutoGenerateColumns="False" IsReadOnly="True"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          HorizontalGridLinesBrush="#F0EEEB" Background="White" RowBackground="White"
+                                          BorderThickness="0" RowHeight="42" SelectionMode="Single"
+                                          ColumnHeaderStyle="{StaticResource TableHeaderStyle}"
+                                          CellStyle="{StaticResource TableCellStyle}"
+                                          SelectionChanged="DgRateTiers_SelectionChanged">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Category" Width="1.1*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Category}" FontWeight="Bold" Foreground="#70000F" FontSize="12.5"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Daily" Binding="{Binding DisplayDaily}" Width="0.9*"/>
+                                        <DataGridTextColumn Header="Weekly · 7 days" Binding="{Binding DisplayWeekly}" Width="1.2*"/>
+                                        <DataGridTextColumn Header="Monthly · 30 days" Binding="{Binding DisplayMonthly}" Width="1.3*"/>
+                                        <DataGridTextColumn Header="Vehicle override" Binding="{Binding VehicleOverride}" Width="1.5*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <TextBlock Text="Vehicle override replaces category base. VH-0004 $520/day · VH-0184 $480/day. Weekly and monthly tiers replace, not stack with, daily pricing."
+                                       FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,12,0,0" LineHeight="16"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Booking rate preview" FontWeight="SemiBold" FontSize="14.5" Foreground="#2B2927"/>
+                            <TextBlock x:Name="TxtPreviewSubtitle" Text="Sedan · 17-19 Oct 2026 · 2 weekend days" FontSize="11.5" Foreground="#7A746D" Margin="0,3,0,16"/>
+
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock x:Name="TxtPreviewBaseLabel" Text="Base · 2 × $450" FontSize="12.5" Foreground="#4A4642"/>
+                                <TextBlock x:Name="TxtPreviewBaseVal" Text="$900.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock x:Name="TxtPreviewUpliftLabel" Text="Weekend uplift · ×1.15" FontSize="12.5" Foreground="#4A4642"/>
+                                <TextBlock x:Name="TxtPreviewUpliftVal" Text="+$135.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,14">
+                                <TextBlock Text="Child seat · 2 × $15" FontSize="12.5" Foreground="#4A4642"/>
+                                <TextBlock Text="+$30.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Border BorderBrush="#E8E5E1" BorderThickness="0,1,0,0" Margin="0,0,0,12"/>
+
+                            <Grid Margin="0,0,0,14">
+                                <TextBlock Text="Eligible booking total" FontSize="12.5" Foreground="#4A4642" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtPreviewTotalVal" Text="$1,065.00" FontSize="15" FontWeight="Bold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <TextBlock Text="Vehicle override → duration tier → holiday OR weekend → fees → approved discount. No multiplier stacking."
+                                       FontSize="10.5" Foreground="#B3261E" TextWrapping="Wrap" LineHeight="15"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,18">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,14">
+                            <StackPanel DockPanel.Dock="Left">
+                                <TextBlock Text="Pricing rules" FontWeight="SemiBold" FontSize="14.5" Foreground="#2B2927"/>
+                                <TextBlock Text="Effective dates in branch timezone · select a rule to inspect or amend" FontSize="11.5" Foreground="#7A746D" Margin="0,3,0,0"/>
+                            </StackPanel>
+
+                            <Border DockPanel.Dock="Right" Background="#FFF2F2" BorderBrush="#FFD6D6" BorderThickness="1" CornerRadius="4" Padding="10,4" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtRulesSummary" Text="8 active / 1 inactive" FontSize="11.5" FontWeight="SemiBold" Foreground="#B3261E"/>
+                            </Border>
+                        </DockPanel>
+
+                        <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8">
+                            <DataGrid x:Name="DgPricingRules" AutoGenerateColumns="False" IsReadOnly="True"
+                                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#F0EEEB" Background="White" RowBackground="White"
+                                      BorderThickness="0" RowHeight="42" SelectionMode="Single"
+                                      ColumnHeaderStyle="{StaticResource TableHeaderStyle}"
+                                      CellStyle="{StaticResource TableCellStyle}"
+                                      SelectionChanged="DgPricingRules_SelectionChanged">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Rule name" Width="1.5*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding DisplayTitle}" FontWeight="Bold" Foreground="#70000F" FontSize="12.5"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="0.7*"/>
+                                    <DataGridTextColumn Header="Effective start / end" Binding="{Binding EffectiveDates}" Width="1.3*"/>
+                                    <DataGridTextColumn Header="Calculation method" Binding="{Binding CalculationMethod}" Width="1.7*"/>
+                                    <DataGridTextColumn Header="Rate / multiplier" Binding="{Binding RateMultiplier}" Width="1.1*"/>
+
+                                    <DataGridTemplateColumn Header="Status" Width="0.9*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4" Padding="8,2" HorizontalAlignment="Left">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#F1F3F4"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                    <Setter Property="Background" Value="#E6F4EA"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#5F6368"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#137333"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="Last modified by / time" Binding="{Binding LastModified}" Width="1.7*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="DAILY RATE" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtDaily" Width="110"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="WEEKLY RATE" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtWeekly" Width="110" ToolTip="Leave blank to use 6 x the daily rate"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="MONTHLY RATE" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtMonthly" Width="110" ToolTip="Leave blank to use 22 x the daily rate"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="DEPOSIT" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtDeposit" Width="110"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="LATE FEE / DAY" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtLateFee" Width="110"/>
-                    </StackPanel>
-                </WrapPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <Button x:Name="BtnAdd" Content="Add Category" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
-                    <Button x:Name="BtnSave" Content="Save Changes" Style="{StaticResource OutlineButton}" Margin="0,0,8,0" IsEnabled="False"/>
-                    <Button x:Name="BtnClear" Content="Clear" Style="{StaticResource OutlineButton}" Margin="0,0,8,0"/>
-                    <Button x:Name="BtnDelete" Content="Delete" Style="{StaticResource DangerButton}" IsEnabled="False"/>
+                </Border>
+
+                <StackPanel Grid.Row="3" Margin="0,0,0,16">
+                    <TextBlock Text="Finalized contracts are protected" FontWeight="SemiBold" Foreground="#5F6368" FontSize="12.5"/>
+                    <TextBlock Text="Rate updates apply to new eligible bookings only. Equal-priority date overlaps are rejected; holiday pricing takes precedence over weekend pricing. Every update records old/new values, approver and effective time."
+                               FontSize="11.5" Foreground="#7A746D" TextWrapping="Wrap" LineHeight="18" Margin="0,4,0,0"/>
                 </StackPanel>
-            </StackPanel>
-        </Border>
+            </Grid>
+        </ScrollViewer>
 
-        <TextBlock Grid.Row="2" Text="Price List" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
+        <Grid x:Name="EditTiersModal" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                    Width="520" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Edit Base Rate Tier" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                    <TextBlock Text="Update base pricing rates for this vehicle category" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
 
-        <DataGrid x:Name="DgRates" Grid.Row="3">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Category" Binding="{Binding category}" Width="1.2*"/>
-                <DataGridTextColumn Header="Daily" Binding="{Binding daily_rate, StringFormat=N2}"/>
-                <DataGridTextColumn Header="Weekly" Binding="{Binding weekly_rate, StringFormat=N2}"/>
-                <DataGridTextColumn Header="Monthly" Binding="{Binding monthly_rate, StringFormat=N2}"/>
-                <DataGridTextColumn Header="Deposit" Binding="{Binding deposit, StringFormat=N2}"/>
-                <DataGridTextColumn Header="Late Fee / Day" Binding="{Binding late_fee_per_day, StringFormat=N2}"/>
-                <DataGridTextColumn Header="Vehicles" Binding="{Binding vehicle_count}" Width="0.7*"/>
-                <DataGridTextColumn Header="Updated" Binding="{Binding updated_at, StringFormat='MMM dd, yyyy'}"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtModalCategory" Height="36" Margin="0,0,0,12" IsReadOnly="True" Background="#FAF9F8"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="DAILY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalDaily" Height="36"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="WEEKLY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalWeekly" Height="36"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="MONTHLY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalMonthly" Height="36"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="DEPOSIT ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalDeposit" Height="36"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="LATE FEE / DAY ($)" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtModalLateFee" Height="36"/>
+                    </StackPanel>
+
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
+                                Width="90" Click="BtnCloseTiersModal_Click"/>
+                        <Button DockPanel.Dock="Right" Content="Save Changes" Style="{StaticResource PrimaryButton}"
+                                Width="120" Click="BtnSaveTiers_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="CreateRuleModal" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                    Width="520" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Create Rate Rule" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                    <TextBlock Text="Configure pricing adjustment, multiplier, or add-on fee" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
+
+                    <TextBlock Text="RULE ID &amp; NAME" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtNewRuleName" Height="36" Margin="0,0,0,12"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbNewRuleCategory" Height="36"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="RATE / MULTIPLIER" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtNewRuleMultiplier" Height="36"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="CALCULATION METHOD" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtNewRuleMethod" Height="36" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="EFFECTIVE DATES" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtNewRuleDates" Height="36" Margin="0,0,0,12"/>
+
+                    <CheckBox x:Name="ChkNewRuleActive" Content="Rule is currently active" IsChecked="True"
+                              FontSize="12.5" Margin="0,0,0,20"/>
+
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
+                                Width="90" Click="BtnCloseRuleModal_Click"/>
+                        <Button DockPanel.Dock="Right" Content="Create Rule" Style="{StaticResource PrimaryButton}"
+                                Width="120" Click="BtnSaveNewRule_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="InspectRuleModal" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                    Width="520" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock x:Name="TxtInspectTitle" Text="Rule Details" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                    <TextBlock x:Name="TxtInspectSubtitle" Text="Inspect and modify pricing calculation rule" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
+
+                    <TextBlock Text="RULE NAME" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtInspectRuleName" Height="36" Margin="0,0,0,12"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtInspectCategory" Height="36"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="RATE / MULTIPLIER" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtInspectMultiplier" Height="36"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="CALCULATION METHOD" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtInspectMethod" Height="36" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="EFFECTIVE DATES" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TxtInspectDates" Height="36" Margin="0,0,0,12"/>
+
+                    <CheckBox x:Name="ChkInspectActive" Content="Rule is currently active"
+                              FontSize="12.5" Margin="0,0,0,20"/>
+
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="Close" Style="{StaticResource OutlineButton}"
+                                Width="90" Click="BtnCloseInspectModal_Click"/>
+                        <Button DockPanel.Dock="Right" Content="Save Changes" Style="{StaticResource PrimaryButton}"
+                                Width="120" Click="BtnSaveInspectRule_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

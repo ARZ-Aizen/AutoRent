@@ -1,10 +1,106 @@
-﻿Imports System.Data
+Imports System.Collections.Generic
+Imports System.Data
+Imports System.Linq
 Imports AutoRent.Data.Context
+Imports AutoRent.Data.Models
 
 Namespace Data.Repositories
     Public NotInheritable Class RateRepository
         Private Sub New()
         End Sub
+
+        Private Shared ReadOnly _rules As New List(Of PricingRule) From {
+            New PricingRule With {
+                .RuleId = "RR-001",
+                .RuleName = "Standard daily",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "Category / vehicle base",
+                .RateMultiplier = "Per day",
+                .IsActive = True,
+                .LastModified = "Alex Morgan · 01 Jan, 09:00"
+            },
+            New PricingRule With {
+                .RuleId = "RR-004",
+                .RuleName = "Weekend uplift",
+                .Category = "All",
+                .EffectiveDates = "01 Oct / 31 Dec 2026",
+                .CalculationMethod = "Fri-Sun · base multiplier",
+                .RateMultiplier = "×1.15",
+                .IsActive = True,
+                .LastModified = "Priya Shah · 14 Oct, 15:18"
+            },
+            New PricingRule With {
+                .RuleId = "RR-005",
+                .RuleName = "Holiday pricing",
+                .Category = "All",
+                .EffectiveDates = "24 Dec / 31 Dec 2026",
+                .CalculationMethod = "Holiday overrides weekend",
+                .RateMultiplier = "×1.25",
+                .IsActive = True,
+                .LastModified = "Priya Shah · 12 Oct, 10:00"
+            },
+            New PricingRule With {
+                .RuleId = "RR-006",
+                .RuleName = "Overtime",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "After 60-min grace / hour",
+                .RateMultiplier = "Daily ÷ 8",
+                .IsActive = True,
+                .LastModified = "Alex Morgan · 01 Jan, 09:10"
+            },
+            New PricingRule With {
+                .RuleId = "RR-007",
+                .RuleName = "Late return",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "After 8h · replaces overtime",
+                .RateMultiplier = "1 daily rate",
+                .IsActive = True,
+                .LastModified = "Alex Morgan · 01 Jan, 09:15"
+            },
+            New PricingRule With {
+                .RuleId = "RR-008",
+                .RuleName = "Extra mileage",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "Above 200 km / day",
+                .RateMultiplier = "$0.75 / km",
+                .IsActive = True,
+                .LastModified = "Priya Shah · 03 Oct, 11:30"
+            },
+            New PricingRule With {
+                .RuleId = "RR-009",
+                .RuleName = "Refueling",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "Actual fuel + service fee",
+                .RateMultiplier = "$25 + fuel",
+                .IsActive = True,
+                .LastModified = "Priya Shah · 03 Oct, 11:35"
+            },
+            New PricingRule With {
+                .RuleId = "RR-010",
+                .RuleName = "Child seat",
+                .Category = "All",
+                .EffectiveDates = "01 Jan 2026 / Ongoing",
+                .CalculationMethod = "Equipment / day",
+                .RateMultiplier = "$15 / day",
+                .IsActive = True,
+                .LastModified = "Priya Shah · 03 Oct, 11:40"
+            },
+            New PricingRule With {
+                .RuleId = "RR-011",
+                .RuleName = "Manager discount",
+                .Category = "All",
+                .EffectiveDates = "01 Oct / 31 Dec 2026",
+                .CalculationMethod = "Authorized percentage",
+                .RateMultiplier = "Up to 10%",
+                .IsActive = False,
+                .LastModified = "Alex Morgan · 10 Oct, 16:00"
+            }
+        }
 
         Public Shared Function GetAll() As DataTable
             Return Db.Query(
@@ -12,6 +108,70 @@ Namespace Data.Repositories
                 "(SELECT COUNT(*) FROM [Vehicles] AS v WHERE v.[category] = r.[category]) AS [vehicle_count] " &
                 "FROM [Rates] AS r ORDER BY r.[daily_rate]")
         End Function
+
+        Public Shared Function GetAllTiers() As List(Of RateTier)
+            Dim list As New List(Of RateTier)()
+            Dim table = Db.Query("SELECT [rate_id], [category], [daily_rate], [weekly_rate], [monthly_rate], [deposit], [late_fee_per_day], [updated_at] FROM [Rates] ORDER BY [daily_rate] DESC")
+
+            For Each row As DataRow In table.Rows
+                Dim cat = Convert.ToString(row("category"))
+                Dim overrideText = "None"
+                If cat.Equals("Sedan", StringComparison.OrdinalIgnoreCase) Then
+                    overrideText = "VH-0001 · $450/day"
+                ElseIf cat.Equals("SUV", StringComparison.OrdinalIgnoreCase) Then
+                    overrideText = "VH-0002 · $320/day"
+                End If
+
+                list.Add(New RateTier With {
+                    .RateId = Convert.ToInt32(row("rate_id")),
+                    .Category = cat,
+                    .DailyRate = If(IsDBNull(row("daily_rate")), 0D, Convert.ToDecimal(row("daily_rate"))),
+                    .WeeklyRate = If(IsDBNull(row("weekly_rate")), 0D, Convert.ToDecimal(row("weekly_rate"))),
+                    .MonthlyRate = If(IsDBNull(row("monthly_rate")), 0D, Convert.ToDecimal(row("monthly_rate"))),
+                    .Deposit = If(IsDBNull(row("deposit")), 0D, Convert.ToDecimal(row("deposit"))),
+                    .LateFeePerDay = If(IsDBNull(row("late_fee_per_day")), 0D, Convert.ToDecimal(row("late_fee_per_day"))),
+                    .VehicleOverride = overrideText,
+                    .UpdatedAt = If(IsDBNull(row("updated_at")), DateTime.Now, Convert.ToDateTime(row("updated_at")))
+                })
+            Next
+
+            Dim orderMap As New Dictionary(Of String, Integer)(StringComparer.OrdinalIgnoreCase) From {
+                {"Sedan", 1},
+                {"SUV", 2},
+                {"Van", 3},
+                {"Pickup", 4}
+            }
+
+            Return list.OrderBy(Function(t) If(orderMap.ContainsKey(t.Category), orderMap(t.Category), 99)).ThenBy(Function(t) t.Category).ToList()
+        End Function
+
+        Public Shared Function GetPricingRules() As List(Of PricingRule)
+            SyncLock _rules
+                Return _rules.ToList()
+            End SyncLock
+        End Function
+
+        Public Shared Sub AddPricingRule(rule As PricingRule)
+            If rule Is Nothing Then Return
+            SyncLock _rules
+                _rules.Add(rule)
+            End SyncLock
+        End Sub
+
+        Public Shared Sub UpdatePricingRule(ruleId As String, ruleName As String, category As String, method As String, multiplier As String, effective As String, isActive As Boolean)
+            SyncLock _rules
+                Dim rule = _rules.FirstOrDefault(Function(r) r.RuleId.Equals(ruleId, StringComparison.OrdinalIgnoreCase))
+                If rule IsNot Nothing Then
+                    rule.RuleName = ruleName
+                    rule.Category = category
+                    rule.CalculationMethod = method
+                    rule.RateMultiplier = multiplier
+                    rule.EffectiveDates = effective
+                    rule.IsActive = isActive
+                    rule.LastModified = $"Admin · {DateTime.Now:dd MMM, HH:mm}"
+                End If
+            End SyncLock
+        End Sub
 
         Public Shared Function GetCategories() As DataTable
             Return Db.Query("SELECT [category] FROM [Rates] ORDER BY [daily_rate]")
