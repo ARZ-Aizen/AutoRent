@@ -67,5 +67,9 @@ Namespace Presentation.Views.User
             TxtInspNotes.Clear()
             ReloadData()
         End Sub
+
+        Private Sub DgInspections_SelectionChanged(sender As Object, e As SelectionChangedEventArgs) Handles DgInspections.SelectionChanged
+
+        End Sub
     End Class
 End Namespace
