@@ -44,11 +44,18 @@ Namespace Presentation.Views.Admin
             }
             CmbStatusFilter.SelectedIndex = 0
 
-            CmbNewRole.ItemsSource = New String() {
-                "Rental Staff",
-                "System Administrator",
-                "Manager"
-            }
+            If UserAdminRepository.AdminExists() Then
+                CmbNewRole.ItemsSource = New String() {
+                    "Rental Staff",
+                    "Manager"
+                }
+            Else
+                CmbNewRole.ItemsSource = New String() {
+                    "Rental Staff",
+                    "System Administrator",
+                    "Manager"
+                }
+            End If
             CmbNewRole.SelectedIndex = 0
 
             CmbEditRole.ItemsSource = New String() {
@@ -161,6 +168,28 @@ Namespace Presentation.Views.Admin
             TxtEditFullName.Text = _selectedUser.FullName
             TxtEditUsername.Text = _selectedUser.Username
 
+            Dim isCurrentAdmin = UserAdminRepository.IsAdminRole(_selectedUser.RoleName) OrElse UserAdminRepository.IsAdminRole(_selectedUser.DisplayRole)
+            If isCurrentAdmin Then
+                CmbEditRole.ItemsSource = New String() {
+                    "System Administrator",
+                    "Manager",
+                    "Rental Staff"
+                }
+            Else
+                If UserAdminRepository.AdminExists() Then
+                    CmbEditRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "Manager"
+                    }
+                Else
+                    CmbEditRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "System Administrator",
+                        "Manager"
+                    }
+                End If
+            End If
+
             Dim currentRole = _selectedUser.RoleName
             Dim roleIndex = CmbEditRole.Items.IndexOf(currentRole)
             If roleIndex >= 0 Then
@@ -213,10 +242,15 @@ Namespace Presentation.Views.Admin
                     Return
                 End If
 
-                If newPassword.Length < UserAdminRepository.MinPasswordLength Then
-                    AlertUtil.ShowWarning($"Password must be at least {UserAdminRepository.MinPasswordLength} characters.", "Edit Account", ViewHelpers.Owner(Me))
+                Dim passErr = UserAdminRepository.ValidatePasswordStrength(newPassword)
+                If passErr IsNot Nothing Then
+                    AlertUtil.ShowWarning(passErr, "Edit Account", ViewHelpers.Owner(Me))
                     Return
                 End If
+            End If
+
+            If Not AlertUtil.Confirm($"Are you sure you want to save changes to the account for '{fullName}'?", "Save Changes", ViewHelpers.Owner(Me)) Then
+                Return
             End If
 
             Try
@@ -260,7 +294,21 @@ Namespace Presentation.Views.Admin
             TxtNewUsername.Clear()
             ClearPasswordField(TxtNewPassword, TxtNewPasswordReveal, EyeIconNewPass)
             ClearPasswordField(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal, EyeIconNewConfirm)
+
+            If UserAdminRepository.AdminExists() Then
+                CmbNewRole.ItemsSource = New String() {
+                    "Rental Staff",
+                    "Manager"
+                }
+            Else
+                CmbNewRole.ItemsSource = New String() {
+                    "Rental Staff",
+                    "System Administrator",
+                    "Manager"
+                }
+            End If
             CmbNewRole.SelectedIndex = 0
+
             CreateUserModal.Visibility = Visibility.Visible
             TxtNewFullName.Focus()
         End Sub
@@ -280,6 +328,11 @@ Namespace Presentation.Views.Admin
             Dim confirmPassword = GetPasswordValue(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal)
             Dim role = TryCast(CmbNewRole.SelectedItem, String)
 
+            If String.IsNullOrWhiteSpace(fullName) Then
+                AlertUtil.ShowWarning("Please specify a full name.", "Create User", ViewHelpers.Owner(Me))
+                Return
+            End If
+
             If String.IsNullOrWhiteSpace(username) Then
                 AlertUtil.ShowWarning("Please specify a username.", "Create User", ViewHelpers.Owner(Me))
                 Return
@@ -295,8 +348,13 @@ Namespace Presentation.Views.Admin
                 Return
             End If
 
-            If password.Length < UserAdminRepository.MinPasswordLength Then
-                AlertUtil.ShowWarning($"Password must be at least {UserAdminRepository.MinPasswordLength} characters.", "Create User", ViewHelpers.Owner(Me))
+            Dim passErr = UserAdminRepository.ValidatePasswordStrength(password)
+            If passErr IsNot Nothing Then
+                AlertUtil.ShowWarning(passErr, "Create User", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If Not AlertUtil.Confirm($"Are you sure you want to create a new staff account for '{fullName}' ({username}) with role '{role}'?", "Create Account", ViewHelpers.Owner(Me)) Then
                 Return
             End If
 
@@ -432,6 +490,14 @@ Namespace Presentation.Views.Admin
 
             Dim userId As Integer
             If Not Integer.TryParse(btn.Tag.ToString(), userId) Then Return
+
+            Dim archivedList = TryCast(DgArchivedStaff.ItemsSource, List(Of Global.AutoRent.Data.Models.User))
+            Dim user = If(archivedList IsNot Nothing, archivedList.FirstOrDefault(Function(u) u.UserId = userId), Nothing)
+            Dim targetName = If(user IsNot Nothing, $"{user.DisplayName} ({user.UserCode})", "this account")
+
+            If Not AlertUtil.Confirm($"Are you sure you want to restore {targetName} to the staff directory?", "Restore Account", ViewHelpers.Owner(Me)) Then
+                Return
+            End If
 
             Try
                 Dim problem = UserAdminRepository.Restore(userId)

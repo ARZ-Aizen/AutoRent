@@ -445,7 +445,7 @@
                     </Border>
 
                     <TextBlock Text="CONFIRM PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,20">
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -463,6 +463,8 @@
                             </Button>
                         </Grid>
                     </Border>
+                    <TextBlock Text="Must be at least 8 characters with uppercase, lowercase, number, and special character."
+                               FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,0,0,18"/>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
@@ -514,7 +516,7 @@
                     </Border>
 
                     <TextBlock Text="CONFIRM NEW PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,20">
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -532,6 +534,8 @@
                             </Button>
                         </Grid>
                     </Border>
+                    <TextBlock Text="Leave blank to keep current password. Must be at least 8 characters with uppercase, lowercase, number, and special character."
+                               FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,0,0,18"/>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
@@ -546,7 +550,7 @@
         <Grid x:Name="ArchivedUsersModal" Visibility="Collapsed" Panel.ZIndex="100">
             <Border Background="#66000000" MouseDown="ArchivedModalBackdrop_MouseDown"/>
             <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
-                    Width="680" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    Width="840" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
                     <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="Archived Staff Accounts" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
@@ -567,14 +571,14 @@
                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="User ID" Binding="{Binding user_code}" Width="110"/>
+                                <DataGridTextColumn Header="User ID" Binding="{Binding user_code}" Width="95"/>
                                 <DataGridTextColumn Header="Full Name" Binding="{Binding full_name}" Width="*"/>
-                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="110"/>
-                                <DataGridTextColumn Header="Role" Binding="{Binding display_role}" Width="140"/>
-                                <DataGridTemplateColumn Header="Actions" Width="180">
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="115"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding display_role}" Width="130"/>
+                                <DataGridTemplateColumn Header="Actions" Width="185">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                 <Button Style="{StaticResource OutlineButton}" Height="28" Padding="10,0"
                                                         Margin="0,0,8,0" Tag="{Binding UserId}" Click="BtnRestoreUser_Click">
                                                     <StackPanel Orientation="Horizontal">

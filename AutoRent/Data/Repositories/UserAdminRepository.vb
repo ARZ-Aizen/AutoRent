@@ -1,5 +1,6 @@
 Imports System.Collections.Generic
 Imports System.Data
+Imports System.Linq
 Imports System.Security.Cryptography
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
@@ -17,7 +18,7 @@ Namespace Data.Repositories
                 Dim count = Db.Count("SELECT COUNT(*) FROM [Users] WHERE [is_deleted] = False")
                 If count <= 1 Then
                     Dim staffData = {
-                        ("Alex Morgan", "a.morgan", "System Administrator", "HQ", True, DateTime.Now.AddHours(-10)),
+                        ("Alex Morgan", "a.morgan", "Manager", "HQ", True, DateTime.Now.AddHours(-10)),
                         ("Priya Shah", "p.shah", "Manager", "HQ", True, DateTime.Now.AddHours(-9)),
                         ("Julian Sterling", "j.sterling", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-8)),
                         ("Daniel Reed", "d.reed", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-7)),
@@ -75,6 +76,25 @@ Namespace Data.Repositories
             Return users
         End Function
 
+        Public Shared Function ValidatePasswordStrength(password As String) As String
+            If String.IsNullOrEmpty(password) Then Return "Password is required."
+            If password.Length < MinPasswordLength Then Return $"Password must be at least {MinPasswordLength} characters long."
+            If Not password.Any(Function(c) Char.IsUpper(c)) Then Return "Password must contain at least one uppercase letter (A-Z)."
+            If Not password.Any(Function(c) Char.IsLower(c)) Then Return "Password must contain at least one lowercase letter (a-z)."
+            If Not password.Any(Function(c) Char.IsDigit(c)) Then Return "Password must contain at least one number (0-9)."
+            If Not password.Any(Function(c) Not Char.IsLetterOrDigit(c)) Then Return "Password must contain at least one special character (e.g. !@#$%^&*)."
+            Return Nothing
+        End Function
+
+        Public Shared Function IsAdminRole(role As String) As Boolean
+            If String.IsNullOrEmpty(role) Then Return False
+            Return role.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0
+        End Function
+
+        Public Shared Function AdminExists() As Boolean
+            Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE ([role] = 'Admin' OR [role] = 'System Administrator') AND [is_deleted] = False") > 0
+        End Function
+
         Public Shared Function Create(username As String, password As String, role As String, fullName As String, branch As String, isActive As Boolean) As String
             username = If(username, "").Trim()
             fullName = If(fullName, "").Trim()
@@ -82,7 +102,14 @@ Namespace Data.Repositories
             role = If(role, "Rental Staff").Trim()
 
             If username.Length < 3 Then Return "Username must be at least 3 characters."
-            If password Is Nothing OrElse password.Length < MinPasswordLength Then Return $"Password must be at least {MinPasswordLength} characters."
+
+            Dim passErr = ValidatePasswordStrength(password)
+            If passErr IsNot Nothing Then Return passErr
+
+            If IsAdminRole(role) AndAlso AdminExists() Then
+                Return "Only one System Administrator is allowed. A System Administrator account already exists."
+            End If
+
             If Db.Count("SELECT COUNT(*) FROM [Users] WHERE [username] = ?", Db.Text(username, 100)) > 0 Then
                 Return $"The username '{username}' is already taken."
             End If
@@ -114,7 +141,8 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function ResetPassword(userId As Integer, newPassword As String) As String
-            If newPassword Is Nothing OrElse newPassword.Length < MinPasswordLength Then Return $"Password must be at least {MinPasswordLength} characters."
+            Dim passErr = ValidatePasswordStrength(newPassword)
+            If passErr IsNot Nothing Then Return passErr
 
             Db.Execute("UPDATE [Users] SET [password_hash] = ? WHERE [user_id] = ? AND [is_deleted] = False",
                        Db.Text(PasswordHasher.HashPassword(newPassword), 255), Db.Int(userId))
@@ -171,6 +199,14 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function Restore(userId As Integer) As String
+            Dim table = Db.Query("SELECT [role] FROM [Users] WHERE [user_id] = ?", Db.Int(userId))
+            If table.Rows.Count > 0 Then
+                Dim roleName = Convert.ToString(table.Rows(0)("role"))
+                If IsAdminRole(roleName) AndAlso AdminExists() Then
+                    Return "Cannot restore this account as System Administrator because another System Administrator already exists."
+                End If
+            End If
+
             Db.Execute("UPDATE [Users] SET [is_deleted] = False, [is_active] = False WHERE [user_id] = ?", Db.Int(userId))
             Return Nothing
         End Function
@@ -191,12 +227,18 @@ Namespace Data.Repositories
             If username.Length < 3 Then Return "Username must be at least 3 characters."
             If String.IsNullOrWhiteSpace(fullName) Then Return "Full name cannot be blank."
 
+            If IsAdminRole(role) AndAlso OtherActiveAdmins(userId) > 0 Then
+                Return "Only one System Administrator is allowed. Another account already holds this role."
+            End If
+
             If Db.Count("SELECT COUNT(*) FROM [Users] WHERE [username] = ? AND [user_id] <> ? AND [is_deleted] = False", Db.Text(username, 100), Db.Int(userId)) > 0 Then
                 Return $"The username '{username}' is already taken."
             End If
 
             If Not String.IsNullOrWhiteSpace(newPassword) Then
-                If newPassword.Length < MinPasswordLength Then Return $"Password must be at least {MinPasswordLength} characters."
+                Dim passErr = ValidatePasswordStrength(newPassword)
+                If passErr IsNot Nothing Then Return passErr
+
                 Db.Execute("UPDATE [Users] SET [full_name] = ?, [username] = ?, [role] = ?, [password_hash] = ? WHERE [user_id] = ? AND [is_deleted] = False",
                            Db.Text(fullName, 100), Db.Text(username, 100), Db.Text(role, 50),
                            Db.Text(PasswordHasher.HashPassword(newPassword), 255), Db.Int(userId))
