@@ -4,115 +4,493 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="720" d:DesignWidth="1100"
-             FontFamily="Manrope, Segoe UI">
+             d:DesignHeight="760"
+             d:DesignWidth="1160"
+             FontFamily="Manrope, Segoe UI"
+             Background="#F8F8F8">
+
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/AutoRent;component/Presentation/UI/AdminStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="DashboardCard" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E6E5E5"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+            </Style>
+
+            <Style x:Key="MetricTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Foreground" Value="#726D71"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            </Style>
+
+            <Style x:Key="MetricValue" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="26"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="#7B1325"/>
+                <Setter Property="Margin" Value="0,5,0,3"/>
+            </Style>
+
+            <Style x:Key="SmallNote" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="Foreground" Value="#8B8588"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="PanelHeading" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="#302D30"/>
+            </Style>
+
+            <Style x:Key="FilterChip" TargetType="Button">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="#6A6268"/>
+                <Setter Property="BorderBrush" Value="#E3DFE0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="13,7"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ChipBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="5"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            </Border>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ChipBorder"
+                                            Property="Opacity"
+                                            Value="0.83"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="28">
-            <StackPanel Margin="0,0,0,20">
-                <TextBlock Text="Home Dashboard" Style="{StaticResource PageTitle}"/>
-                <TextBlock x:Name="TxtDate" Style="{StaticResource PageSubtitle}"/>
-            </StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Auto">
 
-            <UniformGrid Columns="4" Margin="0,0,0,14">
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Total Vehicles" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtTotal" Text="0" Style="{StaticResource StatValue}"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Available Now" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtAvailable" Text="0" Style="{StaticResource StatValue}" Foreground="#2E7D32"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Reserved / Rented" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtOut" Text="0" Style="{StaticResource StatValue}" Foreground="#1565C0"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="In Maintenance" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtMaint" Text="0" Style="{StaticResource StatValue}" Foreground="#E65100"/>
-                    </StackPanel>
-                </Border>
-            </UniformGrid>
+        <StackPanel Margin="24" MinWidth="840">
 
-            <UniformGrid Columns="4" Margin="0,0,0,24">
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Revenue This Month" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtRevenue" Text="0.00" Style="{StaticResource StatValue}" Foreground="#2E7D32"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Maintenance Cost This Month" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtCost" Text="0.00" Style="{StaticResource StatValue}" Foreground="#E65100"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Overdue Maintenance" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtOverdue" Text="0" Style="{StaticResource StatValue}"/>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="Active Users" Style="{StaticResource StatLabel}"/>
-                        <TextBlock x:Name="TxtUsers" Text="0" Style="{StaticResource StatValue}"/>
-                    </StackPanel>
-                </Border>
-            </UniformGrid>
-
-            <Grid Margin="0,0,0,24">
+            <!-- DASHBOARD HEADER -->
+            <Grid Margin="0,0,0,17">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Fleet Status" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel x:Name="StatusBars"/>
-                    </Border>
+                <StackPanel>
+                    <TextBlock Text="Admin Overview Dashboard"
+                               FontSize="23"
+                               FontWeight="Bold"
+                               Foreground="#302D30"/>
+
+                    <TextBlock x:Name="TxtDate"
+                               Foreground="#8B8588"
+                               FontSize="12"
+                               Margin="0,4,0,0"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Upcoming Maintenance" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
-                    <DataGrid x:Name="DgUpcoming" Height="250">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Vehicle" Binding="{Binding vehicle}" Width="1.6*"/>
-                            <DataGridTextColumn Header="Service" Binding="{Binding service_type}" Width="1.2*"/>
-                            <DataGridTextColumn Header="Date" Binding="{Binding scheduled_date, StringFormat='MMM dd'}" Width="0.8*"/>
-                            <DataGridTextColumn Header="Status" Binding="{Binding status}" ElementStyle="{StaticResource StatusText}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
+                <Button x:Name="BtnRefresh"
+                        Grid.Column="1"
+                        Content="↻  Refresh data"
+                        Style="{StaticResource OutlineButton}"
+                        VerticalAlignment="Center"/>
             </Grid>
 
-            <TextBlock Text="Recent Reservations" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
-            <DataGrid x:Name="DgRecent" Height="270">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Customer" Binding="{Binding customer_name}"/>
-                    <DataGridTextColumn Header="Vehicle" Binding="{Binding vehicle}" Width="1.6*"/>
-                    <DataGridTextColumn Header="Pickup" Binding="{Binding pickup_date, StringFormat='MMM dd, yyyy'}"/>
-                    <DataGridTextColumn Header="Return" Binding="{Binding return_date, StringFormat='MMM dd, yyyy'}"/>
-                    <DataGridTextColumn Header="Total" Binding="{Binding total, StringFormat=N2}"/>
-                    <DataGridTextColumn Header="Status" Binding="{Binding status}" ElementStyle="{StaticResource StatusText}"/>
-                </DataGrid.Columns>
-            </DataGrid>
+            <!-- SIX STATISTICS CARDS -->
+            <UniformGrid Columns="6" Margin="0,0,0,12">
+
+                <Border Style="{StaticResource DashboardCard}"
+                        Margin="0,0,9,0"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="Total Fleet Vehicles"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtTotal"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"/>
+                        <TextBlock Text="Registered vehicles"
+                                   Style="{StaticResource SmallNote}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}"
+                        Margin="0,0,9,0"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="Available Vehicles"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtAvailable"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"/>
+                        <TextBlock Text="Ready for rental"
+                                   Style="{StaticResource SmallNote}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}"
+                        Margin="0,0,9,0"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="Currently Rented"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtOut"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"/>
+                        <TextBlock x:Name="TxtReservedNote"
+                                   Style="{StaticResource SmallNote}"
+                                   Text="Reservations tracked separately"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}"
+                        Margin="0,0,9,0"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="In Maintenance"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtMaint"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"/>
+                        <TextBlock x:Name="TxtMaintNote"
+                                   Style="{StaticResource SmallNote}"
+                                   Text="Scheduled servicing"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}"
+                        Margin="0,0,9,0"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="Revenue This Month"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtRevenue"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"
+                                   FontSize="23"/>
+                        <TextBlock Text="Completed rentals"
+                                   Style="{StaticResource SmallNote}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource DashboardCard}"
+                        MinHeight="112">
+                    <StackPanel>
+                        <TextBlock Text="Fleet Utilization"
+                                   Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtUtilization"
+                                   Style="{StaticResource MetricValue}"
+                                   Text="—"/>
+                        <TextBlock Text="Rented / non-retired fleet"
+                                   Style="{StaticResource SmallNote}"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- MAIN DASHBOARD PANELS -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.6*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- REVENUE PERFORMANCE -->
+                <Border Grid.Column="0"
+                        Style="{StaticResource DashboardCard}"
+                        MinHeight="356">
+
+                    <StackPanel>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Revenue performance"
+                                           Style="{StaticResource PanelHeading}"/>
+                                <TextBlock Text="Cumulative completed rental revenue"
+                                           Style="{StaticResource SmallNote}"
+                                           Margin="0,3,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1"
+                                       x:Name="TxtRevenuePeriodLabel"
+                                       Foreground="#7B1325"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Top"/>
+                        </Grid>
+
+                        <!-- TIME FILTERS -->
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,15,0,12">
+
+                            <Button x:Name="BtnToday"
+                                    Content="Today"
+                                    Style="{StaticResource FilterChip}"
+                                    Margin="0,0,7,0"/>
+
+                            <Button x:Name="BtnWeek"
+                                    Content="Last 7 Days"
+                                    Style="{StaticResource FilterChip}"
+                                    Margin="0,0,7,0"/>
+
+                            <Button x:Name="BtnMonth"
+                                    Content="Last 30 Days"
+                                    Style="{StaticResource FilterChip}"/>
+                        </StackPanel>
+
+                        <!-- LIVE REVENUE CHART -->
+                        <Canvas x:Name="RevenueCanvas"
+                                Height="196"
+                                ClipToBounds="True"/>
+
+                        <Border BorderBrush="#EEEAEA"
+                                BorderThickness="0,1,0,0"
+                                Padding="0,9,0,0">
+
+                            <TextBlock x:Name="TxtRevenuePeriodTotal"
+                                       FontSize="12"
+                                       Foreground="#5E585C"/>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- FLEET READINESS -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource DashboardCard}"
+                        MinHeight="356">
+
+                    <StackPanel>
+
+                        <TextBlock Text="Fleet readiness"
+                                   Style="{StaticResource PanelHeading}"/>
+
+                        <TextBlock x:Name="TxtFleetSummary"
+                                   Style="{StaticResource SmallNote}"
+                                   Margin="0,3,0,14"/>
+
+                        <!-- STATUS DISTRIBUTION BAR -->
+                        <Border Height="13"
+                                CornerRadius="4"
+                                ClipToBounds="True"
+                                Background="#F0EEEE"
+                                Margin="0,0,0,14">
+
+                            <Grid x:Name="StatusBar"/>
+                        </Border>
+
+                        <!-- STATUS COUNTS -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock x:Name="TxtFleetAvailable"
+                                       Grid.Row="0"
+                                       Grid.Column="0"
+                                       FontSize="11"
+                                       Foreground="#347353"
+                                       Margin="0,0,0,5"/>
+
+                            <TextBlock x:Name="TxtFleetRented"
+                                       Grid.Row="0"
+                                       Grid.Column="1"
+                                       FontSize="11"
+                                       Foreground="#7B1325"
+                                       Margin="0,0,0,5"/>
+
+                            <TextBlock x:Name="TxtFleetReserved"
+                                       Grid.Row="1"
+                                       Grid.Column="0"
+                                       FontSize="11"
+                                       Foreground="#B07C35"/>
+
+                            <TextBlock x:Name="TxtFleetMaintenance"
+                                       Grid.Row="1"
+                                       Grid.Column="1"
+                                       FontSize="11"
+                                       Foreground="#7A7880"/>
+                        </Grid>
+
+                        <!-- CATEGORY TABLE -->
+                        <TextBlock Text="Category breakdown"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#302D30"
+                                   Margin="0,0,0,7"/>
+
+                        <DataGrid x:Name="DgCategories"
+                                  Height="166"
+                                  RowHeight="30"
+                                  FontSize="11"
+                                  BorderThickness="0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Category"
+                                                    Binding="{Binding category}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Total"
+                                                    Binding="{Binding total}"
+                                                    Width="0.7*"/>
+                                <DataGridTextColumn Header="Rented"
+                                                    Binding="{Binding rented}"
+                                                    Width="0.8*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- RECENT RESERVATIONS -->
+            <Border Style="{StaticResource DashboardCard}"
+                    Margin="0,0,0,12">
+
+                <StackPanel>
+
+                    <TextBlock Text="Recent reservations"
+                               Style="{StaticResource PanelHeading}"/>
+
+                    <TextBlock Text="Latest records from your rental system"
+                               Style="{StaticResource SmallNote}"
+                               Margin="0,3,0,12"/>
+
+                    <DataGrid x:Name="DgRecent"
+                              Height="245"
+                              RowHeight="39"
+                              BorderThickness="0">
+
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="Customer"
+                                                Binding="{Binding customer_name}"
+                                                Width="1.15*"/>
+
+                            <DataGridTextColumn Header="Vehicle"
+                                                Binding="{Binding vehicle}"
+                                                Width="1.7*"/>
+
+                            <DataGridTextColumn Header="Pickup"
+                                                Binding="{Binding pickup_date, StringFormat='MMM dd, yyyy'}"
+                                                Width="1*"/>
+
+                            <DataGridTextColumn Header="Return"
+                                                Binding="{Binding return_date, StringFormat='MMM dd, yyyy'}"
+                                                Width="1*"/>
+
+                            <DataGridTextColumn Header="Total"
+                                                Binding="{Binding total, StringFormat=N2}"
+                                                Width="0.85*"/>
+
+                            <DataGridTextColumn Header="Status"
+                                                Binding="{Binding status}"
+                                                ElementStyle="{StaticResource StatusText}"
+                                                Width="0.8*"/>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- UPCOMING MAINTENANCE -->
+            <Border Style="{StaticResource DashboardCard}">
+                <StackPanel>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Upcoming maintenance"
+                                       Style="{StaticResource PanelHeading}"/>
+
+                            <TextBlock Text="Next scheduled vehicle services"
+                                       Style="{StaticResource SmallNote}"
+                                       Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                    HorizontalAlignment="Right">
+
+                            <TextBlock x:Name="TxtCost"
+                                       FontSize="12"
+                                       Foreground="#5E585C"
+                                       TextAlignment="Right"/>
+
+                            <TextBlock x:Name="TxtOverdue"
+                                       FontSize="11"
+                                       Foreground="#7B1325"
+                                       TextAlignment="Right"/>
+
+                            <TextBlock x:Name="TxtUsers"
+                                       FontSize="11"
+                                       Foreground="#8B8588"
+                                       TextAlignment="Right"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <DataGrid x:Name="DgUpcoming"
+                              Height="224"
+                              RowHeight="38"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="Vehicle"
+                                                Binding="{Binding vehicle}"
+                                                Width="1.6*"/>
+
+                            <DataGridTextColumn Header="Service"
+                                                Binding="{Binding service_type}"
+                                                Width="1.5*"/>
+
+                            <DataGridTextColumn Header="Scheduled"
+                                                Binding="{Binding scheduled_date, StringFormat='MMM dd, yyyy'}"
+                                                Width="1*"/>
+
+                            <DataGridTextColumn Header="Status"
+                                                Binding="{Binding status}"
+                                                ElementStyle="{StaticResource StatusText}"
+                                                Width="0.8*"/>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
+
 </UserControl>

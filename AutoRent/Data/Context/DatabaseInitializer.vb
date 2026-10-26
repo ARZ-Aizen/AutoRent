@@ -33,8 +33,14 @@ Namespace Data.Context
                         "[model_year] LONG, " &
                         "[mileage] LONG, " &
                         "[status] VARCHAR(20), " &
+                        "[image_path] VARCHAR(255), " &
                         "[created_at] DATETIME)")
                     Run(connection, "CREATE UNIQUE INDEX [UX_Vehicles_Plate] ON [Vehicles] ([plate])")
+                End If
+
+                ' Upgrade older databases without deleting any vehicle records.
+                If Not ColumnExists(connection, "Vehicles", "image_path") Then
+                    Run(connection, "ALTER TABLE [Vehicles] ADD COLUMN [image_path] VARCHAR(255)")
                 End If
 
                 If Not TableExists(connection, "Maintenance") Then
