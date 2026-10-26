@@ -131,9 +131,55 @@ Namespace Data.Repositories
 
         Public Shared Function Archive(userId As Integer, actingUserId As Integer) As String
             If userId = actingUserId Then Return "You can't archive your own account."
-            If OtherActiveAdmins(userId) = 0 AndAlso IsActiveAdmin(userId) Then Return "At least one active Admin must remain."
+            If OtherActiveAdmins(userId) = 0 AndAlso IsActiveAdmin(userId) Then Return "At least one administrator must remain."
 
             Db.Execute("UPDATE [Users] SET [is_deleted] = True, [is_active] = False WHERE [user_id] = ?", Db.Int(userId))
+            Return Nothing
+        End Function
+
+        Public Shared Function GetArchived() As List(Of User)
+            Dim users As New List(Of User)()
+            Dim table = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = True ORDER BY [user_id]")
+
+            For Each row As DataRow In table.Rows
+                Dim userId = Convert.ToInt32(row("user_id"))
+                Dim username = Convert.ToString(row("username"))
+                Dim fullName = If(table.Columns.Contains("full_name") AndAlso Not IsDBNull(row("full_name")), Convert.ToString(row("full_name")), username)
+                Dim branch = If(table.Columns.Contains("branch") AndAlso Not IsDBNull(row("branch")), Convert.ToString(row("branch")), "HQ")
+                Dim roleName = Convert.ToString(row("role"))
+                Dim isActive = Convert.ToBoolean(row("is_active"))
+                Dim isDeleted = Convert.ToBoolean(row("is_deleted"))
+                Dim lastLogin = If(IsDBNull(row("last_login")), CType(Nothing, DateTime?), Convert.ToDateTime(row("last_login")))
+                Dim createdAt = If(IsDBNull(row("created_at")), DateTime.Now, Convert.ToDateTime(row("created_at")))
+                Dim userRole As Global.AutoRent.Data.Models.UserRole = If(roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0, Global.AutoRent.Data.Models.UserRole.Admin, Global.AutoRent.Data.Models.UserRole.User)
+
+                users.Add(New Global.AutoRent.Data.Models.User With {
+                    .UserId = userId,
+                    .Username = username,
+                    .FullName = fullName,
+                    .Branch = branch,
+                    .Role = userRole,
+                    .RoleName = roleName,
+                    .IsActive = isActive,
+                    .IsDeleted = isDeleted,
+                    .LastLogin = lastLogin,
+                    .CreatedAt = createdAt
+                })
+            Next
+
+            Return users
+        End Function
+
+        Public Shared Function Restore(userId As Integer) As String
+            Db.Execute("UPDATE [Users] SET [is_deleted] = False, [is_active] = False WHERE [user_id] = ?", Db.Int(userId))
+            Return Nothing
+        End Function
+
+        Public Shared Function PermanentDelete(userId As Integer, actingUserId As Integer) As String
+            If userId = actingUserId Then Return "You cannot delete your own account."
+            If OtherActiveAdmins(userId) = 0 AndAlso IsActiveAdmin(userId) Then Return "At least one administrator must remain."
+
+            Db.Execute("DELETE FROM [Users] WHERE [user_id] = ?", Db.Int(userId))
             Return Nothing
         End Function
 
@@ -200,11 +246,11 @@ Namespace Data.Repositories
         End Function
 
         Private Shared Function OtherActiveAdmins(excludeUserId As Integer) As Integer
-            Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE [role] = 'Admin' AND [is_active] = True AND [is_deleted] = False AND [user_id] <> ?", Db.Int(excludeUserId))
+            Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE ([role] = 'Admin' OR [role] = 'System Administrator') AND [is_deleted] = False AND [user_id] <> ?", Db.Int(excludeUserId))
         End Function
 
         Private Shared Function IsActiveAdmin(userId As Integer) As Boolean
-            Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE [user_id] = ? AND [role] = 'Admin' AND [is_active] = True AND [is_deleted] = False", Db.Int(userId)) > 0
+            Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE [user_id] = ? AND ([role] = 'Admin' OR [role] = 'System Administrator') AND [is_deleted] = False", Db.Int(userId)) > 0
         End Function
     End Class
 End Namespace

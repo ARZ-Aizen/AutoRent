@@ -60,12 +60,14 @@ Namespace Presentation.Views.Admin
 
             _ready = True
             LoadUsers()
+            UpdateArchivedBadge()
         End Sub
 
         Private Sub LoadUsers(Optional selectUserId As Integer = 0)
             Try
                 _allUsers = UserAdminRepository.GetAll()
                 ApplyFilter(selectUserId)
+                UpdateArchivedBadge()
             Catch ex As Exception
                 AlertUtil.ShowError($"Could not load users: {ex.Message}", "User Management", ViewHelpers.Owner(Me))
             End Try
@@ -382,6 +384,98 @@ Namespace Presentation.Views.Admin
             If revealBox.Visibility = Visibility.Visible Then
                 passBox.Password = revealBox.Text
             End If
+        End Sub
+
+        Private Sub UpdateArchivedBadge()
+            Try
+                Dim archived = UserAdminRepository.GetArchived()
+                TxtArchivedButtonLabel.Text = If(archived.Count > 0, $"Archived ({archived.Count})", "Archived")
+            Catch ex As Exception
+            End Try
+        End Sub
+
+        Private Sub BtnViewArchived_Click(sender As Object, e As RoutedEventArgs)
+            LoadArchivedUsers()
+            ArchivedUsersModal.Visibility = Visibility.Visible
+        End Sub
+
+        Private Sub BtnCloseArchivedModal_Click(sender As Object, e As RoutedEventArgs)
+            ArchivedUsersModal.Visibility = Visibility.Collapsed
+        End Sub
+
+        Private Sub ArchivedModalBackdrop_MouseDown(sender As Object, e As MouseButtonEventArgs)
+            ArchivedUsersModal.Visibility = Visibility.Collapsed
+        End Sub
+
+        Private Sub LoadArchivedUsers()
+            Try
+                Dim archived = UserAdminRepository.GetArchived()
+                DgArchivedStaff.ItemsSource = archived
+                TxtArchivedCount.Text = $"{archived.Count} archived account" & If(archived.Count = 1, "", "s")
+                TxtArchivedButtonLabel.Text = If(archived.Count > 0, $"Archived ({archived.Count})", "Archived")
+
+                If archived.Count = 0 Then
+                    TxtNoArchivedUsers.Visibility = Visibility.Visible
+                    BorderArchivedTable.Visibility = Visibility.Collapsed
+                Else
+                    TxtNoArchivedUsers.Visibility = Visibility.Collapsed
+                    BorderArchivedTable.Visibility = Visibility.Visible
+                End If
+            Catch ex As Exception
+                AlertUtil.ShowError($"Could not load archived accounts: {ex.Message}", "Archived Accounts", ViewHelpers.Owner(Me))
+            End Try
+        End Sub
+
+        Private Sub BtnRestoreUser_Click(sender As Object, e As RoutedEventArgs)
+            Dim btn = TryCast(sender, Button)
+            If btn Is Nothing OrElse btn.Tag Is Nothing Then Return
+
+            Dim userId As Integer
+            If Not Integer.TryParse(btn.Tag.ToString(), userId) Then Return
+
+            Try
+                Dim problem = UserAdminRepository.Restore(userId)
+                If problem IsNot Nothing Then
+                    AlertUtil.ShowWarning(problem, "Restore Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+
+                AlertUtil.ShowSuccess("Staff account was restored to the staff directory.", "Restore Account", ViewHelpers.Owner(Me))
+                LoadArchivedUsers()
+                LoadUsers(userId)
+            Catch ex As Exception
+                AlertUtil.ShowError($"Could not restore account: {ex.Message}", "Restore Account", ViewHelpers.Owner(Me))
+            End Try
+        End Sub
+
+        Private Sub BtnPermanentDeleteUser_Click(sender As Object, e As RoutedEventArgs)
+            Dim btn = TryCast(sender, Button)
+            If btn Is Nothing OrElse btn.Tag Is Nothing Then Return
+
+            Dim userId As Integer
+            If Not Integer.TryParse(btn.Tag.ToString(), userId) Then Return
+
+            Dim archivedList = TryCast(DgArchivedStaff.ItemsSource, List(Of Global.AutoRent.Data.Models.User))
+            Dim user = If(archivedList IsNot Nothing, archivedList.FirstOrDefault(Function(u) u.UserId = userId), Nothing)
+            Dim targetName = If(user IsNot Nothing, $"{user.DisplayName} ({user.UserCode})", "this account")
+
+            If Not AlertUtil.Confirm($"Are you sure you want to PERMANENTLY delete {targetName}? This action cannot be undone and will erase the account from the database.", "Delete Account Permanently", ViewHelpers.Owner(Me)) Then
+                Return
+            End If
+
+            Try
+                Dim problem = UserAdminRepository.PermanentDelete(userId, CurrentUserId())
+                If problem IsNot Nothing Then
+                    AlertUtil.ShowWarning(problem, "Delete Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+
+                AlertUtil.ShowSuccess("Staff account was permanently deleted.", "Delete Account", ViewHelpers.Owner(Me))
+                LoadArchivedUsers()
+                UpdateArchivedBadge()
+            Catch ex As Exception
+                AlertUtil.ShowError($"Could not delete account: {ex.Message}", "Delete Account", ViewHelpers.Owner(Me))
+            End Try
         End Sub
     End Class
 End Namespace

@@ -138,15 +138,27 @@
                                FontSize="12.5" Foreground="#7A746D" Margin="0,4,0,0"/>
                 </StackPanel>
 
-                <Button DockPanel.Dock="Right" x:Name="BtnOpenCreateUser"
-                        Style="{StaticResource CreateUserButtonStyle}" VerticalAlignment="Center"
-                        Click="BtnOpenCreateUser_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                   Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Create User" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnViewArchived" Style="{StaticResource OutlineButton}"
+                            Height="36" Padding="14,0" Margin="0,0,10,0" VerticalAlignment="Center"
+                            Click="BtnViewArchived_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtArchivedButtonLabel" Text="Archived" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnOpenCreateUser"
+                            Style="{StaticResource CreateUserButtonStyle}" VerticalAlignment="Center"
+                            Click="BtnOpenCreateUser_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                       Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Create User" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </DockPanel>
 
             <Border Grid.Row="1" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="10"
@@ -526,6 +538,72 @@
                                 Width="100" Click="BtnCloseEditModal_Click"/>
                         <Button DockPanel.Dock="Right" Content="Save Changes" Style="{StaticResource PrimaryButton}"
                                 Width="130" Click="BtnSaveEditUser_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="ArchivedUsersModal" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ArchivedModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                    Width="680" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Archived Staff Accounts" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                        <TextBlock Text="Review archived accounts. You can restore an account to the active directory or permanently delete it."
+                                   FontSize="12" Foreground="#7A746D"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="TxtNoArchivedUsers" Text="No archived accounts found."
+                               Foreground="#7A746D" FontSize="13" HorizontalAlignment="Center"
+                               Margin="0,30,0,30" Visibility="Collapsed"/>
+
+                    <Border x:Name="BorderArchivedTable" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8"
+                            MaxHeight="340" Margin="0,0,0,16">
+                        <DataGrid x:Name="DgArchivedStaff" AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F0EEEB" Background="White" RowBackground="White"
+                                  BorderThickness="0" RowHeight="44" SelectionMode="Single"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="User ID" Binding="{Binding user_code}" Width="110"/>
+                                <DataGridTextColumn Header="Full Name" Binding="{Binding full_name}" Width="*"/>
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="110"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding display_role}" Width="140"/>
+                                <DataGridTemplateColumn Header="Actions" Width="180">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">
+                                                <Button Style="{StaticResource OutlineButton}" Height="28" Padding="10,0"
+                                                        Margin="0,0,8,0" Tag="{Binding UserId}" Click="BtnRestoreUser_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                                   Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Restore" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerOutlineButton}" Height="28" Padding="10,0"
+                                                        Tag="{Binding UserId}" Click="BtnPermanentDeleteUser_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                                   Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Delete" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <DockPanel LastChildFill="False">
+                        <TextBlock x:Name="TxtArchivedCount" Text="0 archived accounts"
+                                   VerticalAlignment="Center" Foreground="#7A746D" FontSize="12"/>
+                        <Button DockPanel.Dock="Right" Content="Close" Style="{StaticResource OutlineButton}"
+                                Width="90" Click="BtnCloseArchivedModal_Click"/>
                     </DockPanel>
                 </StackPanel>
             </Border>
