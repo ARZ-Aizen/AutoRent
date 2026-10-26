@@ -58,6 +58,15 @@ Namespace Presentation.Views.Admin
             }
             CmbEditRole.SelectedIndex = 0
 
+            CmbEditRole.ItemsSource = New String() {
+                "Rental Clerk",
+                "System Administrator",
+                "Business Owner / Branch Manager",
+                "Dispatch Officer",
+                "Front-Desk Staff"
+            }
+            CmbEditRole.SelectedIndex = 0
+
             _ready = True
             LoadUsers()
         End Sub
@@ -74,9 +83,16 @@ Namespace Presentation.Views.Admin
         Private Sub UpdateHeaderCounters(filteredCount As Integer)
             Dim total = _allUsers.Count
             Dim activeCount = _allUsers.Where(Function(u) u.StatusBadge = "Active").Count()
+<<<<<<< HEAD
             Dim inactiveCount = _allUsers.Where(Function(u) u.StatusBadge = "Inactive").Count()
 
             TxtHeaderStats.Text = $"{total} staff accounts · {activeCount} active · {inactiveCount} inactive · passwords are never displayed"
+=======
+            Dim pendingCount = _allUsers.Where(Function(u) u.StatusBadge = "Invite pending").Count()
+            Dim deactivatedCount = _allUsers.Where(Function(u) u.StatusBadge = "Deactivated").Count()
+
+            TxtHeaderStats.Text = $"{total} staff accounts · {activeCount} active · {pendingCount} invitation pending · {deactivatedCount} deactivated · passwords are never displayed"
+>>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
             TxtShowingCount.Text = $"Showing {filteredCount} of {total} accounts · access restricted to authorized administrators"
         End Sub
 
@@ -91,6 +107,10 @@ Namespace Presentation.Views.Admin
 
             Dim query = TxtSearchStaff.Text.Trim().ToLowerInvariant()
             Dim selectedRole = TryCast(CmbRoleFilter.SelectedItem, String)
+<<<<<<< HEAD
+=======
+            Dim selectedBranch = TryCast(CmbBranchFilter.SelectedItem, String)
+>>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
             Dim selectedStatus = TryCast(CmbStatusFilter.SelectedItem, String)
 
             Dim filtered = _allUsers.Where(Function(u)
@@ -106,6 +126,13 @@ Namespace Presentation.Views.Admin
                     If Not u.DisplayRole.Equals(selectedRole, StringComparison.OrdinalIgnoreCase) Then Return False
                 End If
 
+<<<<<<< HEAD
+=======
+                If Not String.IsNullOrEmpty(selectedBranch) AndAlso selectedBranch <> "All branches" Then
+                    If Not u.Branch.Equals(selectedBranch, StringComparison.OrdinalIgnoreCase) Then Return False
+                End If
+
+>>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
                 If Not String.IsNullOrEmpty(selectedStatus) AndAlso selectedStatus <> "All statuses" Then
                     If Not u.StatusBadge.Equals(selectedStatus, StringComparison.OrdinalIgnoreCase) Then Return False
                 End If
@@ -148,8 +175,14 @@ Namespace Presentation.Views.Admin
             TxtSelTitle.Text = $"Selected account · {user.DisplayName}"
             TxtSelSubtitle.Text = user.StatusSubtitle
             TxtSelRole.Text = user.DisplayRole
+<<<<<<< HEAD
             TxtSelCreated.Text = user.CreatedText
             TxtSelActivity.Text = user.LastActivityText
+=======
+            TxtSelInvite.Text = user.InvitationText
+            TxtSelActivity.Text = user.LastActivityText
+            TxtSelAuthority.Text = user.AccountAuthority
+>>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
         End Sub
 
         Private Sub BtnEditAccount_Click(sender As Object, e As RoutedEventArgs)
@@ -270,6 +303,7 @@ Namespace Presentation.Views.Admin
             Dim fullName = TxtNewFullName.Text.Trim()
             Dim password = TxtNewPassword.Text.Trim()
             Dim role = TryCast(CmbNewRole.SelectedItem, String)
+            Dim branch = TryCast(CmbNewBranch.SelectedItem, String)
             Dim isActive = (ChkNewActive.IsChecked = True)
 
             If String.IsNullOrWhiteSpace(username) Then
@@ -278,7 +312,11 @@ Namespace Presentation.Views.Admin
             End If
 
             Try
+<<<<<<< HEAD
                 Dim problem = UserAdminRepository.Create(username, password, role, fullName, "HQ", isActive)
+=======
+                Dim problem = UserAdminRepository.Create(username, password, role, fullName, branch, isActive)
+>>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
                 If problem IsNot Nothing Then
                     AlertUtil.ShowWarning(problem, "Create User", ViewHelpers.Owner(Me))
                     Return
