@@ -54,8 +54,7 @@ Namespace Data.Repositories
 
             If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse isDeleted Then Return Nothing
 
-            Dim userRole As UserRole
-            If Not System.Enum.TryParse(Of UserRole)(roleName, True, userRole) OrElse Not System.Enum.IsDefined(GetType(UserRole), userRole) Then Return Nothing
+            Dim userRole As UserRole = If(roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0, UserRole.Admin, UserRole.User)
 
             Dim loginTime = DateTime.Now
             Using connection = AccessDatabaseConnection.CreateConnection()
@@ -74,6 +73,7 @@ Namespace Data.Repositories
                 .Username = storedUsername,
                 .PasswordHash = passwordHash,
                 .Role = userRole,
+                .RoleName = roleName,
                 .IsActive = True,
                 .IsDeleted = isDeleted,
                 .LastLogin = loginTime,
