@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -25,7 +25,7 @@ Namespace Data.Repositories
             If PlateExists(plate, 0) Then Return $"A vehicle with plate {plate} already exists."
 
             Db.Execute("INSERT INTO [Vehicles] ([plate], [make], [model], [category], [model_year], [mileage], [status], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                       Db.Text(plate, 20), Db.Text(make, 50), Db.Text(model, 50), Db.Text(category, 30),
+                       Db.Text(plate, 20), Db.Text(make, 50), Db.Text(model, 50), Db.Text(category, 50),
                        Db.IntOrNull(modelYear), Db.Int(mileage), Db.Text(status, 20), Db.Dt(DateTime.Now))
             Return Nothing
         End Function
@@ -36,7 +36,7 @@ Namespace Data.Repositories
             If PlateExists(plate, vehicleId) Then Return $"Another vehicle already uses plate {plate}."
 
             Db.Execute("UPDATE [Vehicles] SET [plate] = ?, [make] = ?, [model] = ?, [category] = ?, [model_year] = ?, [mileage] = ?, [status] = ? WHERE [vehicle_id] = ?",
-                       Db.Text(plate, 20), Db.Text(make, 50), Db.Text(model, 50), Db.Text(category, 30),
+                       Db.Text(plate, 20), Db.Text(make, 50), Db.Text(model, 50), Db.Text(category, 50),
                        Db.IntOrNull(modelYear), Db.Int(mileage), Db.Text(status, 20), Db.Int(vehicleId))
             Return Nothing
         End Function
