@@ -6,7 +6,7 @@ Imports System.Windows.Controls
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Repositories
 
-Namespace Presentation.Views
+Namespace Presentation.Views.Admin
     Partial Public Class FleetManagementView
         Inherits UserControl
 

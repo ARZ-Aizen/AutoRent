@@ -1,6 +1,6 @@
 Imports System.Windows.Controls
 
-Namespace Presentation.Views
+Namespace Presentation.Views.Admin
     Partial Public Class AdminView
         Inherits UserControl
 

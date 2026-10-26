@@ -5,7 +5,8 @@ Imports System.Windows.Media
 Imports System.Windows.Media.Animation
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Models
-Imports AutoRent.Presentation.Views
+Imports AutoRent.Presentation.Views.Admin
+Imports AutoRent.Presentation.Views.User
 
 Public Class NavItem
     Public Property Icon As String

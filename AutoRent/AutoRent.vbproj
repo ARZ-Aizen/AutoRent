@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -42,7 +42,8 @@
     <!-- API Layer -->
     <Folder Include="API\Controllers\" />
     <Folder Include="API\DTOs\" />
-    <Folder Include="Presentation\Views\" />
+    <Folder Include="Presentation\Views\Admin\" />
+    <Folder Include="Presentation\Views\User\" />
     <Folder Include="Resources\Config\" />
 
     <!-- Tests -->

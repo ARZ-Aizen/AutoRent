@@ -7,7 +7,7 @@ Imports System.Windows.Media
 Imports System.Windows.Media.Animation
 Imports AutoRent.Data.Repositories
 
-Namespace Presentation.Views
+Namespace Presentation.Views.User
     Partial Public Class ClientView
         Inherits UserControl
 
@@ -718,5 +718,12 @@ Namespace Presentation.Views
             RefreshReservationVehicles()
         End Sub
 
+    End Class
+
+    ''' <summary>
+    ''' Alias for ClientView representing the User portal view.
+    ''' </summary>
+    Public Class UserView
+        Inherits ClientView
     End Class
 End Namespace
