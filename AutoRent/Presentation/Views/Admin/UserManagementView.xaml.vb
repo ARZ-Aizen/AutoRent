@@ -172,8 +172,8 @@ Namespace Presentation.Views.Admin
                 End If
             End If
 
-            TxtEditPassword.Clear()
-            TxtEditConfirmPassword.Clear()
+            ClearPasswordField(TxtEditPassword, TxtEditPasswordReveal, EyeIconEditPass)
+            ClearPasswordField(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal, EyeIconEditConfirm)
             EditUserModal.Visibility = Visibility.Visible
             TxtEditFullName.Focus()
         End Sub
@@ -192,8 +192,8 @@ Namespace Presentation.Views.Admin
             Dim fullName = TxtEditFullName.Text.Trim()
             Dim username = TxtEditUsername.Text.Trim()
             Dim role = TryCast(CmbEditRole.SelectedItem, String)
-            Dim newPassword = TxtEditPassword.Password.Trim()
-            Dim confirmPassword = TxtEditConfirmPassword.Password.Trim()
+            Dim newPassword = GetPasswordValue(TxtEditPassword, TxtEditPasswordReveal)
+            Dim confirmPassword = GetPasswordValue(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal)
 
             If String.IsNullOrWhiteSpace(fullName) Then
                 AlertUtil.ShowWarning("Full name cannot be blank.", "Edit Account", ViewHelpers.Owner(Me))
@@ -256,10 +256,9 @@ Namespace Presentation.Views.Admin
         Private Sub BtnOpenCreateUser_Click(sender As Object, e As RoutedEventArgs)
             TxtNewFullName.Clear()
             TxtNewUsername.Clear()
-            TxtNewPassword.Clear()
-            TxtNewConfirmPassword.Clear()
+            ClearPasswordField(TxtNewPassword, TxtNewPasswordReveal, EyeIconNewPass)
+            ClearPasswordField(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal, EyeIconNewConfirm)
             CmbNewRole.SelectedIndex = 0
-            ChkNewActive.IsChecked = False
             CreateUserModal.Visibility = Visibility.Visible
             TxtNewFullName.Focus()
         End Sub
@@ -275,10 +274,9 @@ Namespace Presentation.Views.Admin
         Private Sub BtnSaveNewUser_Click(sender As Object, e As RoutedEventArgs)
             Dim username = TxtNewUsername.Text.Trim()
             Dim fullName = TxtNewFullName.Text.Trim()
-            Dim password = TxtNewPassword.Password.Trim()
-            Dim confirmPassword = TxtNewConfirmPassword.Password.Trim()
+            Dim password = GetPasswordValue(TxtNewPassword, TxtNewPasswordReveal)
+            Dim confirmPassword = GetPasswordValue(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal)
             Dim role = TryCast(CmbNewRole.SelectedItem, String)
-            Dim isActive = (ChkNewActive.IsChecked = True)
 
             If String.IsNullOrWhiteSpace(username) Then
                 AlertUtil.ShowWarning("Please specify a username.", "Create User", ViewHelpers.Owner(Me))
@@ -301,7 +299,7 @@ Namespace Presentation.Views.Admin
             End If
 
             Try
-                Dim problem = UserAdminRepository.Create(username, password, role, fullName, "HQ", isActive)
+                Dim problem = UserAdminRepository.Create(username, password, role, fullName, "HQ", False)
                 If problem IsNot Nothing Then
                     AlertUtil.ShowWarning(problem, "Create User", ViewHelpers.Owner(Me))
                     Return
@@ -313,6 +311,77 @@ Namespace Presentation.Views.Admin
             Catch ex As Exception
                 AlertUtil.ShowError($"Could not create user: {ex.Message}", "Create User", ViewHelpers.Owner(Me))
             End Try
+        End Sub
+
+        Private Sub ToggleNewPassword_Click(sender As Object, e As RoutedEventArgs)
+            TogglePasswordField(TxtNewPassword, TxtNewPasswordReveal, EyeIconNewPass)
+        End Sub
+
+        Private Sub ToggleNewConfirmPassword_Click(sender As Object, e As RoutedEventArgs)
+            TogglePasswordField(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal, EyeIconNewConfirm)
+        End Sub
+
+        Private Sub ToggleEditPassword_Click(sender As Object, e As RoutedEventArgs)
+            TogglePasswordField(TxtEditPassword, TxtEditPasswordReveal, EyeIconEditPass)
+        End Sub
+
+        Private Sub ToggleEditConfirmPassword_Click(sender As Object, e As RoutedEventArgs)
+            TogglePasswordField(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal, EyeIconEditConfirm)
+        End Sub
+
+        Private Sub TxtNewPasswordReveal_TextChanged(sender As Object, e As TextChangedEventArgs)
+            SyncPasswordReveal(TxtNewPassword, TxtNewPasswordReveal)
+        End Sub
+
+        Private Sub TxtNewConfirmPasswordReveal_TextChanged(sender As Object, e As TextChangedEventArgs)
+            SyncPasswordReveal(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal)
+        End Sub
+
+        Private Sub TxtEditPasswordReveal_TextChanged(sender As Object, e As TextChangedEventArgs)
+            SyncPasswordReveal(TxtEditPassword, TxtEditPasswordReveal)
+        End Sub
+
+        Private Sub TxtEditConfirmPasswordReveal_TextChanged(sender As Object, e As TextChangedEventArgs)
+            SyncPasswordReveal(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal)
+        End Sub
+
+        Private Sub TogglePasswordField(passBox As PasswordBox, revealBox As TextBox, eyeIcon As TextBlock)
+            If passBox.Visibility = Visibility.Visible Then
+                revealBox.Text = passBox.Password
+                passBox.Visibility = Visibility.Collapsed
+                revealBox.Visibility = Visibility.Visible
+                revealBox.Focus()
+                revealBox.CaretIndex = revealBox.Text.Length
+                eyeIcon.Text = ChrW(&HED1A)
+            Else
+                passBox.Password = revealBox.Text
+                revealBox.Visibility = Visibility.Collapsed
+                passBox.Visibility = Visibility.Visible
+                passBox.Focus()
+                eyeIcon.Text = ChrW(&HE7B3)
+            End If
+        End Sub
+
+        Private Function GetPasswordValue(passBox As PasswordBox, revealBox As TextBox) As String
+            If passBox.Visibility = Visibility.Visible Then
+                Return passBox.Password.Trim()
+            Else
+                Return revealBox.Text.Trim()
+            End If
+        End Function
+
+        Private Sub ClearPasswordField(passBox As PasswordBox, revealBox As TextBox, eyeIcon As TextBlock)
+            passBox.Clear()
+            revealBox.Clear()
+            passBox.Visibility = Visibility.Visible
+            revealBox.Visibility = Visibility.Collapsed
+            eyeIcon.Text = ChrW(&HE7B3)
+        End Sub
+
+        Private Sub SyncPasswordReveal(passBox As PasswordBox, revealBox As TextBox)
+            If revealBox.Visibility = Visibility.Visible Then
+                passBox.Password = revealBox.Text
+            End If
         End Sub
     End Class
 End Namespace

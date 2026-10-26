@@ -103,6 +103,21 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Style x:Key="EyeToggleButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -398,13 +413,44 @@
                     <ComboBox x:Name="CmbNewRole" Height="36" Margin="0,0,0,12"/>
 
                     <TextBlock Text="PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <PasswordBox x:Name="TxtNewPassword" Height="36" Margin="0,0,0,12"/>
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TxtNewPassword" BorderThickness="0" Background="Transparent"
+                                         VerticalContentAlignment="Center" Padding="8,0" FontSize="13"/>
+                            <TextBox x:Name="TxtNewPasswordReveal" BorderThickness="0" Background="Transparent"
+                                     VerticalContentAlignment="Center" Padding="8,0" FontSize="13" Visibility="Collapsed"
+                                     TextChanged="TxtNewPasswordReveal_TextChanged"/>
+                            <Button Grid.Column="1" Style="{StaticResource EyeToggleButtonStyle}"
+                                    Click="ToggleNewPassword_Click">
+                                <TextBlock x:Name="EyeIconNewPass" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" Foreground="#7A746D"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
                     <TextBlock Text="CONFIRM PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <PasswordBox x:Name="TxtNewConfirmPassword" Height="36" Margin="0,0,0,12"/>
-
-                    <CheckBox x:Name="ChkNewActive" Content="Account is active"
-                              IsChecked="False" Margin="0,4,0,20"/>
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TxtNewConfirmPassword" BorderThickness="0" Background="Transparent"
+                                         VerticalContentAlignment="Center" Padding="8,0" FontSize="13"/>
+                            <TextBox x:Name="TxtNewConfirmPasswordReveal" BorderThickness="0" Background="Transparent"
+                                     VerticalContentAlignment="Center" Padding="8,0" FontSize="13" Visibility="Collapsed"
+                                     TextChanged="TxtNewConfirmPasswordReveal_TextChanged"/>
+                            <Button Grid.Column="1" Style="{StaticResource EyeToggleButtonStyle}"
+                                    Click="ToggleNewConfirmPassword_Click">
+                                <TextBlock x:Name="EyeIconNewConfirm" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" Foreground="#7A746D"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
@@ -436,10 +482,44 @@
                     <ComboBox x:Name="CmbEditRole" Height="36" Margin="0,0,0,12"/>
 
                     <TextBlock Text="NEW PASSWORD (LEAVE BLANK TO KEEP CURRENT)" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <PasswordBox x:Name="TxtEditPassword" Height="36" Margin="0,0,0,12"/>
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TxtEditPassword" BorderThickness="0" Background="Transparent"
+                                         VerticalContentAlignment="Center" Padding="8,0" FontSize="13"/>
+                            <TextBox x:Name="TxtEditPasswordReveal" BorderThickness="0" Background="Transparent"
+                                     VerticalContentAlignment="Center" Padding="8,0" FontSize="13" Visibility="Collapsed"
+                                     TextChanged="TxtEditPasswordReveal_TextChanged"/>
+                            <Button Grid.Column="1" Style="{StaticResource EyeToggleButtonStyle}"
+                                    Click="ToggleEditPassword_Click">
+                                <TextBlock x:Name="EyeIconEditPass" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" Foreground="#7A746D"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
                     <TextBlock Text="CONFIRM NEW PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <PasswordBox x:Name="TxtEditConfirmPassword" Height="36" Margin="0,0,0,20"/>
+                    <Border BorderBrush="#D9D5D0" BorderThickness="1" CornerRadius="4" Background="White" Height="36" Margin="0,0,0,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TxtEditConfirmPassword" BorderThickness="0" Background="Transparent"
+                                         VerticalContentAlignment="Center" Padding="8,0" FontSize="13"/>
+                            <TextBox x:Name="TxtEditConfirmPasswordReveal" BorderThickness="0" Background="Transparent"
+                                     VerticalContentAlignment="Center" Padding="8,0" FontSize="13" Visibility="Collapsed"
+                                     TextChanged="TxtEditConfirmPasswordReveal_TextChanged"/>
+                            <Button Grid.Column="1" Style="{StaticResource EyeToggleButtonStyle}"
+                                    Click="ToggleEditConfirmPassword_Click">
+                                <TextBlock x:Name="EyeIconEditConfirm" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" Foreground="#7A746D"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
