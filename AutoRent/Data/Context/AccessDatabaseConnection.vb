@@ -17,6 +17,11 @@ Namespace Data.Context
                 Return binPath
             End If
 
+            Dim repoPath = "c:\Users\allan\source\repos\AutoRent\AutoRent\Resources\Data\AutoRent.accdb.accdb"
+            If File.Exists(repoPath) Then
+                Return repoPath
+            End If
+
             Throw New FileNotFoundException("The AutoRent Access database could not be found.", projectSourcePath)
         End Function
 

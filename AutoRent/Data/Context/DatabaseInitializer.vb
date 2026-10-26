@@ -12,7 +12,7 @@ Namespace Data.Context
                 If Not TableExists(connection, "Rates") Then
                     Run(connection, "CREATE TABLE [Rates] (" &
                         "[rate_id] COUNTER PRIMARY KEY, " &
-                        "[category] VARCHAR(30) NOT NULL, " &
+                        "[category] VARCHAR(50) NOT NULL, " &
                         "[daily_rate] CURRENCY, " &
                         "[weekly_rate] CURRENCY, " &
                         "[monthly_rate] CURRENCY, " &
@@ -29,7 +29,7 @@ Namespace Data.Context
                         "[plate] VARCHAR(20) NOT NULL, " &
                         "[make] VARCHAR(50), " &
                         "[model] VARCHAR(50), " &
-                        "[category] VARCHAR(30), " &
+                        "[category] VARCHAR(50), " &
                         "[model_year] LONG, " &
                         "[mileage] LONG, " &
                         "[status] VARCHAR(20), " &
@@ -136,17 +136,22 @@ Namespace Data.Context
 
         Private Shared Sub SeedRates(connection As OleDbConnection)
             Dim defaults As Object()() = {
-                New Object() {"Economy", 40D, 240D, 900D, 150D, 15D},
-                New Object() {"Compact", 50D, 300D, 1100D, 200D, 20D},
-                New Object() {"SUV", 80D, 480D, 1800D, 300D, 30D},
-                New Object() {"Van", 95D, 570D, 2100D, 350D, 35D},
-                New Object() {"Luxury", 150D, 900D, 3300D, 600D, 60D}
+                New Object() {"Sedan", 450D, 2700D, 10800D, 500D, 50D},
+                New Object() {"SUV (Sport Utility Vehicle)", 480D, 2880D, 11520D, 500D, 50D},
+                New Object() {"Hatchback", 380D, 2280D, 9120D, 400D, 40D},
+                New Object() {"Van", 350D, 2100D, 8400D, 450D, 45D},
+                New Object() {"MPV (Multi-Purpose Vehicle)", 360D, 2160D, 8640D, 450D, 45D},
+                New Object() {"Pickup Truck", 420D, 2520D, 10080D, 450D, 45D},
+                New Object() {"Sports Car", 650D, 3900D, 15600D, 800D, 80D},
+                New Object() {"Luxury Car", 600D, 3600D, 14400D, 750D, 75D},
+                New Object() {"Hybrid Car", 430D, 2580D, 10320D, 500D, 50D},
+                New Object() {"Electric Car (EV)", 460D, 2760D, 11040D, 500D, 50D}
             }
 
             For Each row In defaults
                 Using command = connection.CreateCommand()
                     command.CommandText = "INSERT INTO [Rates] ([category], [daily_rate], [weekly_rate], [monthly_rate], [deposit], [late_fee_per_day], [updated_at]) VALUES (?, ?, ?, ?, ?, ?, ?)"
-                    command.Parameters.Add("category", OleDbType.VarWChar, 30).Value = CStr(row(0))
+                    command.Parameters.Add("category", OleDbType.VarWChar, 50).Value = CStr(row(0))
                     For i = 1 To 5
                         command.Parameters.Add("p" & i, OleDbType.Currency).Value = CDec(row(i))
                     Next

@@ -60,6 +60,7 @@ Namespace Presentation.Views.Admin
         End Sub
 
         Private Sub DgRateTiers_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            If Not _ready Then Return
             Dim tier = TryCast(DgRateTiers.SelectedItem, RateTier)
             If tier Is Nothing Then Return
 
@@ -68,7 +69,7 @@ Namespace Presentation.Views.Admin
         End Sub
 
         Private Sub UpdatePreview(tier As RateTier)
-            If tier Is Nothing Then Return
+            If tier Is Nothing OrElse TxtPreviewSubtitle Is Nothing Then Return
 
             TxtPreviewSubtitle.Text = $"{tier.Category} · 17-19 Oct 2026 · 2 weekend days"
             Dim daily = tier.DailyRate
@@ -318,6 +319,7 @@ Namespace Presentation.Views.Admin
         End Sub
 
         Private Sub DgPricingRules_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            If Not _ready Then Return
             Dim rule = TryCast(DgPricingRules.SelectedItem, PricingRule)
             If rule Is Nothing Then Return
 

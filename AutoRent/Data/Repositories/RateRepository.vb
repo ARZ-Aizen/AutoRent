@@ -11,7 +11,7 @@ Namespace Data.Repositories
 
         Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
             {"Sedan", "VH-0001 · ₱450/day"},
-            {"SUV", "VH-0002 · ₱320/day"}
+            {"SUV (Sport Utility Vehicle)", "VH-0002 · ₱480/day"}
         }
 
         Private Shared ReadOnly _rules As New List(Of PricingRule) From {
@@ -142,9 +142,15 @@ Namespace Data.Repositories
 
             Dim orderMap As New Dictionary(Of String, Integer)(StringComparer.OrdinalIgnoreCase) From {
                 {"Sedan", 1},
-                {"SUV", 2},
-                {"Van", 3},
-                {"Pickup", 4}
+                {"SUV (Sport Utility Vehicle)", 2},
+                {"Hatchback", 3},
+                {"Van", 4},
+                {"MPV (Multi-Purpose Vehicle)", 5},
+                {"Pickup Truck", 6},
+                {"Sports Car", 7},
+                {"Luxury Car", 8},
+                {"Hybrid Car", 9},
+                {"Electric Car (EV)", 10}
             }
 
             Return list.OrderBy(Function(t) If(orderMap.ContainsKey(t.Category), orderMap(t.Category), 99)).ThenBy(Function(t) t.Category).ToList()
@@ -199,7 +205,7 @@ Namespace Data.Repositories
             If CategoryExists(category, 0) Then Return $"The category '{category}' already exists."
 
             Db.Execute("INSERT INTO [Rates] ([category], [daily_rate], [weekly_rate], [monthly_rate], [deposit], [late_fee_per_day], [updated_at]) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                       Db.Text(category, 30), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now))
+                       Db.Text(category, 50), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now))
             Return Nothing
         End Function
 
@@ -209,10 +215,10 @@ Namespace Data.Repositories
             If CategoryExists(category, rateId) Then Return $"The category '{category}' already exists."
 
             Db.Execute("UPDATE [Rates] SET [category] = ?, [daily_rate] = ?, [weekly_rate] = ?, [monthly_rate] = ?, [deposit] = ?, [late_fee_per_day] = ?, [updated_at] = ? WHERE [rate_id] = ?",
-                       Db.Text(category, 30), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now), Db.Int(rateId))
+                       Db.Text(category, 50), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now), Db.Int(rateId))
 
             If Not String.Equals(oldCategory, category, StringComparison.OrdinalIgnoreCase) Then
-                Db.Execute("UPDATE [Vehicles] SET [category] = ? WHERE [category] = ?", Db.Text(category, 30), Db.Text(oldCategory, 30))
+                Db.Execute("UPDATE [Vehicles] SET [category] = ? WHERE [category] = ?", Db.Text(category, 50), Db.Text(oldCategory, 50))
                 SyncLock _vehicleOverrides
                     If _vehicleOverrides.ContainsKey(oldCategory) Then
                         Dim val = _vehicleOverrides(oldCategory)
@@ -225,7 +231,7 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function Delete(rateId As Integer, category As String) As String
-            If Db.Count("SELECT COUNT(*) FROM [Vehicles] WHERE [category] = ?", Db.Text(category, 30)) > 0 Then
+            If Db.Count("SELECT COUNT(*) FROM [Vehicles] WHERE [category] = ?", Db.Text(category, 50)) > 0 Then
                 Return "Vehicles are still using this category. Move them to another category first."
             End If
             Db.Execute("DELETE FROM [Rates] WHERE [rate_id] = ?", Db.Int(rateId))
@@ -236,7 +242,7 @@ Namespace Data.Repositories
         End Function
 
         Private Shared Function CategoryExists(category As String, excludeId As Integer) As Boolean
-            Return Db.Count("SELECT COUNT(*) FROM [Rates] WHERE [category] = ? AND [rate_id] <> ?", Db.Text(category, 30), Db.Int(excludeId)) > 0
+            Return Db.Count("SELECT COUNT(*) FROM [Rates] WHERE [category] = ? AND [rate_id] <> ?", Db.Text(category, 50), Db.Int(excludeId)) > 0
         End Function
     End Class
 End Namespace
