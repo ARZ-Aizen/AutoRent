@@ -6,6 +6,7 @@ Imports System.Windows.Media
 Imports System.Windows.Media.Animation
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Models
+Imports AutoRent.Data.Repositories
 Imports AutoRent.Presentation.Views.Admin
 Imports AutoRent.Presentation.Views.User
 
@@ -195,11 +196,21 @@ Class MainWindow
     Private Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs) Handles LogoutButton.Click
         If AlertUtil.Confirm("Are you sure you want to log out of your session?", "Sign Out", Me) Then
             Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-            app.CurrentUser = Nothing
+            If app IsNot Nothing AndAlso app.CurrentUser IsNot Nothing Then
+                UserRepository.RecordLogout(app.CurrentUser.UserId)
+                app.CurrentUser = Nothing
+            End If
 
             Dim loginWindow As New Global.AutoRent.AutoRent.LoginWindow()
             loginWindow.Show()
             Me.Close()
+        End If
+    End Sub
+
+    Private Sub MainWindow_Closing(sender As Object, e As ComponentModel.CancelEventArgs) Handles Me.Closing
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        If app IsNot Nothing AndAlso app.CurrentUser IsNot Nothing Then
+            UserRepository.RecordLogout(app.CurrentUser.UserId)
         End If
     End Sub
 

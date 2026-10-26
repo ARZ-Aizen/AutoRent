@@ -178,14 +178,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Staff directory" FontSize="16" FontWeight="Bold"
-                                   Foreground="#2B2927" VerticalAlignment="Center"/>
-                        <Border DockPanel.Dock="Right" Background="#FCE8E6" BorderBrush="#FAD2CF" BorderThickness="1"
-                                CornerRadius="12" Padding="10,3.5" VerticalAlignment="Center">
-                            <TextBlock Text="Admin-only account changes" FontSize="11" FontWeight="SemiBold" Foreground="#C5221F"/>
-                        </Border>
-                    </DockPanel>
+                    <TextBlock Grid.Row="0" Text="Staff directory" FontSize="16" FontWeight="Bold"
+                               Foreground="#2B2927" VerticalAlignment="Center" Margin="0,0,0,12"/>
 
                     <DataGrid Grid.Row="1" x:Name="DgStaff" AutoGenerateColumns="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"

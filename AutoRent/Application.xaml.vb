@@ -23,4 +23,13 @@ Partial Public Class Application
             Shutdown()
         End Try
     End Sub
+
+    Private Sub Application_Exit(sender As Object, e As ExitEventArgs) Handles Me.Exit
+        Try
+            If CurrentUser IsNot Nothing Then
+                UserRepository.RecordLogout(CurrentUser.UserId)
+            End If
+        Catch ex As Exception
+        End Try
+    End Sub
 End Class

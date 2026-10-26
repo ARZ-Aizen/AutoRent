@@ -52,7 +52,7 @@ Namespace Data.Repositories
                 End Using
             End Using
 
-            If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse Not isActive OrElse isDeleted Then Return Nothing
+            If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse isDeleted Then Return Nothing
 
             Dim userRole As UserRole
             If Not System.Enum.TryParse(Of UserRole)(roleName, True, userRole) OrElse Not System.Enum.IsDefined(GetType(UserRole), userRole) Then Return Nothing
@@ -62,7 +62,7 @@ Namespace Data.Repositories
                 connection.Open()
 
                 Using command = connection.CreateCommand()
-                    command.CommandText = "UPDATE [Users] SET [last_login] = ? WHERE [user_id] = ? AND [is_active] = True AND [is_deleted] = False"
+                    command.CommandText = "UPDATE [Users] SET [last_login] = ?, [is_active] = True WHERE [user_id] = ? AND [is_deleted] = False"
                     command.Parameters.Add("last_login", OleDbType.Date).Value = loginTime
                     command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
                     If command.ExecuteNonQuery() <> 1 Then Return Nothing
@@ -74,7 +74,7 @@ Namespace Data.Repositories
                 .Username = storedUsername,
                 .PasswordHash = passwordHash,
                 .Role = userRole,
-                .IsActive = isActive,
+                .IsActive = True,
                 .IsDeleted = isDeleted,
                 .LastLogin = loginTime,
                 .CreatedAt = createdAt
@@ -119,5 +119,20 @@ Namespace Data.Repositories
 
             Return generatedPassword
         End Function
+
+        Public Shared Sub RecordLogout(userId As Integer)
+            If userId <= 0 Then Return
+            Try
+                Using connection = AccessDatabaseConnection.CreateConnection()
+                    connection.Open()
+                    Using command = connection.CreateCommand()
+                        command.CommandText = "UPDATE [Users] SET [is_active] = False WHERE [user_id] = ?"
+                        command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
+                        command.ExecuteNonQuery()
+                    End Using
+                End Using
+            Catch ex As Exception
+            End Try
+        End Sub
     End Class
 End Namespace
