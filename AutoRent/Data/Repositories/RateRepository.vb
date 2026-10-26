@@ -9,6 +9,11 @@ Namespace Data.Repositories
         Private Sub New()
         End Sub
 
+        Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
+            {"Sedan", "VH-0001 · ₱450/day"},
+            {"SUV", "VH-0002 · ₱320/day"}
+        }
+
         Private Shared ReadOnly _rules As New List(Of PricingRule) From {
             New PricingRule With {
                 .RuleId = "RR-001",
@@ -66,7 +71,7 @@ Namespace Data.Repositories
                 .Category = "All",
                 .EffectiveDates = "01 Jan 2026 / Ongoing",
                 .CalculationMethod = "Above 200 km / day",
-                .RateMultiplier = "$0.75 / km",
+                .RateMultiplier = "₱0.75 / km",
                 .IsActive = True,
                 .LastModified = "Priya Shah · 03 Oct, 11:30"
             },
@@ -76,7 +81,7 @@ Namespace Data.Repositories
                 .Category = "All",
                 .EffectiveDates = "01 Jan 2026 / Ongoing",
                 .CalculationMethod = "Actual fuel + service fee",
-                .RateMultiplier = "$25 + fuel",
+                .RateMultiplier = "₱25 + fuel",
                 .IsActive = True,
                 .LastModified = "Priya Shah · 03 Oct, 11:35"
             },
@@ -86,7 +91,7 @@ Namespace Data.Repositories
                 .Category = "All",
                 .EffectiveDates = "01 Jan 2026 / Ongoing",
                 .CalculationMethod = "Equipment / day",
-                .RateMultiplier = "$15 / day",
+                .RateMultiplier = "₱15 / day",
                 .IsActive = True,
                 .LastModified = "Priya Shah · 03 Oct, 11:40"
             },
@@ -116,11 +121,11 @@ Namespace Data.Repositories
             For Each row As DataRow In table.Rows
                 Dim cat = Convert.ToString(row("category"))
                 Dim overrideText = "None"
-                If cat.Equals("Sedan", StringComparison.OrdinalIgnoreCase) Then
-                    overrideText = "VH-0001 · $450/day"
-                ElseIf cat.Equals("SUV", StringComparison.OrdinalIgnoreCase) Then
-                    overrideText = "VH-0002 · $320/day"
-                End If
+                SyncLock _vehicleOverrides
+                    If _vehicleOverrides.ContainsKey(cat) Then
+                        overrideText = _vehicleOverrides(cat)
+                    End If
+                End SyncLock
 
                 list.Add(New RateTier With {
                     .RateId = Convert.ToInt32(row("rate_id")),
@@ -130,7 +135,7 @@ Namespace Data.Repositories
                     .MonthlyRate = If(IsDBNull(row("monthly_rate")), 0D, Convert.ToDecimal(row("monthly_rate"))),
                     .Deposit = If(IsDBNull(row("deposit")), 0D, Convert.ToDecimal(row("deposit"))),
                     .LateFeePerDay = If(IsDBNull(row("late_fee_per_day")), 0D, Convert.ToDecimal(row("late_fee_per_day"))),
-                    .VehicleOverride = overrideText,
+                    .VehicleOverride = If(String.IsNullOrWhiteSpace(overrideText), "None", overrideText),
                     .UpdatedAt = If(IsDBNull(row("updated_at")), DateTime.Now, Convert.ToDateTime(row("updated_at")))
                 })
             Next
@@ -144,6 +149,17 @@ Namespace Data.Repositories
 
             Return list.OrderBy(Function(t) If(orderMap.ContainsKey(t.Category), orderMap(t.Category), 99)).ThenBy(Function(t) t.Category).ToList()
         End Function
+
+        Public Shared Sub SetVehicleOverride(category As String, overrideText As String)
+            If String.IsNullOrWhiteSpace(category) Then Return
+            SyncLock _vehicleOverrides
+                If String.IsNullOrWhiteSpace(overrideText) OrElse overrideText.Trim().Equals("None", StringComparison.OrdinalIgnoreCase) Then
+                    _vehicleOverrides.Remove(category.Trim())
+                Else
+                    _vehicleOverrides(category.Trim()) = overrideText.Trim()
+                End If
+            End SyncLock
+        End Sub
 
         Public Shared Function GetPricingRules() As List(Of PricingRule)
             SyncLock _rules
@@ -179,7 +195,8 @@ Namespace Data.Repositories
 
         Public Shared Function Add(category As String, daily As Decimal, weekly As Decimal, monthly As Decimal,
                                    deposit As Decimal, lateFee As Decimal) As String
-            If CategoryExists(category, 0) Then Return $"The category '{category.Trim()}' already exists."
+            category = If(category, "").Trim()
+            If CategoryExists(category, 0) Then Return $"The category '{category}' already exists."
 
             Db.Execute("INSERT INTO [Rates] ([category], [daily_rate], [weekly_rate], [monthly_rate], [deposit], [late_fee_per_day], [updated_at]) VALUES (?, ?, ?, ?, ?, ?, ?)",
                        Db.Text(category, 30), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now))
@@ -188,13 +205,21 @@ Namespace Data.Repositories
 
         Public Shared Function Update(rateId As Integer, oldCategory As String, category As String, daily As Decimal, weekly As Decimal,
                                       monthly As Decimal, deposit As Decimal, lateFee As Decimal) As String
-            If CategoryExists(category, rateId) Then Return $"The category '{category.Trim()}' already exists."
+            category = If(category, "").Trim()
+            If CategoryExists(category, rateId) Then Return $"The category '{category}' already exists."
 
             Db.Execute("UPDATE [Rates] SET [category] = ?, [daily_rate] = ?, [weekly_rate] = ?, [monthly_rate] = ?, [deposit] = ?, [late_fee_per_day] = ?, [updated_at] = ? WHERE [rate_id] = ?",
                        Db.Text(category, 30), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now), Db.Int(rateId))
 
-            If Not String.Equals(oldCategory, category.Trim(), StringComparison.Ordinal) Then
+            If Not String.Equals(oldCategory, category, StringComparison.OrdinalIgnoreCase) Then
                 Db.Execute("UPDATE [Vehicles] SET [category] = ? WHERE [category] = ?", Db.Text(category, 30), Db.Text(oldCategory, 30))
+                SyncLock _vehicleOverrides
+                    If _vehicleOverrides.ContainsKey(oldCategory) Then
+                        Dim val = _vehicleOverrides(oldCategory)
+                        _vehicleOverrides.Remove(oldCategory)
+                        _vehicleOverrides(category) = val
+                    End If
+                End SyncLock
             End If
             Return Nothing
         End Function
@@ -204,6 +229,9 @@ Namespace Data.Repositories
                 Return "Vehicles are still using this category. Move them to another category first."
             End If
             Db.Execute("DELETE FROM [Rates] WHERE [rate_id] = ?", Db.Int(rateId))
+            SyncLock _vehicleOverrides
+                _vehicleOverrides.Remove(category)
+            End SyncLock
             Return Nothing
         End Function
 

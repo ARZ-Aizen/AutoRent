@@ -78,9 +78,29 @@
                     <Border Grid.Column="0" Style="{StaticResource Card}">
                         <StackPanel>
                             <DockPanel LastChildFill="False" Margin="0,0,0,14">
-                                <TextBlock Text="Base rate tiers · USD" FontWeight="SemiBold" FontSize="14.5" Foreground="#2B2927" VerticalAlignment="Center"/>
-                                <Button x:Name="BtnEditTiers" DockPanel.Dock="Right" Content="Edit tiers" Style="{StaticResource OutlineButton}"
-                                        Height="30" Padding="14,0" FontSize="12.5" Click="BtnEditTiers_Click"/>
+                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                    <TextBlock Text="Base rate tiers · PHP" FontWeight="SemiBold" FontSize="14.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                    <Button x:Name="BtnOverrideInfo" Style="{StaticResource OutlineButton}" Height="26" Padding="8,0" Margin="10,0,0,0"
+                                            FontSize="11" Click="BtnOverrideInfo_Click" ToolTip="Click to learn how vehicle overrides work">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="What is Vehicle Override?" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                    <Button x:Name="BtnAddTier" Style="{StaticResource OutlineButton}"
+                                            Height="30" Padding="12,0" FontSize="12.5" Margin="0,0,8,0" Click="BtnAddTier_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Add tier" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button x:Name="BtnEditTiers" Content="Edit tiers" Style="{StaticResource OutlineButton}"
+                                            Height="30" Padding="14,0" FontSize="12.5" Click="BtnEditTiers_Click"/>
+                                </StackPanel>
                             </DockPanel>
 
                             <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8">
@@ -108,7 +128,7 @@
                                 </DataGrid>
                             </Border>
 
-                            <TextBlock Text="Vehicle override replaces category base. VH-0004 $520/day · VH-0184 $480/day. Weekly and monthly tiers replace, not stack with, daily pricing."
+                            <TextBlock Text="Vehicle override replaces category base. VH-0004 ₱520/day · VH-0184 ₱480/day. Weekly and monthly tiers replace, not stack with, daily pricing."
                                        FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,12,0,0" LineHeight="16"/>
                         </StackPanel>
                     </Border>
@@ -119,25 +139,25 @@
                             <TextBlock x:Name="TxtPreviewSubtitle" Text="Sedan · 17-19 Oct 2026 · 2 weekend days" FontSize="11.5" Foreground="#7A746D" Margin="0,3,0,16"/>
 
                             <Grid Margin="0,0,0,10">
-                                <TextBlock x:Name="TxtPreviewBaseLabel" Text="Base · 2 × $450" FontSize="12.5" Foreground="#4A4642"/>
-                                <TextBlock x:Name="TxtPreviewBaseVal" Text="$900.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                                <TextBlock x:Name="TxtPreviewBaseLabel" Text="Base · 2 × ₱450" FontSize="12.5" Foreground="#4A4642"/>
+                                <TextBlock x:Name="TxtPreviewBaseVal" Text="₱900.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
                             </Grid>
 
                             <Grid Margin="0,0,0,10">
                                 <TextBlock x:Name="TxtPreviewUpliftLabel" Text="Weekend uplift · ×1.15" FontSize="12.5" Foreground="#4A4642"/>
-                                <TextBlock x:Name="TxtPreviewUpliftVal" Text="+$135.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                                <TextBlock x:Name="TxtPreviewUpliftVal" Text="+₱135.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
                             </Grid>
 
                             <Grid Margin="0,0,0,14">
-                                <TextBlock Text="Child seat · 2 × $15" FontSize="12.5" Foreground="#4A4642"/>
-                                <TextBlock Text="+$30.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                                <TextBlock Text="Child seat · 2 × ₱15" FontSize="12.5" Foreground="#4A4642"/>
+                                <TextBlock Text="+₱30.00" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" HorizontalAlignment="Right"/>
                             </Grid>
 
                             <Border BorderBrush="#E8E5E1" BorderThickness="0,1,0,0" Margin="0,0,0,12"/>
 
                             <Grid Margin="0,0,0,14">
                                 <TextBlock Text="Eligible booking total" FontSize="12.5" Foreground="#4A4642" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="TxtPreviewTotalVal" Text="$1,065.00" FontSize="15" FontWeight="Bold" Foreground="#2B2927" HorizontalAlignment="Right"/>
+                                <TextBlock x:Name="TxtPreviewTotalVal" Text="₱1,065.00" FontSize="15" FontWeight="Bold" Foreground="#2B2927" HorizontalAlignment="Right"/>
                             </Grid>
 
                             <TextBlock Text="Vehicle override → duration tier → holiday OR weekend → fees → approved discount. No multiplier stacking."
@@ -230,13 +250,13 @@
         <Grid x:Name="EditTiersModal" Visibility="Collapsed" Panel.ZIndex="100">
             <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
             <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
-                    Width="520" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    Width="540" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="Edit Base Rate Tier" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
-                    <TextBlock Text="Update base pricing rates for this vehicle category" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
+                    <TextBlock x:Name="TxtTierModalTitle" Text="Edit Base Rate Tier" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                    <TextBlock x:Name="TxtTierModalSubtitle" Text="Customize pricing and overrides for this vehicle category" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
 
                     <TextBlock Text="CATEGORY" Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="TxtModalCategory" Height="36" Margin="0,0,0,12" IsReadOnly="True" Background="#FAF9F8"/>
+                    <TextBox x:Name="TxtModalCategory" Height="36" Margin="0,0,0,12"/>
 
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -245,11 +265,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="DAILY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="DAILY RATE (₱)" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtModalDaily" Height="36"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="WEEKLY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="WEEKLY RATE (₱)" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtModalWeekly" Height="36"/>
                         </StackPanel>
                     </Grid>
@@ -261,25 +281,73 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="MONTHLY RATE ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="MONTHLY RATE (₱)" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtModalMonthly" Height="36"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="DEPOSIT ($)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="DEPOSIT (₱)" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtModalDeposit" Height="36"/>
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="LATE FEE / DAY ($)" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="TxtModalLateFee" Height="36"/>
-                    </StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="LATE FEE / DAY (₱)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalLateFee" Height="36"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="VEHICLE OVERRIDE (OPTIONAL)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtModalOverride" Height="36"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Vehicle override assigns a custom daily rate for a specific vehicle (e.g. VH-0001 · ₱450/day)."
+                               FontSize="11" Foreground="#7A746D" Margin="0,0,0,18"/>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
                                 Width="90" Click="BtnCloseTiersModal_Click"/>
-                        <Button DockPanel.Dock="Right" Content="Save Changes" Style="{StaticResource PrimaryButton}"
+                        <Button x:Name="BtnDeleteTier" DockPanel.Dock="Left" Content="Delete Tier" Style="{StaticResource DangerOutlineButton}"
+                                Width="100" Margin="10,0,0,0" Click="BtnDeleteTier_Click"/>
+                        <Button x:Name="BtnSaveTierSubmit" DockPanel.Dock="Right" Content="Save Changes" Style="{StaticResource PrimaryButton}"
                                 Width="120" Click="BtnSaveTiers_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="VehicleOverrideInfoModal" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                    Width="540" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Vehicle Override Explanation" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                    <TextBlock Text="How individual vehicle overrides interact with category base rates" FontSize="12" Foreground="#7A746D" Margin="0,2,0,16"/>
+
+                    <Border Background="#F9F8F7" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="1. Category Base Rate (Default)" FontWeight="SemiBold" FontSize="13" Foreground="#70000F" Margin="0,0,0,4"/>
+                            <TextBlock Text="Every vehicle in a category (e.g. all Sedans) automatically inherits that category's standard base daily rate."
+                                       FontSize="12" Foreground="#4A4642" TextWrapping="Wrap" LineHeight="17" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="2. Vehicle Override (Specific Unit Exception)" FontWeight="SemiBold" FontSize="13" Foreground="#70000F" Margin="0,0,0,4"/>
+                            <TextBlock Text="When a particular vehicle has special features (e.g. brand-new 2026 unit, premium leather trim, or specialized accessories), administrators can assign a Vehicle Override (e.g. VH-0001 · ₱450/day)."
+                                       FontSize="12" Foreground="#4A4642" TextWrapping="Wrap" LineHeight="17" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="3. Calculation Order &amp; Priority" FontWeight="SemiBold" FontSize="13" Foreground="#70000F" Margin="0,0,0,4"/>
+                            <TextBlock Text="Vehicle Override takes top priority in the pricing engine. It replaces the category base rate completely for that specific vehicle before duration tiers, weekend/holiday multipliers, and optional add-ons are calculated."
+                                       FontSize="12" Foreground="#4A4642" TextWrapping="Wrap" LineHeight="17"/>
+                        </StackPanel>
+                    </Border>
+
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Right" Content="Got it" Style="{StaticResource PrimaryButton}"
+                                Width="100" Click="BtnCloseOverrideInfo_Click"/>
                     </DockPanel>
                 </StackPanel>
             </Border>

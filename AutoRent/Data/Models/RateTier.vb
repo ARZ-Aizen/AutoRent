@@ -12,19 +12,19 @@ Namespace Data.Models
 
         Public ReadOnly Property DisplayDaily As String
             Get
-                Return $"${DailyRate:N0}"
+                Return $"₱{DailyRate:N0}"
             End Get
         End Property
 
         Public ReadOnly Property DisplayWeekly As String
             Get
-                Return $"${WeeklyRate:N0}"
+                Return $"₱{WeeklyRate:N0}"
             End Get
         End Property
 
         Public ReadOnly Property DisplayMonthly As String
             Get
-                Return $"${MonthlyRate:N0}"
+                Return $"₱{MonthlyRate:N0}"
             End Get
         End Property
     End Class

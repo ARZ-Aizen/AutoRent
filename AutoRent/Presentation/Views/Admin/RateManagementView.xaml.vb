@@ -15,6 +15,7 @@ Namespace Presentation.Views.Admin
         Private _ready As Boolean = False
         Private _selectedTier As RateTier = Nothing
         Private _selectedRule As PricingRule = Nothing
+        Private _isNewTierMode As Boolean = False
 
         Public Sub New()
             InitializeComponent()
@@ -76,11 +77,31 @@ Namespace Presentation.Views.Admin
             Dim childSeat = 30D
             Dim total = baseAmount + weekendUplift + childSeat
 
-            TxtPreviewBaseLabel.Text = $"Base · 2 × ${daily:N0}"
-            TxtPreviewBaseVal.Text = $"${baseAmount:N2}"
+            TxtPreviewBaseLabel.Text = $"Base · 2 × ₱{daily:N0}"
+            TxtPreviewBaseVal.Text = $"₱{baseAmount:N2}"
             TxtPreviewUpliftLabel.Text = "Weekend uplift · ×1.15"
-            TxtPreviewUpliftVal.Text = $"+${weekendUplift:N2}"
-            TxtPreviewTotalVal.Text = $"${total:N2}"
+            TxtPreviewUpliftVal.Text = $"+₱{weekendUplift:N2}"
+            TxtPreviewTotalVal.Text = $"₱{total:N2}"
+        End Sub
+
+        Private Sub BtnAddTier_Click(sender As Object, e As RoutedEventArgs)
+            _isNewTierMode = True
+            TxtTierModalTitle.Text = "Add New Base Rate Tier"
+            TxtTierModalSubtitle.Text = "Create a new vehicle category tier with base pricing"
+            TxtModalCategory.Clear()
+            TxtModalCategory.IsReadOnly = False
+            TxtModalCategory.Background = System.Windows.Media.Brushes.White
+            TxtModalDaily.Clear()
+            TxtModalWeekly.Clear()
+            TxtModalMonthly.Clear()
+            TxtModalDeposit.Text = "500"
+            TxtModalLateFee.Text = "50"
+            TxtModalOverride.Text = "None"
+            BtnDeleteTier.Visibility = Visibility.Collapsed
+            BtnSaveTierSubmit.Content = "Create Tier"
+
+            EditTiersModal.Visibility = Visibility.Visible
+            TxtModalCategory.Focus()
         End Sub
 
         Private Sub BtnEditTiers_Click(sender As Object, e As RoutedEventArgs)
@@ -93,12 +114,20 @@ Namespace Presentation.Views.Admin
                 Return
             End If
 
+            _isNewTierMode = False
+            TxtTierModalTitle.Text = "Edit Base Rate Tier"
+            TxtTierModalSubtitle.Text = "Customize pricing and overrides for this vehicle category"
             TxtModalCategory.Text = _selectedTier.Category
+            TxtModalCategory.IsReadOnly = True
+            TxtModalCategory.Background = New System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(250, 249, 248))
             TxtModalDaily.Text = _selectedTier.DailyRate.ToString("0.##")
             TxtModalWeekly.Text = _selectedTier.WeeklyRate.ToString("0.##")
             TxtModalMonthly.Text = _selectedTier.MonthlyRate.ToString("0.##")
             TxtModalDeposit.Text = _selectedTier.Deposit.ToString("0.##")
             TxtModalLateFee.Text = _selectedTier.LateFeePerDay.ToString("0.##")
+            TxtModalOverride.Text = _selectedTier.VehicleOverride
+            BtnDeleteTier.Visibility = Visibility.Visible
+            BtnSaveTierSubmit.Content = "Save Changes"
 
             EditTiersModal.Visibility = Visibility.Visible
             TxtModalDaily.Focus()
@@ -108,49 +137,110 @@ Namespace Presentation.Views.Admin
             EditTiersModal.Visibility = Visibility.Collapsed
         End Sub
 
+        Private Sub BtnDeleteTier_Click(sender As Object, e As RoutedEventArgs)
+            If _selectedTier Is Nothing OrElse _isNewTierMode Then Return
+
+            If Not AlertUtil.Confirm($"Are you sure you want to delete the rate tier for '{_selectedTier.Category}'?", "Delete Tier", ViewHelpers.Owner(Me)) Then
+                Return
+            End If
+
+            Try
+                Dim problem = RateRepository.Delete(_selectedTier.RateId, _selectedTier.Category)
+                If problem IsNot Nothing Then
+                    AlertUtil.ShowWarning(problem, "Delete Tier", ViewHelpers.Owner(Me))
+                    Return
+                End If
+
+                EditTiersModal.Visibility = Visibility.Collapsed
+                AlertUtil.ShowSuccess($"Rate tier '{_selectedTier.Category}' was deleted.", "Delete Tier", ViewHelpers.Owner(Me))
+                LoadTiers()
+            Catch ex As Exception
+                AlertUtil.ShowError($"Could not delete rate tier: {ex.Message}", "Delete Tier", ViewHelpers.Owner(Me))
+            End Try
+        End Sub
+
         Private Sub BtnSaveTiers_Click(sender As Object, e As RoutedEventArgs)
-            If _selectedTier Is Nothing Then Return
+            Dim cat = TxtModalCategory.Text.Trim()
+            If String.IsNullOrWhiteSpace(cat) Then
+                AlertUtil.ShowWarning("Please enter a category name.", "Save Tier", ViewHelpers.Owner(Me))
+                Return
+            End If
 
             Dim daily, weekly, monthly, deposit, lateFee As Decimal
             If Not ViewHelpers.TryParseMoney(TxtModalDaily.Text, daily) OrElse daily <= 0D Then
-                AlertUtil.ShowWarning("Daily rate must be a number greater than 0.", "Edit Tiers", ViewHelpers.Owner(Me))
+                AlertUtil.ShowWarning("Daily rate must be a number greater than 0.", "Save Tier", ViewHelpers.Owner(Me))
                 Return
             End If
 
             If String.IsNullOrWhiteSpace(TxtModalWeekly.Text) Then
                 weekly = daily * 6D
             ElseIf Not ViewHelpers.TryParseMoney(TxtModalWeekly.Text, weekly) Then
-                AlertUtil.ShowWarning("Weekly rate must be a valid number.", "Edit Tiers", ViewHelpers.Owner(Me))
+                AlertUtil.ShowWarning("Weekly rate must be a valid number.", "Save Tier", ViewHelpers.Owner(Me))
                 Return
             End If
 
             If String.IsNullOrWhiteSpace(TxtModalMonthly.Text) Then
                 monthly = daily * 24D
             ElseIf Not ViewHelpers.TryParseMoney(TxtModalMonthly.Text, monthly) Then
-                AlertUtil.ShowWarning("Monthly rate must be a valid number.", "Edit Tiers", ViewHelpers.Owner(Me))
+                AlertUtil.ShowWarning("Monthly rate must be a valid number.", "Save Tier", ViewHelpers.Owner(Me))
                 Return
             End If
 
             If Not ViewHelpers.TryParseMoney(TxtModalDeposit.Text, deposit) Then deposit = 500D
             If Not ViewHelpers.TryParseMoney(TxtModalLateFee.Text, lateFee) Then lateFee = 50D
 
-            If Not AlertUtil.Confirm($"Are you sure you want to update the base rate tier for '{_selectedTier.Category}'?", "Save Tiers", ViewHelpers.Owner(Me)) Then
-                Return
-            End If
+            Dim overrideText = TxtModalOverride.Text.Trim()
+            If String.IsNullOrWhiteSpace(overrideText) Then overrideText = "None"
 
-            Try
-                Dim problem = RateRepository.Update(_selectedTier.RateId, _selectedTier.Category, _selectedTier.Category, daily, weekly, monthly, deposit, lateFee)
-                If problem IsNot Nothing Then
-                    AlertUtil.ShowWarning(problem, "Edit Tiers", ViewHelpers.Owner(Me))
+            If _isNewTierMode Then
+                If Not AlertUtil.Confirm($"Are you sure you want to add the new rate tier for '{cat}'?", "Create Tier", ViewHelpers.Owner(Me)) Then
                     Return
                 End If
 
-                EditTiersModal.Visibility = Visibility.Collapsed
-                AlertUtil.ShowSuccess($"Rate tier for '{_selectedTier.Category}' was updated successfully.", "Edit Tiers", ViewHelpers.Owner(Me))
-                LoadTiers(_selectedTier.Category)
-            Catch ex As Exception
-                AlertUtil.ShowError($"Could not update rate tier: {ex.Message}", "Edit Tiers", ViewHelpers.Owner(Me))
-            End Try
+                Try
+                    Dim problem = RateRepository.Add(cat, daily, weekly, monthly, deposit, lateFee)
+                    If problem IsNot Nothing Then
+                        AlertUtil.ShowWarning(problem, "Create Tier", ViewHelpers.Owner(Me))
+                        Return
+                    End If
+
+                    RateRepository.SetVehicleOverride(cat, overrideText)
+                    EditTiersModal.Visibility = Visibility.Collapsed
+                    AlertUtil.ShowSuccess($"Rate tier '{cat}' was created successfully.", "Create Tier", ViewHelpers.Owner(Me))
+                    LoadTiers(cat)
+                Catch ex As Exception
+                    AlertUtil.ShowError($"Could not create rate tier: {ex.Message}", "Create Tier", ViewHelpers.Owner(Me))
+                End Try
+            Else
+                If _selectedTier Is Nothing Then Return
+
+                If Not AlertUtil.Confirm($"Are you sure you want to update the base rate tier for '{cat}'?", "Save Tier", ViewHelpers.Owner(Me)) Then
+                    Return
+                End If
+
+                Try
+                    Dim problem = RateRepository.Update(_selectedTier.RateId, _selectedTier.Category, cat, daily, weekly, monthly, deposit, lateFee)
+                    If problem IsNot Nothing Then
+                        AlertUtil.ShowWarning(problem, "Save Tier", ViewHelpers.Owner(Me))
+                        Return
+                    End If
+
+                    RateRepository.SetVehicleOverride(cat, overrideText)
+                    EditTiersModal.Visibility = Visibility.Collapsed
+                    AlertUtil.ShowSuccess($"Rate tier for '{cat}' was updated successfully.", "Save Tier", ViewHelpers.Owner(Me))
+                    LoadTiers(cat)
+                Catch ex As Exception
+                    AlertUtil.ShowError($"Could not update rate tier: {ex.Message}", "Save Tier", ViewHelpers.Owner(Me))
+                End Try
+            End If
+        End Sub
+
+        Private Sub BtnOverrideInfo_Click(sender As Object, e As RoutedEventArgs)
+            VehicleOverrideInfoModal.Visibility = Visibility.Visible
+        End Sub
+
+        Private Sub BtnCloseOverrideInfo_Click(sender As Object, e As RoutedEventArgs)
+            VehicleOverrideInfoModal.Visibility = Visibility.Collapsed
         End Sub
 
         Private Sub BtnCreateRule_Click(sender As Object, e As RoutedEventArgs)
@@ -277,6 +367,7 @@ Namespace Presentation.Views.Admin
 
         Private Sub ModalBackdrop_MouseDown(sender As Object, e As MouseButtonEventArgs)
             EditTiersModal.Visibility = Visibility.Collapsed
+            VehicleOverrideInfoModal.Visibility = Visibility.Collapsed
             CreateRuleModal.Visibility = Visibility.Collapsed
             InspectRuleModal.Visibility = Visibility.Collapsed
             DgPricingRules.SelectedItem = Nothing
