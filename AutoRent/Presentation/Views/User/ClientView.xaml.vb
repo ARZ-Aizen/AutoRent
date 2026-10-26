@@ -1,4 +1,4 @@
-Imports System.Collections.ObjectModel
+﻿Imports System.Collections.ObjectModel
 Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
@@ -11,12 +11,10 @@ Namespace Presentation.Views.User
     Partial Public Class ClientView
         Inherits UserControl
 
-        ' ===================== EVENTS FOR THE HOST WINDOW =====================
         Public Event SwitchToAdminRequested As EventHandler
         Public Event SettingsRequested As EventHandler
         Public Event SignOutRequested As EventHandler
 
-        ' ===================== VIEW MODELS (loaded from the Access database) =====================
         Public Class FleetItem
             Public Property DbId As Integer
             Public Property Plate As String
@@ -123,7 +121,6 @@ Namespace Presentation.Views.User
             End Sub
         End Class
 
-        ' ===================== DATA STORES =====================
         Private ReadOnly _fleet As New ObservableCollection(Of FleetItem)
         Private ReadOnly _customers As New ObservableCollection(Of CustomerItem)
         Private ReadOnly _reservations As New ObservableCollection(Of ReservationItem)
@@ -133,7 +130,6 @@ Namespace Presentation.Views.User
         Private _currentActiveButton As Button = Nothing
         Private _initialized As Boolean = False
 
-        ' ===================== USER INFO (set from the host window) =====================
         Public Property UserName As String
             Get
                 Return TxtUserName.Text
@@ -152,7 +148,6 @@ Namespace Presentation.Views.User
             End Set
         End Property
 
-        ' Lets the host hide "Switch to Admin Console" for non-admin users
         Public Property CanSwitchToAdmin As Boolean
             Get
                 Return BtnSwitchAdmin.Visibility = Visibility.Visible
@@ -162,7 +157,6 @@ Namespace Presentation.Views.User
             End Set
         End Property
 
-        ' ===================== STARTUP =====================
         Public Sub New()
             InitializeComponent()
             SetLabelsVisible(False)
@@ -188,7 +182,6 @@ Namespace Presentation.Views.User
             End If
         End Sub
 
-        ' ===================== DATABASE LOADING =====================
         Private Shared Function Txt(row As DataRow, column As String) As String
             If IsDBNull(row(column)) Then Return String.Empty
             Return Convert.ToString(row(column))
@@ -209,7 +202,6 @@ Namespace Presentation.Views.User
             Return Convert.ToDateTime(row(column))
         End Function
 
-        ' Builds a label like "Toyota Vios 2023" from the Vehicles columns
         Private Shared Function VehicleName(row As DataRow) As String
             Dim parts As New List(Of String)
             For Each col In {"make", "model", "model_year"}
@@ -274,7 +266,6 @@ Namespace Presentation.Views.User
             MessageBox.Show($"Could not {action}: {ex.Message}", "AutoRent", MessageBoxButton.OK, MessageBoxImage.Error)
         End Sub
 
-        ' ===================== NAVIGATION =====================
         Private Sub SidebarOption_Click(sender As Object, e As RoutedEventArgs)
             Dim btn = TryCast(sender, Button)
             If btn Is Nothing Then Return
@@ -354,13 +345,11 @@ Namespace Presentation.Views.User
             End If
         End Sub
 
-        ' ===================== SIDEBAR EXPAND / COLLAPSE =====================
         Private Const ExpandedWidth As Double = 264
         Private Const CollapsedWidth As Double = 72
         Private _isExpanded As Boolean = False
-        Private _hoverExpanded As Boolean = False   ' expanded only because the mouse is over the sidebar
+        Private _hoverExpanded As Boolean = False
 
-        ' Hovering over the sidebar slides it open with the menu names; moving away closes it (unless pinned with the logo)
         Private Sub ClientSidebar_MouseEnter(sender As Object, e As System.Windows.Input.MouseEventArgs)
             If Not _isExpanded Then
                 _hoverExpanded = True
@@ -377,7 +366,7 @@ Namespace Presentation.Views.User
 
         Private Sub LogoToggle_Click(sender As Object, e As RoutedEventArgs)
             If _hoverExpanded Then
-                _hoverExpanded = False   ' keep it open (pinned)
+                _hoverExpanded = False
             Else
                 SetSidebarExpanded(Not _isExpanded)
             End If
@@ -413,13 +402,11 @@ Namespace Presentation.Views.User
                 Next
             Next
 
-            ' Tooltips stand in for the labels while collapsed
             For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch, BtnVehicleInspection}
                 btn.ToolTip = If(visible, Nothing, btn.Tag)
             Next
         End Sub
 
-        ' ===================== FOOTER BUTTONS =====================
         Private Sub BtnSwitchAdmin_Click(sender As Object, e As RoutedEventArgs)
             RaiseEvent SwitchToAdminRequested(Me, EventArgs.Empty)
         End Sub
@@ -432,7 +419,6 @@ Namespace Presentation.Views.User
             RaiseEvent SignOutRequested(Me, EventArgs.Empty)
         End Sub
 
-        ' ===================== 1. HOME (DASHBOARD) =====================
         Private Sub RefreshDashboard()
             TxtHomeDate.Text = Date.Today.ToString("dddd, MMMM d, yyyy")
             TxtStatTotal.Text = _fleet.Count.ToString()
@@ -442,7 +428,6 @@ Namespace Presentation.Views.User
             DgRecent.ItemsSource = _reservations.Take(5).ToList()
         End Sub
 
-        ' ===================== 2. FLEET AVAILABILITY =====================
         Private Sub TxtFleetSearch_TextChanged(sender As Object, e As TextChangedEventArgs)
             If Not _initialized Then Return
             ApplyFleetFilter()
@@ -467,7 +452,6 @@ Namespace Presentation.Views.User
             TxtFleetCount.Text = $"{result.Count} of {_fleet.Count} vehicles"
         End Sub
 
-        ' ===================== 3. CUSTOMER MANAGEMENT =====================
         Private Sub TxtCustSearch_TextChanged(sender As Object, e As TextChangedEventArgs)
             If Not _initialized Then Return
             ApplyCustomerFilter()
@@ -540,7 +524,6 @@ Namespace Presentation.Views.User
             ApplyCustomerFilter()
         End Sub
 
-        ' ===================== 4. RESERVATIONS =====================
         Private Sub RefreshReservationVehicles()
             CmbResVehicle.ItemsSource = _fleet.Where(Function(f) f.Status = "Available").ToList()
         End Sub
@@ -633,7 +616,6 @@ Namespace Presentation.Views.User
             Return True
         End Function
 
-        ' ===================== 5. DAILY DISPATCH =====================
         Private Sub CmbDispatchType_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
             If Not _initialized Then Return
             ApplyDispatchFilter()
@@ -671,7 +653,6 @@ Namespace Presentation.Views.User
             ApplyDispatchFilter()
         End Sub
 
-        ' ===================== 6. VEHICLE INSPECTION =====================
         Private Sub BtnSaveInspection_Click(sender As Object, e As RoutedEventArgs)
             Dim veh = TryCast(CmbInspVehicle.SelectedItem, FleetItem)
             Dim inspector As String = TxtInspector.Text.Trim()
@@ -720,9 +701,6 @@ Namespace Presentation.Views.User
 
     End Class
 
-    ''' <summary>
-    ''' Alias for ClientView representing the User portal view.
-    ''' </summary>
     Public Class UserView
         Inherits ClientView
     End Class

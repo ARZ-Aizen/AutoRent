@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports System.Windows
@@ -30,8 +30,6 @@ Namespace Presentation.Views.Admin
             LoadVehicles()
             ClearForm()
         End Sub
-
-        ' ---------- Loading ----------
 
         Private Sub LoadCategories()
             Try
@@ -78,8 +76,6 @@ Namespace Presentation.Views.Admin
             If _ready Then ApplyFilter()
         End Sub
 
-        ' ---------- Form ----------
-
         Private Sub ClearForm()
             _selectedId = 0
             DgVehicles.SelectedItem = Nothing
@@ -123,7 +119,6 @@ Namespace Presentation.Views.Admin
             CmbCategory.SelectedIndex = -1
         End Sub
 
-        ''' <summary>Validates the form. Returns an error message, or Nothing when valid.</summary>
         Private Function ReadForm(ByRef modelYear As Integer?, ByRef mileage As Integer, ByRef category As String, ByRef status As String) As String
             If String.IsNullOrWhiteSpace(TxtPlate.Text) Then Return "Enter the plate number."
             If String.IsNullOrWhiteSpace(TxtMake.Text) Then Return "Enter the make."
@@ -148,8 +143,6 @@ Namespace Presentation.Views.Admin
             If String.IsNullOrEmpty(status) Then Return "Choose a status."
             Return Nothing
         End Function
-
-        ' ---------- Actions ----------
 
         Private Sub BtnAdd_Click(sender As Object, e As RoutedEventArgs) Handles BtnAdd.Click
             Dim year As Integer? = Nothing, mileage As Integer, category As String = Nothing, status As String = Nothing

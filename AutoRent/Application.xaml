@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:AutoRent"
              StartupUri="Presentation/UI/LoginWindow.xaml">
     <Application.Resources>
-         
+
     </Application.Resources>
 </Application>

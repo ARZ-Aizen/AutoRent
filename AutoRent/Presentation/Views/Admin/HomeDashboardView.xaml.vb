@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -52,7 +52,6 @@ Namespace Presentation.Views.Admin
             {"Retired", Color.FromRgb(&H9A, &H94, &H8D)}
         }
 
-        ''' <summary>One row per status: label, a bar sized by share of the fleet, and the count.</summary>
         Private Sub BuildStatusBars(counts As Dictionary(Of String, Integer), total As Integer)
             StatusBars.Children.Clear()
 

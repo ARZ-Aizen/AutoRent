@@ -1,16 +1,10 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Data.OleDb
 
 Namespace Data.Context
-    ''' <summary>
-    ''' Small helper around OleDb so repositories stay short.
-    ''' Parameters are positional (Access/OleDb ignores names), so pass them in the same order as the "?" in the SQL.
-    ''' </summary>
     Public NotInheritable Class Db
         Private Sub New()
         End Sub
-
-        ' ---------- Parameter factories (blank / Nothing becomes NULL) ----------
 
         Public Shared Function Text(value As String, Optional size As Integer = 255) As OleDbParameter
             Dim p As New OleDbParameter("p", OleDbType.VarWChar, size)
@@ -67,8 +61,6 @@ Namespace Data.Context
         Public Shared Function Bool(value As Boolean) As OleDbParameter
             Return New OleDbParameter("p", OleDbType.Boolean) With {.Value = value}
         End Function
-
-        ' ---------- Execution ----------
 
         Public Shared Function Query(sql As String, ParamArray args() As OleDbParameter) As DataTable
             Using connection = AccessDatabaseConnection.CreateConnection()

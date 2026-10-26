@@ -1,10 +1,6 @@
 ﻿Imports System.Data.OleDb
 
 Namespace Data.Context
-    ''' <summary>
-    ''' Creates the admin-side tables on first run. The shipped .accdb only contains [Users],
-    ''' so this runs once at startup and does nothing when the tables already exist.
-    ''' </summary>
     Public NotInheritable Class DatabaseInitializer
         Private Sub New()
         End Sub
@@ -119,7 +115,6 @@ Namespace Data.Context
             End Using
         End Sub
 
-        ''' <summary>Starter price list so the Fleet page has categories to pick from. Editable in Rate Management.</summary>
         Private Shared Sub SeedRates(connection As OleDbConnection)
             Dim defaults As Object()() = {
                 New Object() {"Economy", 40D, 240D, 900D, 150D, 15D},

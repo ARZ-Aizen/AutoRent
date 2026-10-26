@@ -1,9 +1,8 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Globalization
 Imports System.Windows
 
 Namespace Common.Utilities
-    ''' <summary>Small helpers shared by the admin pages.</summary>
     Public NotInheritable Class ViewHelpers
         Private Sub New()
         End Sub
@@ -31,7 +30,6 @@ Namespace Common.Utilities
             Return Integer.TryParse(If(text, "").Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, value) AndAlso value >= 0
         End Function
 
-        ''' <summary>Escapes a string for use inside a DataView.RowFilter LIKE '%...%' expression.</summary>
         Public Shared Function EscapeLike(value As String) As String
             Dim sb As New System.Text.StringBuilder()
             For Each ch In value

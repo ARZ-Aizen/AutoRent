@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports AutoRent.Data.Context
@@ -22,9 +22,7 @@ Namespace Data.Repositories
                 Return Revenue - Expenses
             End Get
         End Property
-        ''' <summary>Columns: category, rentals, revenue</summary>
         Public Property ByCategory As DataTable
-        ''' <summary>Columns: month, rentals, revenue, expenses, net</summary>
         Public Property ByMonth As DataTable
     End Class
 
@@ -68,7 +66,6 @@ Namespace Data.Repositories
                 "ORDER BY r.[created_at] DESC")
         End Function
 
-        ''' <summary>Revenue = completed reservations returned in the period. Expenses = completed maintenance in the period.</summary>
         Public Shared Function GetSummary(fromDate As DateTime, toDate As DateTime) As FinancialSummary
             Dim startAt = fromDate.Date
             Dim endBefore = toDate.Date.AddDays(1)

@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Globalization
 Imports System.IO
 Imports System.Text
@@ -28,7 +28,7 @@ Namespace Presentation.Views.Admin
             DpFrom.SelectedDate = New DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)
             DpTo.SelectedDate = DateTime.Today
             _ready = True
-            CmbPeriod.SelectedIndex = 0   ' triggers the first load
+            CmbPeriod.SelectedIndex = 0
         End Sub
 
         Private Sub CmbPeriod_SelectionChanged(sender As Object, e As SelectionChangedEventArgs) Handles CmbPeriod.SelectionChanged
@@ -95,8 +95,6 @@ Namespace Presentation.Views.Admin
             DgCategory.ItemsSource = _summary.ByCategory.DefaultView
             DgMonth.ItemsSource = _summary.ByMonth.DefaultView
         End Sub
-
-        ' ---------- CSV export ----------
 
         Private Sub BtnExport_Click(sender As Object, e As RoutedEventArgs) Handles BtnExport.Click
             If _summary Is Nothing Then Return

@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Windows
 Imports System.Windows.Controls
 Imports AutoRent.Common.Utilities
@@ -69,7 +69,6 @@ Namespace Presentation.Views.Admin
             If String.IsNullOrWhiteSpace(TxtCategory.Text) Then Return "Enter a category name."
             If Not ViewHelpers.TryParseMoney(TxtDaily.Text, daily) OrElse daily <= 0D Then Return "Daily rate must be a number greater than 0."
 
-            ' Weekly / monthly are optional: blank falls back to 6x / 22x the daily rate (a small multi-day discount)
             If String.IsNullOrWhiteSpace(TxtWeekly.Text) Then
                 weekly = daily * 6D
             ElseIf Not ViewHelpers.TryParseMoney(TxtWeekly.Text, weekly) Then

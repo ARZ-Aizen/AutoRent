@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -33,7 +33,6 @@ Namespace Data.Repositories
             Db.Execute("UPDATE [Rates] SET [category] = ?, [daily_rate] = ?, [weekly_rate] = ?, [monthly_rate] = ?, [deposit] = ?, [late_fee_per_day] = ?, [updated_at] = ? WHERE [rate_id] = ?",
                        Db.Text(category, 30), Db.Money(daily), Db.Money(weekly), Db.Money(monthly), Db.Money(deposit), Db.Money(lateFee), Db.Dt(DateTime.Now), Db.Int(rateId))
 
-            ' Keep vehicles attached when a category is renamed
             If Not String.Equals(oldCategory, category.Trim(), StringComparison.Ordinal) Then
                 Db.Execute("UPDATE [Vehicles] SET [category] = ? WHERE [category] = ?", Db.Text(category, 30), Db.Text(oldCategory, 30))
             End If

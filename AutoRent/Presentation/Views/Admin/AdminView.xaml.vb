@@ -1,4 +1,4 @@
-Imports System.Windows.Controls
+﻿Imports System.Windows.Controls
 
 Namespace Presentation.Views.Admin
     Partial Public Class AdminView

@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -25,9 +25,9 @@ Class MainWindow
     Private Const CollapsedWidth As Double = 72
 
     Private _currentViewIsAdmin As Boolean = False
-    Private _isExpanded As Boolean = False   ' starts collapsed
-    Private _hoverExpanded As Boolean = False ' expanded only because the mouse is over the sidebar
-    Private _clientView As ClientView        ' created once, reused
+    Private _isExpanded As Boolean = False
+    Private _hoverExpanded As Boolean = False
+    Private _clientView As ClientView
 
     Public Sub New()
         InitializeComponent()
@@ -50,22 +50,18 @@ Class MainWindow
                 LoadClientView()
             End If
         Else
-            ' Fallback if started without a session
             LoadClientView()
         End If
     End Sub
 
-    ' ---------- Sidebar expand / collapse ----------
-
     Private Sub LogoToggle_Click(sender As Object, e As RoutedEventArgs) Handles LogoToggle.Click
         If _hoverExpanded Then
-            _hoverExpanded = False   ' keep it open (pinned)
+            _hoverExpanded = False
         Else
             SetSidebarExpanded(Not _isExpanded)
         End If
     End Sub
 
-    ' Hovering over the sidebar slides it open with the menu names; moving away closes it again (unless pinned with the logo)
     Private Sub Sidebar_MouseEnter(sender As Object, e As MouseEventArgs) Handles Sidebar.MouseEnter
         If Not _isExpanded Then
             _hoverExpanded = True
@@ -83,7 +79,6 @@ Class MainWindow
     Private Sub SetSidebarExpanded(expand As Boolean)
         _isExpanded = expand
 
-        ' Collapsing: hide labels first so they don't get squished during the animation
         If Not expand Then SetLabelsVisible(False)
 
         Dim anim As New DoubleAnimation With {
@@ -92,7 +87,6 @@ Class MainWindow
             .EasingFunction = New CubicEase With {.EasingMode = EasingMode.EaseInOut}
         }
 
-        ' Expanding: show labels once there is room for them
         If expand Then
             AddHandler anim.Completed, Sub(s, args) SetLabelsVisible(True)
         End If
@@ -112,11 +106,9 @@ Class MainWindow
         NavList.Tag = If(visible, "Expanded", "Collapsed")
     End Sub
 
-    ' ---------- ADMIN VIEW (uses the MainWindow sidebar) ----------
-
     Private Sub LoadAdminView()
         _currentViewIsAdmin = True
-        Sidebar.Visibility = Visibility.Visible       ' show the admin sidebar
+        Sidebar.Visibility = Visibility.Visible
         SidebarColumn.Width = New GridLength(CollapsedWidth)
 
         CurrentViewBadgeText.Text = "ADMIN CONSOLE"
@@ -131,14 +123,12 @@ Class MainWindow
             New NavItem(ChrW(&HE9D9), "Financial Reports", "Reports"),
             New NavItem(ChrW(&HE716), "User Management", "Users")
         }
-        NavList.SelectedIndex = 0   ' fires SelectionChanged -> loads first page
+        NavList.SelectedIndex = 0
     End Sub
-
-    ' ---------- CLIENT VIEW (ClientView has its own sidebar) ----------
 
     Private Sub LoadClientView()
         _currentViewIsAdmin = False
-        Sidebar.Visibility = Visibility.Collapsed     ' hide the MainWindow sidebar
+        Sidebar.Visibility = Visibility.Collapsed
         SidebarColumn.Width = New GridLength(0)
 
         If _clientView Is Nothing Then
@@ -173,8 +163,6 @@ Class MainWindow
         LogoutButton_Click(sender, New RoutedEventArgs())
     End Sub
 
-    ' ---------- Navigation (admin sidebar only) ----------
-
     Private Sub NavList_SelectionChanged(sender As Object, e As SelectionChangedEventArgs) Handles NavList.SelectionChanged
         Dim item = TryCast(NavList.SelectedItem, NavItem)
         If item Is Nothing Then Return
@@ -188,7 +176,7 @@ Class MainWindow
             Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
             Case "Users"       : MainContentHost.Content = New UserManagementView()
             Case Else
-                MainContentHost.Content = New AdminView()   ' temporary fallback
+                MainContentHost.Content = New AdminView()
         End Select
     End Sub
 
@@ -201,7 +189,6 @@ Class MainWindow
     End Sub
 
     Private Sub SettingsButton_Click(sender As Object, e As RoutedEventArgs) Handles SettingsButton.Click
-        ' TODO: open settings
     End Sub
 
     Private Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs) Handles LogoutButton.Click

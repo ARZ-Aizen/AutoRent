@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -61,10 +61,6 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
-        ''' <summary>
-        ''' A vehicle with a job "In Progress" is shown as Maintenance in the fleet list;
-        ''' when the last open job finishes it goes back to Available.
-        ''' </summary>
         Private Shared Sub SyncVehicleStatus(vehicleId As Integer)
             Dim openJobs = Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [vehicle_id] = ? AND [status] = 'In Progress'", Db.Int(vehicleId))
 

@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -15,7 +15,6 @@ Namespace Data.Repositories
                 "ORDER BY v.[plate]")
         End Function
 
-        ''' <summary>Vehicles that can be scheduled for service (everything except Retired).</summary>
         Public Shared Function GetPickList() As DataTable
             Return Db.Query("SELECT [vehicle_id], [plate] & ' - ' & [make] & ' ' & [model] AS [display] FROM [Vehicles] WHERE [status] <> 'Retired' ORDER BY [plate]")
         End Function
@@ -42,7 +41,6 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
-        ''' <summary>Deletes a vehicle that has no history. Vehicles with bookings or service records must be set to Retired instead.</summary>
         Public Shared Function Delete(vehicleId As Integer) As String
             Dim uses = Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [vehicle_id] = ?", Db.Int(vehicleId)) +
                        Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ?", Db.Int(vehicleId))

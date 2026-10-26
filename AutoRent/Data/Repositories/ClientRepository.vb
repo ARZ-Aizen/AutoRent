@@ -3,12 +3,9 @@ Imports System.Data.OleDb
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
-    ''' <summary>Data access for the Client Portal (fleet board, customers, reservations, dispatch, inspections).</summary>
     Public NotInheritable Class ClientRepository
         Private Sub New()
         End Sub
-
-        ' ---------- Fleet ----------
 
         Public Shared Function GetFleet() As DataTable
             Return Db.Query(
@@ -16,8 +13,6 @@ Namespace Data.Repositories
                 "FROM [Vehicles] AS v LEFT JOIN [Rates] AS r ON v.[category] = r.[category] " &
                 "WHERE v.[status] <> 'Retired' ORDER BY v.[plate]")
         End Function
-
-        ' ---------- Customers ----------
 
         Public Shared Function GetCustomers() As DataTable
             Return Db.Query("SELECT [customer_id], [full_name], [phone], [email], [license_no] FROM [Customers] ORDER BY [full_name]")
@@ -42,8 +37,6 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
-        ' ---------- Reservations ----------
-
         Public Shared Function GetReservations() As DataTable
             Return Db.Query(
                 "SELECT r.[reservation_id], r.[customer_name], r.[vehicle_id], r.[pickup_date], r.[return_date], r.[total], r.[status], " &
@@ -52,7 +45,6 @@ Namespace Data.Repositories
                 "ORDER BY r.[reservation_id] DESC")
         End Function
 
-        ''' <summary>Creates the reservation, its pickup and return dispatches, and marks the vehicle Reserved, all or nothing.</summary>
         Public Shared Function CreateReservation(customerName As String, vehicleId As Integer, pickup As Date, dropoff As Date, total As Decimal) As String
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
@@ -83,7 +75,6 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
-        ''' <summary>Sets a reservation to Cancelled or Completed, frees the vehicle and closes any open dispatches.</summary>
         Public Shared Sub CloseReservation(reservationId As Integer, vehicleId As Integer, newStatus As String)
             Dim dispatchStatus = If(newStatus = "Completed", "Completed", "Cancelled")
 
@@ -98,9 +89,6 @@ Namespace Data.Repositories
             End Using
         End Sub
 
-        ' ---------- Dispatch ----------
-
-        ''' <summary>Today's dispatches plus anything from earlier days that is still scheduled.</summary>
         Public Shared Function GetDispatchBoard() As DataTable
             Dim today = DateTime.Today
             Return Db.Query(
@@ -113,7 +101,6 @@ Namespace Data.Repositories
                 Db.Dt(today.AddDays(1)), Db.Dt(today))
         End Function
 
-        ''' <summary>Pickup: reservation becomes Active and the vehicle Rented. Return: reservation Completed and the vehicle Available.</summary>
         Public Shared Sub CompleteDispatch(dispatchId As Integer, reservationId As Integer, vehicleId As Integer, dispatchType As String)
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
@@ -131,8 +118,6 @@ Namespace Data.Repositories
                 End Using
             End Using
         End Sub
-
-        ' ---------- Inspections ----------
 
         Public Shared Function GetInspections() As DataTable
             Return Db.Query(
@@ -154,8 +139,6 @@ Namespace Data.Repositories
                 End Using
             End Using
         End Sub
-
-        ' ---------- helpers ----------
 
         Private Shared Sub Run(connection As OleDbConnection, tx As OleDbTransaction, sql As String, ParamArray args() As OleDbParameter)
             Using command = connection.CreateCommand()

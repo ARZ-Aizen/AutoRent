@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports System.Windows
@@ -52,7 +52,6 @@ Namespace Presentation.Views.Admin
             End Try
         End Sub
 
-        ''' <summary>"Overdue" / "Today" / "In n days" for jobs that are still Scheduled; blank otherwise.</summary>
         Private Shared Function DueText(status As String, scheduled As Object) As String
             If status <> "Scheduled" OrElse IsDBNull(scheduled) Then Return String.Empty
             Dim days = (Convert.ToDateTime(scheduled).Date - DateTime.Today).Days
