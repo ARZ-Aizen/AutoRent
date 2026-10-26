@@ -13,36 +13,7 @@ Namespace Data.Repositories
 
         Public Const MinPasswordLength As Integer = 8
 
-        Public Shared Sub EnsureSampleStaffSeeded()
-            Try
-                Dim count = Db.Count("SELECT COUNT(*) FROM [Users] WHERE [is_deleted] = False")
-                If count <= 1 Then
-                    Dim staffData = {
-                        ("Alex Morgan", "a.morgan", "Manager", "HQ", True, DateTime.Now.AddHours(-10)),
-                        ("Priya Shah", "p.shah", "Manager", "HQ", True, DateTime.Now.AddHours(-9)),
-                        ("Julian Sterling", "j.sterling", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-8)),
-                        ("Daniel Reed", "d.reed", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-7)),
-                        ("Noah Brooks", "n.brooks", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-6)),
-                        ("Ella Hayes", "e.hayes", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-5)),
-                        ("Luca Bennett", "l.bennett", "Rental Staff", "HQ", False, DateTime.Now.AddDays(-6)),
-                        ("Maya Chen", "m.chen", "Rental Staff", "HQ", True, CType(Nothing, DateTime?))
-                    }
-
-                    For Each item In staffData
-                        If Db.Count("SELECT COUNT(*) FROM [Users] WHERE [username] = ?", Db.Text(item.Item2, 100)) = 0 Then
-                            Db.Execute("INSERT INTO [Users] ([username], [full_name], [branch], [password_hash], [role], [is_active], [is_deleted], [last_login], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                       Db.Text(item.Item2, 100), Db.Text(item.Item1, 100), Db.Text(item.Item4, 50),
-                                       Db.Text(PasswordHasher.HashPassword("Staff123!"), 255), Db.Text(item.Item3, 50),
-                                       Db.Bool(item.Item5), Db.Bool(False), Db.DtOrNull(item.Item6), Db.Dt(DateTime.Now.AddDays(-14)))
-                        End If
-                    Next
-                End If
-            Catch ex As Exception
-            End Try
-        End Sub
-
         Public Shared Function GetAll() As List(Of User)
-            EnsureSampleStaffSeeded()
             Dim users As New List(Of User)()
 
             Dim table = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = False ORDER BY [user_id]")
