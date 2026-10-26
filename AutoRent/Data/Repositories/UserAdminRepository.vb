@@ -18,7 +18,6 @@ Namespace Data.Repositories
                 If count <= 1 Then
                     Dim staffData = {
                         ("Alex Morgan", "a.morgan", "System Administrator", "HQ", True, DateTime.Now.AddHours(-10)),
-<<<<<<< HEAD
                         ("Priya Shah", "p.shah", "Manager", "HQ", True, DateTime.Now.AddHours(-9)),
                         ("Julian Sterling", "j.sterling", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-8)),
                         ("Daniel Reed", "d.reed", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-7)),
@@ -26,15 +25,6 @@ Namespace Data.Repositories
                         ("Ella Hayes", "e.hayes", "Rental Staff", "HQ", True, DateTime.Now.AddHours(-5)),
                         ("Luca Bennett", "l.bennett", "Rental Staff", "HQ", False, DateTime.Now.AddDays(-6)),
                         ("Maya Chen", "m.chen", "Rental Staff", "HQ", True, CType(Nothing, DateTime?))
-=======
-                        ("Priya Shah", "p.shah", "Business Owner / Branch Manager", "HQ", True, DateTime.Now.AddHours(-9)),
-                        ("Julian Sterling", "j.sterling", "Dispatch Officer", "HQ", True, DateTime.Now.AddHours(-8)),
-                        ("Daniel Reed", "d.reed", "Dispatch Officer", "HQ", True, DateTime.Now.AddHours(-7)),
-                        ("Noah Brooks", "n.brooks", "Rental Clerk", "HQ", True, DateTime.Now.AddHours(-6)),
-                        ("Ella Hayes", "e.hayes", "Front-Desk Staff", "HQ", True, DateTime.Now.AddHours(-5)),
-                        ("Luca Bennett", "l.bennett", "Front-Desk Staff", "HQ", False, DateTime.Now.AddDays(-6)),
-                        ("Maya Chen", "m.chen", "Rental Clerk", "HQ", True, CType(Nothing, DateTime?))
->>>>>>> fb67b0a79680152b8c70af7d784c7652495f2813
                     }
 
                     For Each item In staffData
