@@ -1,0 +1,177 @@
+﻿<UserControl x:Class="Presentation.Views.User.FleetAvailabilityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Manrope, Segoe UI">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ClientStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Modern table header -->
+            <Style x:Key="ModernTableHeader"
+                   TargetType="{x:Type DataGridColumnHeader}">
+                <Setter Property="Background" Value="#F5F3F1"/>
+                <Setter Property="Foreground" Value="#393633"/>
+                <Setter Property="FontFamily" Value="Manrope, Segoe UI"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="12,14"/>
+                <Setter Property="BorderBrush" Value="#E7E2DD"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+
+            <!-- Table cells -->
+            <Style x:Key="ModernTableCell"
+                   TargetType="{x:Type DataGridCell}">
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="BorderBrush" Value="#F0EDE9"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#F5E7E9"/>
+                        <Setter Property="Foreground" Value="#780018"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Table rows -->
+            <Style x:Key="ModernTableRow"
+                   TargetType="{x:Type DataGridRow}">
+                <Setter Property="MinHeight" Value="44"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="#393633"/>
+                <Setter Property="BorderBrush" Value="#F0EDE9"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="AlternationIndex" Value="1">
+                        <Setter Property="Background" Value="#FCFBFA"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#F7F2EF"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#F5E7E9"/>
+                        <Setter Property="Foreground" Value="#780018"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Page heading -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Fleet Availability"
+                       Style="{StaticResource PageTitle}"/>
+            <TextBlock
+                Text="See which vehicles are available, reserved, rented, or in maintenance."
+                Style="{StaticResource PageSubtitle}"
+                TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Search and status filters -->
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Margin="0,0,0,14">
+
+            <StackPanel>
+                <TextBlock Text="Search"
+                           Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="TxtFleetSearch"
+                         Tag="Search plate, model or category"
+                         Width="260"
+                         ToolTip="Search by plate, model or category"
+                         TextChanged="TxtFleetSearch_TextChanged"/>
+            </StackPanel>
+
+            <StackPanel Margin="12,0,0,0">
+                <TextBlock Text="Status"
+                           Style="{StaticResource FieldLabel}"/>
+                <ComboBox x:Name="CmbFleetStatus"
+                          Width="160"
+                          SelectedIndex="0"
+                          SelectionChanged="CmbFleetStatus_SelectionChanged">
+                    <ComboBoxItem Content="All"/>
+                    <ComboBoxItem Content="Available"/>
+                    <ComboBoxItem Content="Reserved"/>
+                    <ComboBoxItem Content="Rented"/>
+                    <ComboBoxItem Content="Maintenance"/>
+                </ComboBox>
+            </StackPanel>
+
+            <TextBlock x:Name="TxtFleetCount"
+                       VerticalAlignment="Bottom"
+                       Margin="16,0,0,8"
+                       Foreground="#7A746D"
+                       FontSize="12"/>
+        </StackPanel>
+
+        <!-- Outlined fleet table -->
+        <Border Grid.Row="2"
+                Background="White"
+                BorderBrush="#E4DFDA"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="0"
+                ClipToBounds="True">
+
+            <DataGrid x:Name="DgFleet"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#F0EDE9"
+                      BorderThickness="0"
+                      Background="White"
+                      AlternationCount="2"
+                      ColumnHeaderStyle="{StaticResource ModernTableHeader}"
+                      CellStyle="{StaticResource ModernTableCell}"
+                      RowStyle="{StaticResource ModernTableRow}">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Plate No."
+                                        Binding="{Binding Plate}"
+                                        Width="1.1*"/>
+
+                    <DataGridTextColumn Header="Vehicle"
+                                        Binding="{Binding Model}"
+                                        Width="1.5*"/>
+
+                    <DataGridTextColumn Header="Category"
+                                        Binding="{Binding Category}"
+                                        Width="1.1*"/>
+
+                    <DataGridTextColumn Header="Daily Rate"
+                                        Binding="{Binding DailyRate, StringFormat=N2}"
+                                        Width="1.1*"/>
+
+                    <DataGridTemplateColumn Header="Status"
+                                            SortMemberPath="Status"
+                                            Width="1*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding Status}"
+                                                ContentTemplate="{StaticResource StatusPill}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

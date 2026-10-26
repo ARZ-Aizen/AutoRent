@@ -9,10 +9,7 @@ Namespace Data.Repositories
         Private Sub New()
         End Sub
 
-        Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
-            {"Sedan", "VH-0001 · ₱450/day"},
-            {"SUV (Sport Utility Vehicle)", "VH-0002 · ₱480/day"}
-        }
+        Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
 
         Private Shared ReadOnly _rules As New List(Of PricingRule) From {
             New PricingRule With {
@@ -23,7 +20,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Category / vehicle base",
                 .RateMultiplier = "Per day",
                 .IsActive = True,
-                .LastModified = "Alex Morgan · 01 Jan, 09:00"
+                .LastModified = "Admin · 01 Jan, 09:00"
             },
             New PricingRule With {
                 .RuleId = "RR-004",
@@ -33,7 +30,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Fri-Sun · base multiplier",
                 .RateMultiplier = "×1.15",
                 .IsActive = True,
-                .LastModified = "Priya Shah · 14 Oct, 15:18"
+                .LastModified = "Admin · 14 Oct, 15:18"
             },
             New PricingRule With {
                 .RuleId = "RR-005",
@@ -43,7 +40,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Holiday overrides weekend",
                 .RateMultiplier = "×1.25",
                 .IsActive = True,
-                .LastModified = "Priya Shah · 12 Oct, 10:00"
+                .LastModified = "Admin · 12 Oct, 10:00"
             },
             New PricingRule With {
                 .RuleId = "RR-006",
@@ -53,7 +50,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "After 60-min grace / hour",
                 .RateMultiplier = "Daily ÷ 8",
                 .IsActive = True,
-                .LastModified = "Alex Morgan · 01 Jan, 09:10"
+                .LastModified = "Admin · 01 Jan, 09:10"
             },
             New PricingRule With {
                 .RuleId = "RR-007",
@@ -63,7 +60,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "After 8h · replaces overtime",
                 .RateMultiplier = "1 daily rate",
                 .IsActive = True,
-                .LastModified = "Alex Morgan · 01 Jan, 09:15"
+                .LastModified = "Admin · 01 Jan, 09:15"
             },
             New PricingRule With {
                 .RuleId = "RR-008",
@@ -73,7 +70,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Above 200 km / day",
                 .RateMultiplier = "₱0.75 / km",
                 .IsActive = True,
-                .LastModified = "Priya Shah · 03 Oct, 11:30"
+                .LastModified = "Admin · 03 Oct, 11:30"
             },
             New PricingRule With {
                 .RuleId = "RR-009",
@@ -83,7 +80,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Actual fuel + service fee",
                 .RateMultiplier = "₱25 + fuel",
                 .IsActive = True,
-                .LastModified = "Priya Shah · 03 Oct, 11:35"
+                .LastModified = "Admin · 03 Oct, 11:35"
             },
             New PricingRule With {
                 .RuleId = "RR-010",
@@ -93,7 +90,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Equipment / day",
                 .RateMultiplier = "₱15 / day",
                 .IsActive = True,
-                .LastModified = "Priya Shah · 03 Oct, 11:40"
+                .LastModified = "Admin · 03 Oct, 11:40"
             },
             New PricingRule With {
                 .RuleId = "RR-011",
@@ -103,7 +100,7 @@ Namespace Data.Repositories
                 .CalculationMethod = "Authorized percentage",
                 .RateMultiplier = "Up to 10%",
                 .IsActive = False,
-                .LastModified = "Alex Morgan · 10 Oct, 16:00"
+                .LastModified = "Admin · 10 Oct, 16:00"
             }
         }
 

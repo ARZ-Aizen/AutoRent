@@ -102,14 +102,13 @@
     </UserControl.Resources>
 
     <Grid Background="#F4F3F1">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid Margin="32,20,32,16">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <Grid Margin="32,18,32,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
                 <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
                     <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -155,9 +154,9 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="10"
-                            Padding="20,18,20,16">
+                            Padding="20,16,20,14">
                         <StackPanel>
-                            <DockPanel LastChildFill="False" Margin="0,0,0,14">
+                            <DockPanel LastChildFill="False" Margin="0,0,0,12">
                                 <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                                     <TextBlock Text="Base rate tiers · PHP" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
                                     <TextBlock Text="Category baseline pricing and unit overrides" FontSize="11.5" Foreground="#7A746D" Margin="0,2,0,0"/>
@@ -171,7 +170,9 @@
                                 <DataGrid x:Name="DgRateTiers" AutoGenerateColumns="False" IsReadOnly="True"
                                           HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                           HorizontalGridLinesBrush="#F0EEEB" Background="White" RowBackground="White"
-                                          BorderThickness="0" RowHeight="46" SelectionMode="Single" SelectionUnit="FullRow"
+                                          BorderThickness="0" RowHeight="40" Height="205" SelectionMode="Single" SelectionUnit="FullRow"
+                                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                           ColumnHeaderStyle="{StaticResource RateDataGridHeaderStyle}"
                                           RowStyle="{StaticResource RateDataGridRowStyle}"
                                           SelectionChanged="DgRateTiers_SelectionChanged">
@@ -225,7 +226,7 @@
                             </Border>
 
                             <TextBlock Text="Vehicle override replaces category base. VH-0004 ₱520/day · VH-0184 ₱480/day. Weekly and monthly tiers replace, not stack with, daily pricing."
-                                       FontSize="11.5" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,12,0,0" LineHeight="17"/>
+                                       FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="16"/>
                         </StackPanel>
                     </Border>
 
@@ -267,27 +268,34 @@
                 </Grid>
 
                 <Border Grid.Row="2" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="10"
-                        Padding="20,18,20,16" Margin="0,0,0,14">
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,14">
+                        Padding="20,16,20,14" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
                             <StackPanel DockPanel.Dock="Left">
                                 <TextBlock Text="Pricing rules" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
                                 <TextBlock Text="Effective dates in branch timezone · select a rule to inspect or amend"
                                            FontSize="11.5" Foreground="#7A746D" Margin="0,3,0,0"/>
                             </StackPanel>
 
-                            <Border DockPanel.Dock="Right" Background="#FDF2F2" BorderBrush="#FAD2D2" BorderThickness="1"
+                            <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="#FDF2F2" BorderBrush="#FAD2D2" BorderThickness="1"
                                     CornerRadius="12" Padding="10,3.5" VerticalAlignment="Center">
                                 <TextBlock x:Name="TxtRulesSummary" Text="8 active / 1 inactive"
                                            FontSize="11.5" FontWeight="SemiBold" Foreground="#9E1C2E"/>
                             </Border>
                         </DockPanel>
 
-                        <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8">
+                        <Border Grid.Row="1" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8">
                             <DataGrid x:Name="DgPricingRules" AutoGenerateColumns="False" IsReadOnly="True"
                                       HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                       HorizontalGridLinesBrush="#F0EEEB" Background="White" RowBackground="White"
-                                      BorderThickness="0" RowHeight="46" SelectionMode="Single" SelectionUnit="FullRow"
+                                      BorderThickness="0" RowHeight="42" SelectionMode="Single" SelectionUnit="FullRow"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ColumnHeaderStyle="{StaticResource RateDataGridHeaderStyle}"
                                       RowStyle="{StaticResource RateDataGridRowStyle}"
                                       SelectionChanged="DgPricingRules_SelectionChanged">
@@ -383,19 +391,18 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
                 <Border Grid.Row="3" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="10"
-                        Padding="18,14" Margin="0,0,0,12">
+                        Padding="16,10" Margin="0,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="Finalized contracts are protected" FontSize="13" FontWeight="Bold" Foreground="#2B2927"/>
+                        <TextBlock Text="Finalized contracts are protected" FontSize="12.5" FontWeight="Bold" Foreground="#2B2927"/>
                         <TextBlock Text="Rate updates apply to new eligible bookings only. Equal-priority date overlaps are rejected; holiday pricing takes precedence over weekend pricing. Every update records old/new values, approver and effective time."
-                                   FontSize="11.5" Foreground="#7A746D" TextWrapping="Wrap" LineHeight="18" Margin="0,4,0,0"/>
+                                   FontSize="11" Foreground="#7A746D" TextWrapping="Wrap" LineHeight="16" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Border>
             </Grid>
-        </ScrollViewer>
 
         <Grid x:Name="EditTiersModal" Visibility="Collapsed" Panel.ZIndex="100">
             <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>

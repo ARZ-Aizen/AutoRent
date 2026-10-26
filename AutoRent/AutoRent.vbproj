@@ -43,7 +43,6 @@
     <Folder Include="API\Controllers\" />
     <Folder Include="API\DTOs\" />
     <Folder Include="Presentation\Views\Admin\" />
-    <Folder Include="Presentation\Views\User\" />
     <Folder Include="Resources\Config\" />
 
     <!-- Tests -->
