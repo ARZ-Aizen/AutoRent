@@ -173,12 +173,9 @@ Namespace Presentation.Views.Admin
             End If
 
             TxtEditPassword.Clear()
+            TxtEditConfirmPassword.Clear()
             EditUserModal.Visibility = Visibility.Visible
             TxtEditFullName.Focus()
-        End Sub
-
-        Private Sub BtnGenerateEditPassword_Click(sender As Object, e As RoutedEventArgs)
-            TxtEditPassword.Text = GenerateSecurePassword()
         End Sub
 
         Private Sub BtnCloseEditModal_Click(sender As Object, e As RoutedEventArgs)
@@ -195,7 +192,8 @@ Namespace Presentation.Views.Admin
             Dim fullName = TxtEditFullName.Text.Trim()
             Dim username = TxtEditUsername.Text.Trim()
             Dim role = TryCast(CmbEditRole.SelectedItem, String)
-            Dim newPassword = TxtEditPassword.Text.Trim()
+            Dim newPassword = TxtEditPassword.Password.Trim()
+            Dim confirmPassword = TxtEditConfirmPassword.Password.Trim()
 
             If String.IsNullOrWhiteSpace(fullName) Then
                 AlertUtil.ShowWarning("Full name cannot be blank.", "Edit Account", ViewHelpers.Owner(Me))
@@ -205,6 +203,18 @@ Namespace Presentation.Views.Admin
             If String.IsNullOrWhiteSpace(username) Then
                 AlertUtil.ShowWarning("Username cannot be blank.", "Edit Account", ViewHelpers.Owner(Me))
                 Return
+            End If
+
+            If Not String.IsNullOrEmpty(newPassword) Then
+                If newPassword <> confirmPassword Then
+                    AlertUtil.ShowWarning("New password and confirmation password do not match.", "Edit Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+
+                If newPassword.Length < UserAdminRepository.MinPasswordLength Then
+                    AlertUtil.ShowWarning($"Password must be at least {UserAdminRepository.MinPasswordLength} characters.", "Edit Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
             End If
 
             Try
@@ -246,15 +256,12 @@ Namespace Presentation.Views.Admin
         Private Sub BtnOpenCreateUser_Click(sender As Object, e As RoutedEventArgs)
             TxtNewFullName.Clear()
             TxtNewUsername.Clear()
-            TxtNewPassword.Text = GenerateSecurePassword()
+            TxtNewPassword.Clear()
+            TxtNewConfirmPassword.Clear()
             CmbNewRole.SelectedIndex = 0
-            ChkNewActive.IsChecked = True
+            ChkNewActive.IsChecked = False
             CreateUserModal.Visibility = Visibility.Visible
             TxtNewFullName.Focus()
-        End Sub
-
-        Private Sub BtnGeneratePassword_Click(sender As Object, e As RoutedEventArgs)
-            TxtNewPassword.Text = GenerateSecurePassword()
         End Sub
 
         Private Sub BtnCloseCreateModal_Click(sender As Object, e As RoutedEventArgs)
@@ -268,12 +275,28 @@ Namespace Presentation.Views.Admin
         Private Sub BtnSaveNewUser_Click(sender As Object, e As RoutedEventArgs)
             Dim username = TxtNewUsername.Text.Trim()
             Dim fullName = TxtNewFullName.Text.Trim()
-            Dim password = TxtNewPassword.Text.Trim()
+            Dim password = TxtNewPassword.Password.Trim()
+            Dim confirmPassword = TxtNewConfirmPassword.Password.Trim()
             Dim role = TryCast(CmbNewRole.SelectedItem, String)
             Dim isActive = (ChkNewActive.IsChecked = True)
 
             If String.IsNullOrWhiteSpace(username) Then
                 AlertUtil.ShowWarning("Please specify a username.", "Create User", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If String.IsNullOrEmpty(password) Then
+                AlertUtil.ShowWarning("Please specify a password.", "Create User", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If password <> confirmPassword Then
+                AlertUtil.ShowWarning("Password and confirmation password do not match.", "Create User", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If password.Length < UserAdminRepository.MinPasswordLength Then
+                AlertUtil.ShowWarning($"Password must be at least {UserAdminRepository.MinPasswordLength} characters.", "Create User", ViewHelpers.Owner(Me))
                 Return
             End If
 
@@ -291,12 +314,5 @@ Namespace Presentation.Views.Admin
                 AlertUtil.ShowError($"Could not create user: {ex.Message}", "Create User", ViewHelpers.Owner(Me))
             End Try
         End Sub
-
-
-
-        Private Shared Function GenerateSecurePassword() As String
-            Dim bytes = RandomNumberGenerator.GetBytes(6)
-            Return "AutoRent#" & Convert.ToHexString(bytes).Substring(0, 6) & "!"
-        End Function
     End Class
 End Namespace

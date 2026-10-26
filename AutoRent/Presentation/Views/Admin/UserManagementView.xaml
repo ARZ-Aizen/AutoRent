@@ -383,15 +383,10 @@
             <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
                     Width="500" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
-                    <DockPanel Margin="0,0,0,16">
-                        <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="Create Staff Account" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
-                            <TextBlock Text="Set credentials and assign role" FontSize="12" Foreground="#7A746D"/>
-                        </StackPanel>
-                        <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                FontSize="12" Width="28" Height="28" Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" Click="BtnCloseCreateModal_Click"/>
-                    </DockPanel>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Create Staff Account" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                        <TextBlock Text="Set credentials and assign role" FontSize="12" Foreground="#7A746D"/>
+                    </StackPanel>
 
                     <TextBlock Text="FULL NAME" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
                     <TextBox x:Name="TxtNewFullName" Height="36" Margin="0,0,0,12"/>
@@ -402,20 +397,14 @@
                     <TextBlock Text="ROLE" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
                     <ComboBox x:Name="CmbNewRole" Height="36" Margin="0,0,0,12"/>
 
-                    <TextBlock Text="INITIAL TEMPORARY PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <Grid Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" x:Name="TxtNewPassword" Height="36"/>
-                        <Button Grid.Column="2" Content="Generate" Style="{StaticResource OutlineButton}"
-                                Height="36" Click="BtnGeneratePassword_Click"/>
-                    </Grid>
+                    <TextBlock Text="PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="TxtNewPassword" Height="36" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="CONFIRM PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="TxtNewConfirmPassword" Height="36" Margin="0,0,0,12"/>
 
                     <CheckBox x:Name="ChkNewActive" Content="Account is active"
-                              IsChecked="True" Margin="0,4,0,20"/>
+                              IsChecked="False" Margin="0,4,0,20"/>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
@@ -432,15 +421,10 @@
             <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
                     Width="500" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
-                    <DockPanel Margin="0,0,0,16">
-                        <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="Edit Staff Account" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
-                            <TextBlock x:Name="TxtEditSubtitle" Text="Update account profile, credentials and role" FontSize="12" Foreground="#7A746D"/>
-                        </StackPanel>
-                        <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                FontSize="12" Width="28" Height="28" Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" Click="BtnCloseEditModal_Click"/>
-                    </DockPanel>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Edit Staff Account" FontSize="18" FontWeight="Bold" Foreground="#2B2927"/>
+                        <TextBlock x:Name="TxtEditSubtitle" Text="Update account profile, credentials and role" FontSize="12" Foreground="#7A746D"/>
+                    </StackPanel>
 
                     <TextBlock Text="FULL NAME" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
                     <TextBox x:Name="TxtEditFullName" Height="36" Margin="0,0,0,12"/>
@@ -452,16 +436,10 @@
                     <ComboBox x:Name="CmbEditRole" Height="36" Margin="0,0,0,12"/>
 
                     <TextBlock Text="NEW PASSWORD (LEAVE BLANK TO KEEP CURRENT)" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" x:Name="TxtEditPassword" Height="36"/>
-                        <Button Grid.Column="2" Content="Generate" Style="{StaticResource OutlineButton}"
-                                Height="36" Click="BtnGenerateEditPassword_Click"/>
-                    </Grid>
+                    <PasswordBox x:Name="TxtEditPassword" Height="36" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="CONFIRM NEW PASSWORD" Style="{StaticResource FieldLabel}" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="TxtEditConfirmPassword" Height="36" Margin="0,0,0,20"/>
 
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
