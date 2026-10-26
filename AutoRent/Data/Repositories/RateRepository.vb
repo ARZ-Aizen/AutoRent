@@ -9,10 +9,7 @@ Namespace Data.Repositories
         Private Sub New()
         End Sub
 
-        Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
-            {"Sedan", "VH-0001 · ₱450/day"},
-            {"SUV (Sport Utility Vehicle)", "VH-0002 · ₱480/day"}
-        }
+        Private Shared ReadOnly _vehicleOverrides As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
 
         Private Shared ReadOnly _rules As New List(Of PricingRule) From {
             New PricingRule With {
