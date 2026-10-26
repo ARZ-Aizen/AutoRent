@@ -1,4 +1,4 @@
-﻿Imports System.Data.OleDb
+Imports System.Data.OleDb
 
 Namespace Data.Context
     Public NotInheritable Class DatabaseInitializer
@@ -92,6 +92,16 @@ Namespace Data.Context
                         "[findings] MEMO, " &
                         "[inspection_result] VARCHAR(20))")
                 End If
+
+                Try
+                    If Not ColumnExists(connection, "Users", "full_name") Then
+                        Run(connection, "ALTER TABLE [Users] ADD COLUMN [full_name] VARCHAR(100)")
+                    End If
+                    If Not ColumnExists(connection, "Users", "branch") Then
+                        Run(connection, "ALTER TABLE [Users] ADD COLUMN [branch] VARCHAR(50)")
+                    End If
+                Catch
+                End Try
             End Using
         End Sub
 
@@ -104,6 +114,15 @@ Namespace Data.Context
                     End Using
                 End Using
             Catch ex As OleDbException
+                Return False
+            End Try
+        End Function
+
+        Private Shared Function ColumnExists(connection As OleDbConnection, tableName As String, columnName As String) As Boolean
+            Try
+                Dim schema = connection.GetOleDbSchemaTable(OleDbSchemaGuid.Columns, New Object() {Nothing, Nothing, tableName, columnName})
+                Return schema IsNot Nothing AndAlso schema.Rows.Count > 0
+            Catch ex As Exception
                 Return False
             End Try
         End Function

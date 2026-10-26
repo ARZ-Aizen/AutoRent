@@ -1,6 +1,7 @@
-﻿Imports System.Collections.Generic
+Imports System.Collections.Generic
 Imports System.Windows
 Imports System.Windows.Controls
+Imports System.Windows.Input
 Imports System.Windows.Media
 Imports System.Windows.Media.Animation
 Imports AutoRent.Common.Utilities
@@ -199,6 +200,18 @@ Class MainWindow
             Dim loginWindow As New Global.AutoRent.AutoRent.LoginWindow()
             loginWindow.Show()
             Me.Close()
+        End If
+    End Sub
+
+    Private Sub MainWindow_StateChanged(sender As Object, e As EventArgs) Handles Me.StateChanged
+        If Me.WindowState <> WindowState.Maximized Then
+            Me.WindowState = WindowState.Maximized
+        End If
+    End Sub
+
+    Private Sub MainWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
+        If e.Key = Key.Escape OrElse e.Key = Key.F11 OrElse (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) AndAlso e.SystemKey = Key.Enter) Then
+            e.Handled = True
         End If
     End Sub
 End Class
