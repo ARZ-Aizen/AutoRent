@@ -41,11 +41,19 @@ Class MainWindow
 
         If currentUser IsNot Nothing Then
             UsernameDisplay.Text = currentUser.Username
-            UserRoleDisplay.Text = currentUser.Role.ToString().ToUpperInvariant()
-            Me.Title = $"AutoRent - {currentUser.Username} ({currentUser.Role})"
+            UserRoleDisplay.Text = currentUser.DisplayRole.ToUpperInvariant()
+            Me.Title = $"AutoRent - {currentUser.Username} ({currentUser.DisplayRole})"
 
-            If currentUser.Role = UserRole.Admin Then
+            ' Role access rules:
+            ' 1. Admin: Admin side ONLY
+            ' 2. Manager: Can access BOTH sides (can switch)
+            ' 3. Rental Staff: Client side ONLY
+            If currentUser.IsAdmin Then
+                SwitchViewButton.Visibility = Visibility.Collapsed
+                LoadAdminView()
+            ElseIf currentUser.IsManager Then
                 SwitchViewButton.Visibility = Visibility.Visible
+                SwitchText.Text = "Switch to Client"
                 LoadAdminView()
             Else
                 SwitchViewButton.Visibility = Visibility.Collapsed
@@ -101,7 +109,6 @@ Class MainWindow
 
         BrandText.Visibility = v
         UserText.Visibility = v
-        SettingsLabel.Visibility = v
         LogoutLabel.Visibility = v
         SwitchText.Visibility = v
 
@@ -109,26 +116,61 @@ Class MainWindow
     End Sub
 
     Private Sub LoadAdminView()
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        Dim currentUser = app.CurrentUser
+
+        ' Access control guard: Only Admin and Manager can access Admin side
+        If currentUser IsNot Nothing AndAlso Not currentUser.CanAccessAdmin Then
+            AlertUtil.ShowWarning("Access Denied: Rental Staff accounts are restricted to the Client Operations portal.", "Access Restricted", Me)
+            LoadClientView()
+            Return
+        End If
+
         _currentViewIsAdmin = True
         Sidebar.Visibility = Visibility.Visible
         SidebarColumn.Width = New GridLength(CollapsedWidth)
 
         CurrentViewBadgeText.Text = "ADMIN CONSOLE"
         CurrentViewBadgeText.Foreground = New SolidColorBrush(Color.FromRgb(192, 57, 75))
-        SwitchText.Text = "Preview Client View"
 
-        NavList.ItemsSource = New List(Of NavItem) From {
+        ' Only Manager can switch between Admin and Client views
+        If currentUser IsNot Nothing AndAlso currentUser.CanSwitchSides Then
+            SwitchViewButton.Visibility = Visibility.Visible
+            SwitchText.Text = "Switch to Client"
+        Else
+            SwitchViewButton.Visibility = Visibility.Collapsed
+        End If
+
+        Dim navItems As New List(Of NavItem) From {
             New NavItem(ChrW(&HE80F), "Home Dashboard", "Home"),
             New NavItem(ChrW(&HE804), "Fleet Management", "Fleet"),
+            New NavItem(ChrW(&HE81D), "Dispatch Reports", "DispatchReports"),
             New NavItem(ChrW(&HE90F), "Maintenance Schedules", "Maintenance"),
             New NavItem(ChrW(&HE8EC), "Rate Management", "Rates"),
             New NavItem(ChrW(&HE9D9), "Financial Reports", "Reports"),
             New NavItem(ChrW(&HE716), "User Management", "Users")
         }
+
+        ' User Request: "transfer the settings along side the menu bar in admin (system administartor only, no manager)"
+        If currentUser IsNot Nothing AndAlso currentUser.IsAdmin Then
+            navItems.Add(New NavItem(ChrW(&HE713), "Settings", "Settings"))
+        End If
+
+        NavList.ItemsSource = navItems
         NavList.SelectedIndex = 0
     End Sub
 
     Private Sub LoadClientView()
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        Dim currentUser = app.CurrentUser
+
+        ' Access control guard: Admin MUST ONLY access admin side
+        If currentUser IsNot Nothing AndAlso currentUser.IsAdmin Then
+            AlertUtil.ShowWarning("Access Denied: Administrators are restricted to the Admin Console.", "Access Restricted", Me)
+            LoadAdminView()
+            Return
+        End If
+
         _currentViewIsAdmin = False
         Sidebar.Visibility = Visibility.Collapsed
         SidebarColumn.Width = New GridLength(0)
@@ -136,16 +178,14 @@ Class MainWindow
         If _clientView Is Nothing Then
             _clientView = New ClientView()
             AddHandler _clientView.SwitchToAdminRequested, AddressOf ClientView_SwitchToAdmin
-            AddHandler _clientView.SettingsRequested, AddressOf ClientView_Settings
             AddHandler _clientView.SignOutRequested, AddressOf ClientView_SignOut
         End If
 
-        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-        Dim currentUser = app.CurrentUser
         If currentUser IsNot Nothing Then
-            _clientView.UserName = currentUser.Username
-            _clientView.UserRole = currentUser.Role.ToString()
-            _clientView.CanSwitchToAdmin = (currentUser.Role = UserRole.Admin)
+            _clientView.UserName = currentUser.DisplayName
+            _clientView.UserRole = currentUser.DisplayRole
+            ' Only Manager can switch to Admin side from Client view
+            _clientView.CanSwitchToAdmin = currentUser.CanSwitchSides
         Else
             _clientView.CanSwitchToAdmin = False
         End If
@@ -154,11 +194,16 @@ Class MainWindow
     End Sub
 
     Private Sub ClientView_SwitchToAdmin(sender As Object, e As EventArgs)
-        LoadAdminView()
-    End Sub
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        Dim currentUser = app.CurrentUser
 
-    Private Sub ClientView_Settings(sender As Object, e As EventArgs)
-        SettingsButton_Click(sender, New RoutedEventArgs())
+        ' Access control guard: Only Manager can switch to Admin side
+        If currentUser IsNot Nothing AndAlso Not currentUser.CanSwitchSides Then
+            AlertUtil.ShowWarning("Access Denied: Only Managers can access both Admin Console and Client portal.", "Access Restricted", Me)
+            Return
+        End If
+
+        LoadAdminView()
     End Sub
 
     Private Sub ClientView_SignOut(sender As Object, e As EventArgs)
@@ -171,26 +216,39 @@ Class MainWindow
         If Not _currentViewIsAdmin Then Return
 
         Select Case item.Key
-            Case "Home"        : MainContentHost.Content = New HomeDashboardView()
-            Case "Fleet"       : MainContentHost.Content = New FleetManagementView()
-            Case "Maintenance" : MainContentHost.Content = New MaintenanceSchedulesView()
-            Case "Rates"       : MainContentHost.Content = New RateManagementView()
-            Case "Reports"     : MainContentHost.Content = New FinancialReportsView()
-            Case "Users"       : MainContentHost.Content = New UserManagementView()
+            Case "Home"            : MainContentHost.Content = New HomeDashboardView()
+            Case "Fleet"           : MainContentHost.Content = New FleetManagementView()
+            Case "DispatchReports" : MainContentHost.Content = New DispatchReportsView()
+            Case "Maintenance"     : MainContentHost.Content = New MaintenanceSchedulesView()
+            Case "Rates"           : MainContentHost.Content = New RateManagementView()
+            Case "Reports"         : MainContentHost.Content = New FinancialReportsView()
+            Case "Users"           : MainContentHost.Content = New UserManagementView()
+            Case "Settings"
+                Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+                If app.CurrentUser IsNot Nothing AndAlso app.CurrentUser.IsAdmin Then
+                    MainContentHost.Content = New SettingsView()
+                Else
+                    AlertUtil.ShowWarning("Access Denied: Settings and centralized data exports are restricted to System Administrators only.", "Access Restricted", Me)
+                End If
             Case Else
                 MainContentHost.Content = New AdminView()
         End Select
     End Sub
 
     Private Sub SwitchViewButton_Click(sender As Object, e As RoutedEventArgs) Handles SwitchViewButton.Click
+        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+        Dim currentUser = app.CurrentUser
+
+        ' Only Manager can switch views
+        If currentUser IsNot Nothing AndAlso Not currentUser.CanSwitchSides Then
+            Return
+        End If
+
         If _currentViewIsAdmin Then
             LoadClientView()
         Else
             LoadAdminView()
         End If
-    End Sub
-
-    Private Sub SettingsButton_Click(sender As Object, e As RoutedEventArgs) Handles SettingsButton.Click
     End Sub
 
     Private Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs) Handles LogoutButton.Click

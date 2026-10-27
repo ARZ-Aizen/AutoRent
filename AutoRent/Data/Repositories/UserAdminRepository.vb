@@ -28,7 +28,14 @@ Namespace Data.Repositories
                 Dim isDeleted = Convert.ToBoolean(row("is_deleted"))
                 Dim lastLogin = If(IsDBNull(row("last_login")), CType(Nothing, DateTime?), Convert.ToDateTime(row("last_login")))
                 Dim createdAt = If(IsDBNull(row("created_at")), DateTime.Now, Convert.ToDateTime(row("created_at")))
-                Dim userRole As Global.AutoRent.Data.Models.UserRole = If(roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0, Global.AutoRent.Data.Models.UserRole.Admin, Global.AutoRent.Data.Models.UserRole.User)
+                Dim userRole As Global.AutoRent.Data.Models.UserRole = Global.AutoRent.Data.Models.UserRole.User
+                If roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    userRole = Global.AutoRent.Data.Models.UserRole.Admin
+                ElseIf roleName.IndexOf("Manager", StringComparison.OrdinalIgnoreCase) >= 0 OrElse roleName.IndexOf("Owner", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    userRole = Global.AutoRent.Data.Models.UserRole.Manager
+                Else
+                    userRole = Global.AutoRent.Data.Models.UserRole.User
+                End If
 
                 users.Add(New Global.AutoRent.Data.Models.User With {
                     .UserId = userId,
@@ -150,7 +157,14 @@ Namespace Data.Repositories
                 Dim isDeleted = Convert.ToBoolean(row("is_deleted"))
                 Dim lastLogin = If(IsDBNull(row("last_login")), CType(Nothing, DateTime?), Convert.ToDateTime(row("last_login")))
                 Dim createdAt = If(IsDBNull(row("created_at")), DateTime.Now, Convert.ToDateTime(row("created_at")))
-                Dim userRole As Global.AutoRent.Data.Models.UserRole = If(roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0, Global.AutoRent.Data.Models.UserRole.Admin, Global.AutoRent.Data.Models.UserRole.User)
+                Dim userRole As Global.AutoRent.Data.Models.UserRole = Global.AutoRent.Data.Models.UserRole.User
+                If roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    userRole = Global.AutoRent.Data.Models.UserRole.Admin
+                ElseIf roleName.IndexOf("Manager", StringComparison.OrdinalIgnoreCase) >= 0 OrElse roleName.IndexOf("Owner", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    userRole = Global.AutoRent.Data.Models.UserRole.Manager
+                Else
+                    userRole = Global.AutoRent.Data.Models.UserRole.User
+                End If
 
                 users.Add(New Global.AutoRent.Data.Models.User With {
                     .UserId = userId,

@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports System.Data.OleDb
 Imports AutoRent.Data.Context
 
@@ -9,7 +9,7 @@ Namespace Data.Repositories
 
         Public Shared Function GetFleet() As DataTable
             Return Db.Query(
-                "SELECT v.[vehicle_id], v.[plate], v.[make], v.[model], v.[model_year], v.[category], v.[status], r.[daily_rate] " &
+                "SELECT v.[vehicle_id], v.[plate], v.[make], v.[model], v.[model_year], v.[category], v.[status], v.[image_path], r.[daily_rate] " &
                 "FROM [Vehicles] AS v LEFT JOIN [Rates] AS r ON v.[category] = r.[category] " &
                 "WHERE v.[status] <> 'Retired' ORDER BY v.[plate]")
         End Function
@@ -25,6 +25,16 @@ Namespace Data.Repositories
 
             Db.Execute("INSERT INTO [Customers] ([full_name], [phone], [email], [license_no], [created_at]) VALUES (?, ?, ?, ?, ?)",
                        Db.Text(name, 100), Db.Text(phone, 30), Db.Text(email, 100), Db.Text(license, 50), Db.Dt(DateTime.Now))
+            Return Nothing
+        End Function
+
+        Public Shared Function UpdateCustomer(customerId As Integer, name As String, phone As String, email As String, license As String) As String
+            If Db.Count("SELECT COUNT(*) FROM [Customers] WHERE [full_name] = ? AND [phone] = ? AND [customer_id] <> ?", Db.Text(name, 100), Db.Text(phone, 30), Db.Int(customerId)) > 0 Then
+                Return "Another customer with the same name and phone already exists."
+            End If
+
+            Db.Execute("UPDATE [Customers] SET [full_name] = ?, [phone] = ?, [email] = ?, [license_no] = ? WHERE [customer_id] = ?",
+                       Db.Text(name, 100), Db.Text(phone, 30), Db.Text(email, 100), Db.Text(license, 50), Db.Int(customerId))
             Return Nothing
         End Function
 
@@ -49,6 +59,19 @@ Namespace Data.Repositories
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
                 Using tx = connection.BeginTransaction()
+                    ' Check if customer has a valid driver license on file
+                    Using cmdLic = connection.CreateCommand()
+                        cmdLic.Transaction = tx
+                        cmdLic.CommandText = "SELECT [license_no] FROM [Customers] WHERE [full_name] = ?"
+                        cmdLic.Parameters.Add(Db.Text(customerName, 100))
+                        Dim licObj = cmdLic.ExecuteScalar()
+                        Dim licStr As String = If(licObj Is Nothing OrElse IsDBNull(licObj), "", Convert.ToString(licObj).Trim())
+                        If String.IsNullOrWhiteSpace(licStr) Then
+                            tx.Rollback()
+                            Return "Customer does not have a verified driver's license on file and cannot rent a vehicle."
+                        End If
+                    End Using
+
                     If Scalar(connection, tx, "SELECT COUNT(*) FROM [Vehicles] WHERE [vehicle_id] = ? AND [status] = 'Available'", Db.Int(vehicleId)) = 0 Then
                         tx.Rollback()
                         Return "That vehicle is no longer available."

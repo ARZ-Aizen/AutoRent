@@ -1,4 +1,4 @@
-﻿Imports System.Linq
+Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -162,7 +162,7 @@ Namespace Presentation.Views.User
             UserText.Visibility = v
 
             For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch,
-                             BtnVehicleInspection, BtnSwitchAdmin, BtnSettings, BtnSignOut}
+                             BtnVehicleInspection, BtnSwitchAdmin, BtnSignOut}
                 Dim panel = TryCast(btn.Content, StackPanel)
                 If panel Is Nothing Then Continue For
                 For Each label In panel.Children.OfType(Of TextBlock)().Where(Function(t) Equals(t.Tag, "Label"))
@@ -177,10 +177,6 @@ Namespace Presentation.Views.User
 
         Private Sub BtnSwitchAdmin_Click(sender As Object, e As RoutedEventArgs)
             RaiseEvent SwitchToAdminRequested(Me, EventArgs.Empty)
-        End Sub
-
-        Private Sub BtnSettings_Click(sender As Object, e As RoutedEventArgs)
-            RaiseEvent SettingsRequested(Me, EventArgs.Empty)
         End Sub
 
         Private Sub BtnSignOut_Click(sender As Object, e As RoutedEventArgs)

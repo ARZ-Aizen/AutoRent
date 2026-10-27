@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Presentation.Views.User.CustomerManagementView"
+<UserControl x:Class="Presentation.Views.User.CustomerManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="Manrope, Segoe UI">
@@ -9,44 +9,77 @@
                 <ResourceDictionary Source="ClientStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Modern table header -->
-            <Style x:Key="ModernTableHeader"
-                   TargetType="{x:Type DataGridColumnHeader}">
-                <Setter Property="Background" Value="#F5F3F1"/>
-                <Setter Property="Foreground" Value="#393633"/>
-                <Setter Property="FontFamily" Value="Manrope, Segoe UI"/>
-                <Setter Property="FontSize" Value="12"/>
+            <!-- Brand colors -->
+            <SolidColorBrush x:Key="BrandMaroon" Color="#70000F"/>
+            <SolidColorBrush x:Key="BrandMaroonHover" Color="#8A0016"/>
+
+            <!-- Action buttons in header -->
+            <Style x:Key="RegisterCustomerBtn" TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource BrandMaroon}"/>
+                <Setter Property="Foreground" Value="White"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="18,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandMaroonHover}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Custom Header Style for DataGrid -->
+            <Style x:Key="ModernTableHeader" TargetType="{x:Type DataGridColumnHeader}">
+                <Setter Property="Background" Value="#F8F7F5"/>
+                <Setter Property="Foreground" Value="#5C5750"/>
+                <Setter Property="FontFamily" Value="Manrope, Segoe UI"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="12,14"/>
-                <Setter Property="BorderBrush" Value="#E7E2DD"/>
+                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="BorderBrush" Value="#E8E5E1"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
             </Style>
 
-            <!-- Table cells -->
-            <Style x:Key="ModernTableCell"
-                   TargetType="{x:Type DataGridCell}">
-                <Setter Property="Padding" Value="12,8"/>
+            <Style x:Key="ModernTableHeaderCenter" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource ModernTableHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            </Style>
+
+            <!-- Custom Cell Style -->
+            <Style x:Key="ModernTableCell" TargetType="{x:Type DataGridCell}">
+                <Setter Property="Padding" Value="16,10"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="BorderBrush" Value="#F0EDE9"/>
+                <Setter Property="BorderBrush" Value="#F0EEEB"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#F5E7E9"/>
-                        <Setter Property="Foreground" Value="#780018"/>
+                        <Setter Property="Background" Value="#FBF4F5"/>
+                        <Setter Property="Foreground" Value="#70000F"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
-            <!-- Table rows -->
-            <Style x:Key="ModernTableRow"
-                   TargetType="{x:Type DataGridRow}">
-                <Setter Property="MinHeight" Value="44"/>
+            <!-- Custom Row Style -->
+            <Style x:Key="ModernTableRow" TargetType="{x:Type DataGridRow}">
+                <Setter Property="MinHeight" Value="52"/>
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="Foreground" Value="#393633"/>
-                <Setter Property="BorderBrush" Value="#F0EDE9"/>
+                <Setter Property="Foreground" Value="#2B2927"/>
+                <Setter Property="BorderBrush" Value="#F0EEEB"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Style.Triggers>
@@ -54,158 +87,603 @@
                         <Setter Property="Background" Value="#FCFBFA"/>
                     </Trigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#F7F2EF"/>
+                        <Setter Property="Background" Value="#F7F4F1"/>
                     </Trigger>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#F5E7E9"/>
-                        <Setter Property="Foreground" Value="#780018"/>
+                        <Setter Property="Background" Value="#FBF4F5"/>
+                        <Setter Property="Foreground" Value="#70000F"/>
                     </Trigger>
                 </Style.Triggers>
+            </Style>
+
+            <!-- Pagination button base -->
+            <Style x:Key="PageBtn" TargetType="Button">
+                <Setter Property="Width" Value="38"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="White"
+                                    BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="10">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F6F5F3"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#D0CBC5"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.35"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Action Edit Button -->
+            <Style x:Key="RowEditBtn" TargetType="Button">
+                <Setter Property="Background" Value="#F5F4F1"/>
+                <Setter Property="Foreground" Value="#2B2927"/>
+                <Setter Property="BorderBrush" Value="#D9D5D0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F7E9EB"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#D4A2AA"/>
+                                    <Setter Property="Foreground" Value="#70000F"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Action Delete Button -->
+            <Style x:Key="RowDeleteBtn" TargetType="Button">
+                <Setter Property="Background" Value="#FBF8F8"/>
+                <Setter Property="Foreground" Value="#9B2C3B"/>
+                <Setter Property="BorderBrush" Value="#EBD5D7"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#FDF2F2"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E57373"/>
+                                    <Setter Property="Foreground" Value="#C62828"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="28">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid>
+        <!-- Main Scrollable Dashboard Content -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="32,24,32,28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <!-- Page heading -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,18">
-            <TextBlock Text="Customer Management"
-                       Style="{StaticResource PageTitle}"/>
-            <TextBlock
-                Text="Register new customers and manage existing records."
-                Style="{StaticResource PageSubtitle}"
-                TextWrapping="Wrap"/>
-        </StackPanel>
+                <!-- ROW 0: Page Heading & Actions -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,20" LastChildFill="False">
+                    <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+                        <TextBlock Text="Customer Management" Style="{StaticResource PageTitle}"/>
+                        <TextBlock Text="Directory of registered drivers and renters · Add, verify, update or remove customer records"
+                                   Style="{StaticResource PageSubtitle}"/>
+                    </StackPanel>
 
-        <!-- Add customer form -->
-        <Border Grid.Row="1"
-                Style="{StaticResource Card}"
-                Margin="0,0,0,20">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnOpenAddCustomer"
+                                Style="{StaticResource RegisterCustomerBtn}"
+                                Click="BtnOpenAddModal_Click"
+                                ToolTip="Register a new customer profile">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Register Customer" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.4*"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1.5*"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <!-- ROW 1: Metric Cards Overview -->
+                <Grid Grid.Row="1" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0"
-                            Margin="0,0,12,0">
-                    <TextBlock Text="Full name"
-                               Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="TxtCustName"
-                             Tag="e.g. Juan Dela Cruz"/>
-                </StackPanel>
+                    <!-- Total Customers -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="18,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                        </Border.Effect>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="TOTAL CUSTOMERS" FontSize="11" FontWeight="Bold" Foreground="#8C857B"/>
+                                <TextBlock x:Name="TxtStatTotal" Text="0" FontSize="26" FontWeight="Bold" Foreground="#1F1D1B" Margin="0,4,0,2"/>
+                                <TextBlock Text="Registered accounts" FontSize="11.5" Foreground="#7A746D"/>
+                            </StackPanel>
+                            <Border Width="40" Height="40" CornerRadius="10" Background="#F7E9EB" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#70000F"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
 
-                <StackPanel Grid.Column="1"
-                            Margin="0,0,12,0">
-                    <TextBlock Text="Phone"
-                               Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="TxtCustPhone"
-                             Tag="09XX XXX XXXX"/>
-                </StackPanel>
+                    <!-- Active Renters -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="18,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                        </Border.Effect>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="ACTIVE RENTERS" FontSize="11" FontWeight="Bold" Foreground="#8C857B"/>
+                                <TextBlock x:Name="TxtStatActive" Text="0" FontSize="26" FontWeight="Bold" Foreground="#137333" Margin="0,4,0,2"/>
+                                <TextBlock Text="Active or confirmed" FontSize="11.5" Foreground="#7A746D"/>
+                            </StackPanel>
+                            <Border Width="40" Height="40" CornerRadius="10" Background="#E6F4EA" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <TextBlock Text="&#xE804;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#137333"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
 
-                <StackPanel Grid.Column="2"
-                            Margin="0,0,12,0">
-                    <TextBlock Text="Email"
-                               Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="TxtCustEmail"
-                             Tag="name@example.com"/>
-                </StackPanel>
+                    <!-- Verified Drivers -->
+                    <Border Grid.Column="4" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="18,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                        </Border.Effect>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="VERIFIED DRIVERS" FontSize="11" FontWeight="Bold" Foreground="#8C857B"/>
+                                <TextBlock x:Name="TxtStatVerified" Text="0" FontSize="26" FontWeight="Bold" Foreground="#1565C0" Margin="0,4,0,2"/>
+                                <TextBlock Text="License on file" FontSize="11.5" Foreground="#7A746D"/>
+                            </StackPanel>
+                            <Border Width="40" Height="40" CornerRadius="10" Background="#E3EEF9" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#1565C0"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
 
-                <StackPanel Grid.Column="3"
-                            Margin="0,0,12,0">
-                    <TextBlock Text="License no."
-                               Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="TxtCustLicense"
-                             Tag="e.g. N01-23-456789"/>
-                </StackPanel>
+                    <!-- Incomplete Profiles -->
+                    <Border Grid.Column="6" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="18,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                        </Border.Effect>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="MISSING LICENSE" FontSize="11" FontWeight="Bold" Foreground="#8C857B"/>
+                                <TextBlock x:Name="TxtStatMissing" Text="0" FontSize="26" FontWeight="Bold" Foreground="#D97706" Margin="0,4,0,2"/>
+                                <TextBlock Text="Pending driver ID" FontSize="11.5" Foreground="#7A746D"/>
+                            </StackPanel>
+                            <Border Width="40" Height="40" CornerRadius="10" Background="#FDEBDD" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#D97706"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
 
-                <Button Grid.Column="4"
-                        Content="Add Customer"
-                        Style="{StaticResource PrimaryButton}"
-                        VerticalAlignment="Bottom"
-                        Click="BtnAddCustomer_Click"/>
+                <!-- ROW 2: Search, Filters and Sorters -->
+                <Border Grid.Row="2" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12"
+                        Padding="16,14" Margin="0,0,0,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2.2*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="1.4*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Search -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Search Customers" Style="{StaticResource FieldLabel}"/>
+                            <Grid>
+                                <TextBox x:Name="TxtCustSearch" Height="36" Padding="32,0,10,0"
+                                         VerticalContentAlignment="Center" FontSize="13"
+                                         TextChanged="TxtCustSearch_TextChanged"/>
+                                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12.5" Foreground="#9E9892"
+                                           VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" IsHitTestVisible="False"/>
+                                <TextBlock x:Name="TxtSearchWatermark" Text="Search name, phone, email, license..."
+                                           Foreground="#A39D96" FontSize="12.5" IsHitTestVisible="False"
+                                           VerticalAlignment="Center" Margin="32,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- License Filter -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="License Status" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbLicenseFilter" Height="36" SelectionChanged="FilterInputs_Changed"/>
+                        </StackPanel>
+
+                        <!-- Status Filter -->
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="Rental Status" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbStatusFilter" Height="36" SelectionChanged="FilterInputs_Changed"/>
+                        </StackPanel>
+
+                        <!-- Sort By -->
+                        <StackPanel Grid.Column="6">
+                            <TextBlock Text="Sort By" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbSort" Height="36" SelectionChanged="FilterInputs_Changed"/>
+                        </StackPanel>
+
+                        <!-- Reset Button -->
+                        <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
+                            <Button x:Name="BtnResetFilters" Content="Reset" Style="{StaticResource OutlineButton}"
+                                    Height="36" Padding="16,0" Click="BtnResetFilters_Click"
+                                    ToolTip="Reset search and filters"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ROW 3: Customers Table Card -->
+                <Border Grid.Row="3"
+                        Background="White"
+                        BorderBrush="#E8E5E1"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="0"
+                        ClipToBounds="True"
+                        MinHeight="380">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <!-- DataGrid -->
+                        <DataGrid x:Name="DgCustomers"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserResizeRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  RowHeaderWidth="0"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F0EEEB"
+                                  BorderThickness="0"
+                                  Background="White"
+                                  AlternationCount="2"
+                                  ColumnHeaderStyle="{StaticResource ModernTableHeader}"
+                                  CellStyle="{StaticResource ModernTableCell}"
+                                  RowStyle="{StaticResource ModernTableRow}"
+                                  SelectionMode="Single">
+
+                            <DataGrid.Columns>
+                                <!-- Customer ID -->
+                                <DataGridTemplateColumn Header="CUSTOMER ID" Width="130"
+                                                        HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F7E9EB" BorderBrush="#E7C0C7" BorderThickness="1"
+                                                    CornerRadius="6" Padding="10,4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding CustomerIdDisplay}" FontWeight="Bold" FontSize="11.5" Foreground="#70000F"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Customer info (Avatar + Name) -->
+                                <DataGridTemplateColumn Header="CUSTOMER" Width="2.2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="38" Height="38" CornerRadius="19" Background="{Binding AvatarBgColor}">
+                                                    <TextBlock Text="{Binding Initials}" Foreground="{Binding AvatarFgColor}"
+                                                               FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" Foreground="#2B2927"/>
+                                                    <TextBlock Text="{Binding CustomerIdDisplay}" FontSize="11" Foreground="#8C857B"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Contact Info -->
+                                <DataGridTemplateColumn Header="CONTACT" Width="2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                    <TextBlock Text="&#xE717;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#7A746D" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding PhoneDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#9E9892" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding EmailDisplay}" FontSize="11.5" Foreground="#7A746D" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Driver License -->
+                                <DataGridTemplateColumn Header="DRIVER LICENSE" Width="1.7*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="6" Padding="10,4" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                    Background="{Binding LicenseBadgeBg}"
+                                                    BorderBrush="{Binding LicenseBadgeBorder}"
+                                                    BorderThickness="1"
+                                                    ToolTip="{Binding CanRentTooltip}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding LicenseBadgeIcon}" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="10.5" Foreground="{Binding LicenseBadgeFg}"
+                                                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                    <TextBlock Text="{Binding LicenseBadgeText}" FontSize="11.5" FontWeight="SemiBold"
+                                                               Foreground="{Binding LicenseBadgeFg}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Status -->
+                                <DataGridTemplateColumn Header="STATUS" Width="145"
+                                                        HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Background="{Binding StatusBadgeBg}" BorderThickness="1" BorderBrush="#E2DFD9">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                             Fill="{Binding StatusDotColor}"/>
+                                                    <TextBlock Text="{Binding StatusBadgeText}" FontSize="11" FontWeight="Bold"
+                                                               Foreground="{Binding StatusBadgeFg}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Actions -->
+                                <DataGridTemplateColumn Header="ACTIONS" Width="170"
+                                                        HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowEditBtn}"
+                                                        Click="BtnEditCustomer_Click"
+                                                        Tag="{Binding}"
+                                                        Margin="0,0,8,0"
+                                                        ToolTip="Edit customer profile">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Edit" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource RowDeleteBtn}"
+                                                        Click="BtnDeleteCustomer_Click"
+                                                        Tag="{Binding}"
+                                                        ToolTip="Delete customer record">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Delete" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Empty State Message -->
+                        <Border x:Name="BorderEmptyState" Background="White" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,40">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#F7F5F3" HorizontalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="22" Foreground="#A59F98"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="No customers found" FontSize="15" FontWeight="Bold" Foreground="#2B2927" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                <TextBlock Text="Try adjusting your search or filter terms to find records." FontSize="12.5" Foreground="#7A746D" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ROW 4: Pagination Card -->
+                <Border Grid.Row="4"
+                        Background="White"
+                        BorderBrush="#E8E5E1"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="24,12"
+                        Margin="0,16,0,0">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock x:Name="TxtPaging"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="#A59F98"
+                                   FontFamily="Manrope, Segoe UI"/>
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <Button x:Name="BtnPrev"
+                                    Style="{StaticResource PageBtn}"
+                                    Click="BtnPrev_Click"
+                                    Margin="0,0,8,0">
+                                <TextBlock Text="&#xE76B;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="11"
+                                           Foreground="#7A746D"/>
+                            </Button>
+
+                            <ItemsControl x:Name="IcPages">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+
+                            <Button x:Name="BtnNext"
+                                    Style="{StaticResource PageBtn}"
+                                    Click="BtnNext_Click"
+                                    Margin="0,0,0,0">
+                                <TextBlock Text="&#xE76C;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="11"
+                                           Foreground="#7A746D"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
-        </Border>
+        </ScrollViewer>
 
-        <!-- Search and delete controls -->
-        <Grid Grid.Row="2"
-              Margin="0,0,0,14">
+        <!-- MODAL OVERLAY: Add / Edit Customer -->
+        <Grid x:Name="CustomerModalOverlay" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="16"
+                    Width="500" Padding="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="28" ShadowDepth="4" Direction="270" Opacity="0.18" Color="#000"/>
+                </Border.Effect>
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <!-- Modal Header -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0"
-                        HorizontalAlignment="Left">
-                <TextBlock Text="Search"
-                           Style="{StaticResource FieldLabel}"/>
-                <TextBox x:Name="TxtCustSearch"
-                         Tag="Search name, phone, email or license"
-                         Width="300"
-                         ToolTip="Search by name, phone, email or license"
-                         TextChanged="TxtCustSearch_TextChanged"/>
-            </StackPanel>
+                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12" Background="#F7E9EB" Margin="0,0,14,0">
+                            <TextBlock x:Name="TxtModalIcon" Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#70000F"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
 
-            <Button Grid.Column="1"
-                    Content="Delete selected"
-                    Style="{StaticResource OutlineButton}"
-                    VerticalAlignment="Bottom"
-                    Click="BtnDeleteCustomer_Click"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtModalTitle" Text="Register New Customer" FontSize="18" FontWeight="Bold" Foreground="#1F1D1B"/>
+                            <TextBlock x:Name="TxtModalSubtitle" Text="Enter customer details and driver license info" FontSize="12.5" Foreground="#7A746D" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="2" Width="32" Height="32" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Click="BtnCloseModal_Click" VerticalAlignment="Top">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#8C857B"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Error Banner -->
+                    <Border x:Name="BorderModalError" Background="#FDF2F2" BorderBrush="#F5C2C7" BorderThickness="1"
+                            CornerRadius="8" Padding="12,8" Margin="0,0,0,14" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE783;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#C62828" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtModalError" Text="Validation message goes here" FontSize="12" Foreground="#C62828" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Full Name -->
+                    <StackPanel Margin="0,0,0,14">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <TextBlock Text="Full Name" Style="{StaticResource FieldLabel}" Margin="0"/>
+                            <TextBlock Text=" *" Foreground="#C62828" FontWeight="Bold" FontSize="12"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtModalName" Tag="e.g. Juan Dela Cruz" Height="38"/>
+                    </StackPanel>
+
+                    <!-- Phone -->
+                    <StackPanel Margin="0,0,0,14">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <TextBlock Text="Phone Number" Style="{StaticResource FieldLabel}" Margin="0"/>
+                            <TextBlock Text=" *" Foreground="#C62828" FontWeight="Bold" FontSize="12"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtModalPhone" Tag="e.g. 0917 123 4567" Height="38"/>
+                    </StackPanel>
+
+                    <!-- Email -->
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="Email Address" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtModalEmail" Tag="e.g. juan.delacruz@example.com" Height="38"/>
+                    </StackPanel>
+
+                    <!-- Driver License No -->
+                    <StackPanel Margin="0,0,0,22">
+                        <TextBlock Text="Driver's License No." Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="TxtModalLicense" Tag="e.g. N01-23-456789" Height="38"/>
+                        <TextBlock Text="Required for vehicle rental and dispatch. Customers without a license cannot rent." FontSize="11" Foreground="#C62828" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Modal Action Buttons -->
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
+                                Width="110" Height="38" Click="BtnCloseModal_Click"/>
+                        <Button x:Name="BtnSaveModal" DockPanel.Dock="Right" Content="Save Customer" Style="{StaticResource PrimaryButton}"
+                                Width="140" Height="38" Click="BtnSaveModal_Click"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
         </Grid>
-
-        <!-- Outlined customer table -->
-        <Border Grid.Row="3"
-                Background="White"
-                BorderBrush="#E4DFDA"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="0"
-                ClipToBounds="True">
-
-            <DataGrid x:Name="DgCustomers"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      IsReadOnly="True"
-                      HeadersVisibility="Column"
-                      RowHeaderWidth="0"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#F0EDE9"
-                      BorderThickness="0"
-                      Background="White"
-                      AlternationCount="2"
-                      ColumnHeaderStyle="{StaticResource ModernTableHeader}"
-                      CellStyle="{StaticResource ModernTableCell}"
-                      RowStyle="{StaticResource ModernTableRow}">
-
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"
-                                        Binding="{Binding Name}"
-                                        Width="1.3*"/>
-
-                    <DataGridTextColumn Header="Phone"
-                                        Binding="{Binding Phone}"
-                                        Width="1.1*"/>
-
-                    <DataGridTextColumn Header="Email"
-                                        Binding="{Binding Email}"
-                                        Width="1.5*"/>
-
-                    <DataGridTextColumn Header="License No."
-                                        Binding="{Binding License}"
-                                        Width="1.2*"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
     </Grid>
 </UserControl>

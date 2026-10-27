@@ -54,7 +54,14 @@ Namespace Data.Repositories
 
             If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse isDeleted Then Return Nothing
 
-            Dim userRole As UserRole = If(roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0, UserRole.Admin, UserRole.User)
+            Dim userRole As UserRole = UserRole.User
+            If roleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                userRole = UserRole.Admin
+            ElseIf roleName.IndexOf("Manager", StringComparison.OrdinalIgnoreCase) >= 0 OrElse roleName.IndexOf("Owner", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                userRole = UserRole.Manager
+            Else
+                userRole = UserRole.User
+            End If
 
             Dim loginTime = DateTime.Now
             Using connection = AccessDatabaseConnection.CreateConnection()

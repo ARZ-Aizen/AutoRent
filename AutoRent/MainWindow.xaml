@@ -163,13 +163,7 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <Button x:Name="SettingsButton" Style="{StaticResource SidebarLink}" ToolTip="Settings">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                           Width="34" TextAlignment="Center" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="SettingsLabel" Text="Settings" FontSize="12" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            </StackPanel>
-                        </Button>
+
 
                         <Button x:Name="LogoutButton" Style="{StaticResource SidebarLink}" Foreground="#E0707F" ToolTip="Sign Out">
                             <StackPanel Orientation="Horizontal">

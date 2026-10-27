@@ -43,7 +43,52 @@ Namespace Data.Models
                     Return "Rental Staff"
                 End If
                 If Role = UserRole.Admin Then Return "System Administrator"
+                If Role = UserRole.Manager Then Return "Manager"
                 Return "Rental Staff"
+            End Get
+        End Property
+
+        Public ReadOnly Property IsAdmin As Boolean
+            Get
+                If Role = UserRole.Admin Then Return True
+                If Not String.IsNullOrWhiteSpace(RoleName) AndAlso RoleName.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0 Then Return True
+                Return False
+            End Get
+        End Property
+
+        Public ReadOnly Property IsManager As Boolean
+            Get
+                If Role = UserRole.Manager Then Return True
+                If Not String.IsNullOrWhiteSpace(RoleName) AndAlso (RoleName.IndexOf("Manager", StringComparison.OrdinalIgnoreCase) >= 0 OrElse RoleName.IndexOf("Owner", StringComparison.OrdinalIgnoreCase) >= 0) Then Return True
+                Return False
+            End Get
+        End Property
+
+        Public ReadOnly Property IsRentalStaff As Boolean
+            Get
+                Return Not IsAdmin AndAlso Not IsManager
+            End Get
+        End Property
+
+        ' Role access permissions:
+        ' 1. Admin: Admin side ONLY
+        ' 2. Manager: BOTH sides
+        ' 3. Rental Staff: Client side ONLY
+        Public ReadOnly Property CanAccessAdmin As Boolean
+            Get
+                Return IsAdmin OrElse IsManager
+            End Get
+        End Property
+
+        Public ReadOnly Property CanAccessClient As Boolean
+            Get
+                Return IsManager OrElse IsRentalStaff
+            End Get
+        End Property
+
+        Public ReadOnly Property CanSwitchSides As Boolean
+            Get
+                Return IsManager
             End Get
         End Property
 

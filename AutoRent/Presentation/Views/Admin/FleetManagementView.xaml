@@ -151,11 +151,6 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
 
-                <Button Content="↓  Export CSV"
-                        Style="{StaticResource ActionButton}"
-                        Click="Export_Click"
-                        Margin="0,0,9,0"/>
-
                 <Button Content="＋  Add Vehicle"
                         Style="{StaticResource PrimaryButton}"
                         Click="Add_Click"/>
