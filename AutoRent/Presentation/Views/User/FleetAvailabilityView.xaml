@@ -26,7 +26,7 @@
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="12"/>
                 <Setter Property="Margin" Value="8"/>
-                <Setter Property="Width" Value="265"/>
+                <Setter Property="MinWidth" Value="0"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Effect">
                     <Setter.Value>
@@ -98,278 +98,259 @@
         <!-- Main Fleet Availability Page -->
         <Grid Margin="28">
             <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Page heading -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,18">
-            <TextBlock Text="Fleet Availability"
+            <!-- Page heading -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,18">
+                <TextBlock Text="Fleet Availability"
                        Style="{StaticResource PageTitle}"/>
-            <TextBlock
+                <TextBlock
                 Text="See which vehicles are available, reserved, rented, or in maintenance."
                 Style="{StaticResource PageSubtitle}"
                 TextWrapping="Wrap"/>
-        </StackPanel>
+            </StackPanel>
 
-        <!-- Search and status filters -->
-        <StackPanel Grid.Row="1"
+            <!-- Search and status filters -->
+            <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     Margin="0,0,0,14">
 
-            <StackPanel>
-                <TextBlock Text="Search"
+                <StackPanel>
+                    <TextBlock Text="Search"
                            Style="{StaticResource FieldLabel}"/>
-                <TextBox x:Name="TxtFleetSearch"
+                    <TextBox x:Name="TxtFleetSearch"
                          Tag="Search plate, model or make"
                          Width="230"
                          ToolTip="Search by plate, model or make"
                          TextChanged="TxtFleetSearch_TextChanged"/>
-            </StackPanel>
+                </StackPanel>
 
-            <StackPanel Margin="12,0,0,0">
-                <TextBlock Text="Category"
+                <StackPanel Margin="12,0,0,0">
+                    <TextBlock Text="Category"
                            Style="{StaticResource FieldLabel}"/>
-                <ComboBox x:Name="CmbFleetCategory"
+                    <ComboBox x:Name="CmbFleetCategory"
                           Width="160"
                           SelectionChanged="CmbFleetCategory_SelectionChanged"/>
-            </StackPanel>
+                </StackPanel>
 
-            <StackPanel Margin="12,0,0,0">
-                <TextBlock Text="Status"
+                <StackPanel Margin="12,0,0,0">
+                    <TextBlock Text="Status"
                            Style="{StaticResource FieldLabel}"/>
-                <ComboBox x:Name="CmbFleetStatus"
+                    <ComboBox x:Name="CmbFleetStatus"
                           Width="150"
                           SelectedIndex="0"
                           SelectionChanged="CmbFleetStatus_SelectionChanged">
-                    <ComboBoxItem Content="All"/>
-                    <ComboBoxItem Content="Available"/>
-                    <ComboBoxItem Content="Reserved"/>
-                    <ComboBoxItem Content="Rented"/>
-                    <ComboBoxItem Content="Maintenance"/>
-                </ComboBox>
-            </StackPanel>
+                        <ComboBoxItem Content="All"/>
+                        <ComboBoxItem Content="Available"/>
+                        <ComboBoxItem Content="Reserved"/>
+                        <ComboBoxItem Content="Rented"/>
+                        <ComboBoxItem Content="Maintenance"/>
+                    </ComboBox>
+                </StackPanel>
 
-            <TextBlock x:Name="TxtFleetCount"
+                <TextBlock x:Name="TxtFleetCount"
                        VerticalAlignment="Bottom"
                        Margin="16,0,0,8"
                        Foreground="#7A746D"
                        FontSize="12"/>
-        </StackPanel>
+            </StackPanel>
 
-        <!-- Scrollable card grid -->
-        <ScrollViewer Grid.Row="2"
+            <!-- Scrollable card grid -->
+            <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
                       Padding="0,0,4,0">
-            <ItemsControl x:Name="IcFleet">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel HorizontalAlignment="Left"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Style="{StaticResource VehicleCard}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="170"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
+                <ItemsControl x:Name="IcFleet">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource VehicleCard}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="170"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                <!-- Vehicle image area -->
-                                <Border Grid.Row="0"
+                                    <!-- Vehicle image area -->
+                                    <Border Grid.Row="0"
                                         Background="#F6F5F3"
                                         CornerRadius="12,12,0,0"
                                         ClipToBounds="True">
-                                    <Grid>
-                                        <!-- Vehicle photo -->
-                                        <Image Source="{Binding Photo}"
+                                        <Grid>
+                                            <!-- Vehicle photo -->
+                                            <Image Source="{Binding Photo}"
                                                Stretch="Uniform"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                Margin="16"/>
 
-                                        <!-- Placeholder icon when no photo -->
-                                        <Border Visibility="{Binding HasNoPhoto, Converter={StaticResource BoolToVis}}"
+                                            <!-- Placeholder icon when no photo -->
+                                            <Border Visibility="{Binding HasNoPhoto, Converter={StaticResource BoolToVis}}"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE804;"
+                                                <TextBlock Text="&#xE804;"
                                                        FontFamily="Segoe MDL2 Assets"
                                                        FontSize="48"
                                                        Foreground="#C8C3BD"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"/>
-                                        </Border>
+                                            </Border>
 
-                                        <!-- Status badge overlay -->
-                                        <Border x:Name="StatusBadge"
+                                            <!-- Status badge overlay -->
+                                            <Border x:Name="StatusBadge"
                                                 Style="{StaticResource StatusBadge}">
-                                            <TextBlock x:Name="StatusText"
+                                                <TextBlock x:Name="StatusText"
                                                        Text="{Binding StatusUpper}"
                                                        FontSize="9"
                                                        FontWeight="Bold"
                                                        Foreground="White"
                                                        FontFamily="Manrope, Segoe UI"/>
-                                        </Border>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
 
-                                        <!-- Favorite button overlay -->
-                                        <Border Width="28" Height="28"
-                                                CornerRadius="14"
-                                                Background="White"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Top"
-                                                Margin="0,12,12,0"
-                                                Cursor="Hand">
-                                            <Border.Effect>
-                                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Opacity="0.12" Color="#000"/>
-                                            </Border.Effect>
-                                            <TextBlock Text="&#xEB51;"
-                                                       FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="11"
-                                                       Foreground="#A59F98"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
+                                    <!-- Car name, plate, rate -->
+                                    <StackPanel Grid.Row="1" Margin="14,12,14,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                <!-- Car name, plate, rate -->
-                                <StackPanel Grid.Row="1" Margin="14,12,14,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Make}"
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Make}"
                                                        FontSize="14"
                                                        FontWeight="Bold"
                                                        Foreground="#2B2927"
                                                        TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding Model}"
+                                                <TextBlock Text="{Binding Model}"
                                                        FontSize="13"
                                                        FontWeight="SemiBold"
                                                        Foreground="#2B2927"
                                                        TextTrimming="CharacterEllipsis"
                                                        Margin="0,1,0,0"/>
-                                        </StackPanel>
+                                            </StackPanel>
 
-                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                            <TextBlock Text="DAILY RATE"
+                                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                <TextBlock Text="DAILY RATE"
                                                        FontSize="9"
                                                        FontWeight="SemiBold"
                                                        Foreground="#7A746D"
                                                        HorizontalAlignment="Right"/>
-                                            <TextBlock Text="{Binding DailyRate, StringFormat='₱{0:N0}'}"
+                                                <TextBlock Text="{Binding DailyRate, StringFormat='₱{0:N0}'}"
                                                        FontSize="18"
                                                        FontWeight="Bold"
                                                        Foreground="#70000F"
                                                        HorizontalAlignment="Right"
                                                        Margin="0,1,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
+                                            </StackPanel>
+                                        </Grid>
 
-                                    <TextBlock Foreground="#A59F98" FontSize="11" Margin="0,2,0,0"
+                                        <TextBlock Foreground="#A59F98" FontSize="11" Margin="0,2,0,0"
                                                TextTrimming="CharacterEllipsis">
                                         <Run Text="{Binding Plate, Mode=OneWay}"/>
                                         <Run Text=" • "/>
                                         <Run Text="{Binding Category, Mode=OneWay}"/>
-                                    </TextBlock>
-                                </StackPanel>
+                                        </TextBlock>
+                                    </StackPanel>
 
-                                <!-- Separator -->
-                                <Border Grid.Row="2"
+                                    <!-- Separator -->
+                                    <Border Grid.Row="2"
                                         Height="1"
                                         Background="#F0EDE9"
                                         Margin="14,10,14,0"/>
 
-                                <!-- Category chip -->
-                                <StackPanel Grid.Row="3"
+                                    <!-- Category chip -->
+                                    <StackPanel Grid.Row="3"
                                             Orientation="Horizontal"
                                             Margin="14,10,14,12">
-                                    <!-- Category icon -->
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
-                                        <TextBlock Text="&#xE804;"
+                                        <!-- Category icon -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+                                            <TextBlock Text="&#xE804;"
                                                    FontFamily="Segoe MDL2 Assets"
                                                    FontSize="13"
                                                    Foreground="#7A746D"
                                                    VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Category}"
+                                            <TextBlock Text="{Binding Category}"
                                                    FontSize="11"
                                                    Foreground="#7A746D"
                                                    FontWeight="SemiBold"
                                                    Margin="5,0,0,0"
                                                    VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
 
-                                <!-- View Details button -->
-                                <Border Grid.Row="4"
+                                    <!-- View Details button -->
+                                    <Border Grid.Row="4"
                                         Style="{StaticResource ViewDetailsBtn}"
                                         Tag="{Binding DbId}"
                                         MouseLeftButtonUp="ViewDetails_Click">
-                                    <TextBlock Text="VIEW DETAILS"
+                                        <TextBlock Text="VIEW DETAILS"
                                                FontSize="11"
                                                FontWeight="Bold"
                                                Foreground="White"
                                                HorizontalAlignment="Center"
                                                FontFamily="Manrope, Segoe UI"/>
-                                </Border>
-                            </Grid>
-                        </Border>
+                                    </Border>
+                                </Grid>
+                            </Border>
 
-                        <!-- Status-dependent badge colouring -->
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding Status}" Value="Available">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#16A34A"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}" Value="Reserved">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#F59E0B"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}" Value="Rented">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#374151"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}" Value="Maintenance">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}" Value="In Maintenance">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}" Value="Under Maintenance">
-                                <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                            <!-- Status-dependent badge colouring -->
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="Available">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#16A34A"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#F59E0B"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Rented">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#374151"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Maintenance">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="In Maintenance">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Under Maintenance">
+                                    <Setter TargetName="StatusBadge" Property="Background" Value="#991B1B"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
 
-        <!-- Pagination card -->
-        <Border Grid.Row="3"
+            <!-- Pagination card -->
+            <Border Grid.Row="3"
                 Background="White"
                 BorderBrush="#E8E5E1"
                 BorderThickness="1"
                 CornerRadius="14"
                 Padding="24,12"
                 Margin="0,16,0,0">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
-            </Border.Effect>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                </Border.Effect>
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtPaging"
+                    <TextBlock x:Name="TxtPaging"
                            Grid.Column="0"
                            VerticalAlignment="Center"
                            FontSize="11"
@@ -377,48 +358,48 @@
                            Foreground="#A59F98"
                            FontFamily="Manrope, Segoe UI"/>
 
-                <StackPanel Grid.Column="1"
+                    <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right">
-                    <Button x:Name="BtnPrev"
+                        <Button x:Name="BtnPrev"
                             Style="{StaticResource PageBtn}"
                             Click="BtnPrev_Click"
                             Margin="0,0,8,0">
-                        <TextBlock Text="&#xE76B;"
+                            <TextBlock Text="&#xE76B;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="11"
                                    Foreground="#7A746D"/>
-                    </Button>
+                        </Button>
 
-                    <ItemsControl x:Name="IcPages">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
+                        <ItemsControl x:Name="IcPages">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
 
-                    <Button x:Name="BtnNext"
+                        <Button x:Name="BtnNext"
                             Style="{StaticResource PageBtn}"
                             Click="BtnNext_Click"
                             Margin="0,0,0,0">
-                        <TextBlock Text="&#xE76C;"
+                            <TextBlock Text="&#xE76C;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="11"
                                    Foreground="#7A746D"/>
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-    </Grid>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
 
-    <!-- VEHICLE DETAILS DOSSIER MODAL OVERLAY (Strictly Read-Only / No Edit Buttons) -->
-    <Grid x:Name="VehicleDetailsOverlay" Visibility="Collapsed" Panel.ZIndex="1000">
-        <!-- Dimmed backdrop -->
-        <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
+        <!-- VEHICLE DETAILS DOSSIER MODAL OVERLAY (Strictly Read-Only / No Edit Buttons) -->
+        <Grid x:Name="VehicleDetailsOverlay" Visibility="Collapsed" Panel.ZIndex="1000">
+            <!-- Dimmed backdrop -->
+            <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
 
-        <!-- Centered Modal Card Container -->
-        <Border Background="#F9F8F6"
+            <!-- Centered Modal Card Container -->
+            <Border Background="#F9F8F6"
                 BorderBrush="#E2DED9"
                 BorderThickness="1"
                 CornerRadius="16"
@@ -426,193 +407,193 @@
                 MaxWidth="1180"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="32" ShadowDepth="6" Direction="270" Opacity="0.25" Color="#000"/>
-            </Border.Effect>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="32" ShadowDepth="6" Direction="270" Opacity="0.25" Color="#000"/>
+                </Border.Effect>
 
-            <ScrollViewer MaxHeight="860" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="28,24,28,28">
+                <ScrollViewer MaxHeight="860" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="28,24,28,28">
 
-                    <!-- Dossier Header -->
-                    <Grid Margin="0,0,0,22">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+                        <!-- Dossier Header -->
+                        <Grid Margin="0,0,0,22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                        <!-- Title & Subtitle -->
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock Text="Vehicle Details"
+                            <!-- Title & Subtitle -->
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="Vehicle Details"
                                        FontSize="24"
                                        FontWeight="Bold"
                                        Foreground="#1F1D1B"
                                        FontFamily="Manrope, Segoe UI"/>
-                            <TextBlock x:Name="TxtDetailHeaderSubtitle"
+                                <TextBlock x:Name="TxtDetailHeaderSubtitle"
                                        Text="VH-0001 / ABC-1234 · Vehicle dossier · rental and inspection records are never deleted"
                                        FontSize="12.5"
                                        Foreground="#7A746D"
                                        Margin="0,3,0,0"
                                        FontFamily="Manrope, Segoe UI"/>
-                        </StackPanel>
+                            </StackPanel>
 
-                        <!-- Top Right Actions: Close Dossier Button (Strictly NO edit buttons per requirement) -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button x:Name="BtnCloseVehicleDetails"
+                            <!-- Top Right Actions: Close Dossier Button (Strictly NO edit buttons per requirement) -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="BtnCloseVehicleDetails"
                                     Style="{StaticResource OutlineButton}"
                                     Height="38"
                                     Padding="18,0"
                                     Cursor="Hand"
                                     Click="BtnCloseVehicleDetails_Click">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Close Dossier" FontWeight="SemiBold" FontSize="12.5" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Close Dossier" FontWeight="SemiBold" FontSize="12.5" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
 
-                    <!-- Top Section: 2-Column Grid (Left Vehicle Card + Right Cards) -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="340"/>
-                            <ColumnDefinition Width="18"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                        <!-- Top Section: 2-Column Grid (Left Vehicle Card + Right Cards) -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="340"/>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                        <!-- LEFT CARD: Vehicle Info & Specs -->
-                        <Border Grid.Column="0"
+                            <!-- LEFT CARD: Vehicle Info & Specs -->
+                            <Border Grid.Column="0"
                                 Background="White"
                                 BorderBrush="#E8E5E1"
                                 BorderThickness="1"
                                 CornerRadius="12"
                                 Padding="22">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
-                            </Border.Effect>
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                                </Border.Effect>
 
-                            <StackPanel>
-                                <!-- Title & Status Badge Row -->
-                                <Grid Margin="0,0,0,18">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <!-- Title & Status Badge Row -->
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock x:Name="TxtDetailMakeModel"
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock x:Name="TxtDetailMakeModel"
                                                    Text="Mercedes-Benz S-Class"
                                                    FontSize="18"
                                                    FontWeight="Bold"
                                                    Foreground="#1F1D1B"
                                                    TextWrapping="Wrap"/>
-                                        <TextBlock x:Name="TxtDetailSpecs"
+                                            <TextBlock x:Name="TxtDetailSpecs"
                                                    Text="2024 · Obsidian black · Executive sedan"
                                                    FontSize="11.5"
                                                    Foreground="#7A746D"
                                                    Margin="0,3,0,0"
                                                    TextWrapping="Wrap"/>
-                                    </StackPanel>
+                                        </StackPanel>
 
-                                    <Border x:Name="BorderDetailStatusBadge"
+                                        <Border x:Name="BorderDetailStatusBadge"
                                             Grid.Column="1"
                                             Background="#E6F4EA"
                                             CornerRadius="10"
                                             Padding="10,3"
                                             VerticalAlignment="Top"
                                             Margin="8,0,0,0">
-                                        <TextBlock x:Name="TxtDetailStatus"
+                                            <TextBlock x:Name="TxtDetailStatus"
                                                    Text="Available"
                                                    FontSize="11"
                                                    FontWeight="Bold"
                                                    Foreground="#137333"/>
-                                    </Border>
-                                </Grid>
+                                        </Border>
+                                    </Grid>
 
-                                <!-- Base Daily Rate -->
-                                <StackPanel Margin="0,0,0,20">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="BASE DAILY RATE"
+                                    <!-- Base Daily Rate -->
+                                    <StackPanel Margin="0,0,0,20">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="BASE DAILY RATE"
                                                    FontSize="10"
                                                    FontWeight="Bold"
                                                    Foreground="#7A746D"
                                                    VerticalAlignment="Bottom"/>
-                                        <TextBlock x:Name="TxtDetailDailyRate"
+                                            <TextBlock x:Name="TxtDetailDailyRate"
                                                    Grid.Column="1"
                                                    Text="₱450"
                                                    FontSize="30"
                                                    FontWeight="Bold"
                                                    Foreground="#70000F"
                                                    HorizontalAlignment="Right"/>
-                                    </Grid>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- Divider -->
+                                    <Border Height="1" Background="#F0EDE9" Margin="0,0,0,16"/>
+
+                                    <!-- Specification Rows -->
+                                    <StackPanel>
+                                        <!-- Vehicle ID / Plate -->
+                                        <Grid Margin="0,0,0,12">
+                                            <TextBlock Text="Vehicle ID / plate" FontSize="12" Foreground="#7A746D"/>
+                                            <TextBlock x:Name="TxtDetailVehicleIdPlate" Text="VH-0001 / ABC-1234" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Category / Seats -->
+                                        <Grid Margin="0,0,0,12">
+                                            <TextBlock Text="Category / seats" FontSize="12" Foreground="#7A746D"/>
+                                            <TextBlock x:Name="TxtDetailCategorySeats" Text="Sedan / 5" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Fuel / Transmission -->
+                                        <Grid Margin="0,0,0,12">
+                                            <TextBlock Text="Fuel / transmission" FontSize="12" Foreground="#7A746D"/>
+                                            <TextBlock x:Name="TxtDetailFuelTrans" Text="Petrol / Automatic" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Odometer -->
+                                        <Grid Margin="0,0,0,12">
+                                            <TextBlock Text="Odometer" FontSize="12" Foreground="#7A746D"/>
+                                            <TextBlock x:Name="TxtDetailOdometer" Text="24,680 km" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Acquired -->
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Acquired" FontSize="12" Foreground="#7A746D"/>
+                                            <TextBlock x:Name="TxtDetailAcquired" Text="12 Jan 2024" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
                                 </StackPanel>
+                            </Border>
 
-                                <!-- Divider -->
-                                <Border Height="1" Background="#F0EDE9" Margin="0,0,0,16"/>
-
-                                <!-- Specification Rows -->
-                                <StackPanel>
-                                    <!-- Vehicle ID / Plate -->
-                                    <Grid Margin="0,0,0,12">
-                                        <TextBlock Text="Vehicle ID / plate" FontSize="12" Foreground="#7A746D"/>
-                                        <TextBlock x:Name="TxtDetailVehicleIdPlate" Text="VH-0001 / ABC-1234" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
-                                    </Grid>
-
-                                    <!-- Category / Seats -->
-                                    <Grid Margin="0,0,0,12">
-                                        <TextBlock Text="Category / seats" FontSize="12" Foreground="#7A746D"/>
-                                        <TextBlock x:Name="TxtDetailCategorySeats" Text="Sedan / 5" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
-                                    </Grid>
-
-                                    <!-- Fuel / Transmission -->
-                                    <Grid Margin="0,0,0,12">
-                                        <TextBlock Text="Fuel / transmission" FontSize="12" Foreground="#7A746D"/>
-                                        <TextBlock x:Name="TxtDetailFuelTrans" Text="Petrol / Automatic" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
-                                    </Grid>
-
-                                    <!-- Odometer -->
-                                    <Grid Margin="0,0,0,12">
-                                        <TextBlock Text="Odometer" FontSize="12" Foreground="#7A746D"/>
-                                        <TextBlock x:Name="TxtDetailOdometer" Text="24,680 km" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
-                                    </Grid>
-
-                                    <!-- Acquired -->
-                                    <Grid Margin="0,0,0,6">
-                                        <TextBlock Text="Acquired" FontSize="12" Foreground="#7A746D"/>
-                                        <TextBlock x:Name="TxtDetailAcquired" Text="12 Jan 2024" FontSize="12" FontWeight="SemiBold" Foreground="#1F1D1B" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <StackPanel Grid.Column="2">
-                            <Border Background="White"
+                            <StackPanel Grid.Column="2">
+                                <Border Background="White"
                                     BorderBrush="#E8E5E1"
                                     BorderThickness="1"
                                     CornerRadius="12"
                                     Padding="22">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
-                                </Border.Effect>
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                                    </Border.Effect>
 
-                                <StackPanel>
-                                    <!-- Header Row with View All History button -->
-                                    <Grid Margin="0,0,0,14">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Rental &amp; inspection history"
+                                    <StackPanel>
+                                        <!-- Header Row with View All History button -->
+                                        <Grid Margin="0,0,0,14">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Rental &amp; inspection history"
                                                        FontSize="15"
                                                        FontWeight="Bold"
                                                        Foreground="#1F1D1B"/>
-                                            <TextBlock Text="Latest completed records · all records retained"
+                                                <TextBlock Text="Latest completed records · all records retained"
                                                        FontSize="11.5"
                                                        Foreground="#7A746D"
                                                        Margin="0,2,0,0"/>
-                                        </StackPanel>
+                                            </StackPanel>
 
-                                        <Button x:Name="BtnViewAllHistory"
+                                            <Button x:Name="BtnViewAllHistory"
                                                 Style="{StaticResource OutlineButton}"
                                                 Content="View all history"
                                                 Height="30"
@@ -621,119 +602,119 @@
                                                 HorizontalAlignment="Right"
                                                 Cursor="Hand"
                                                 Click="BtnViewAllHistory_Click"/>
-                                    </Grid>
+                                        </Grid>
 
-                                    <!-- Table Header -->
-                                    <Grid Background="#F8F7F5" Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="125"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="155"/>
-                                            <ColumnDefinition Width="95"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Booking / Inspection" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                        <TextBlock Grid.Column="1" Text="Customer / Inspector" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                        <TextBlock Grid.Column="2" Text="Period / Date" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                        <TextBlock Grid.Column="3" Text="Odometer" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                        <TextBlock Grid.Column="4" Text="Result" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                    </Grid>
+                                        <!-- Table Header -->
+                                        <Grid Background="#F8F7F5" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="125"/>
+                                                <ColumnDefinition Width="140"/>
+                                                <ColumnDefinition Width="155"/>
+                                                <ColumnDefinition Width="95"/>
+                                                <ColumnDefinition Width="100"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Booking / Inspection" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                            <TextBlock Grid.Column="1" Text="Customer / Inspector" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                            <TextBlock Grid.Column="2" Text="Period / Date" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                            <TextBlock Grid.Column="3" Text="Odometer" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                            <TextBlock Grid.Column="4" Text="Result" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                        </Grid>
 
-                                    <!-- Items List -->
-                                    <ItemsControl x:Name="IcVehHistory">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border BorderBrush="#F0EDE9" BorderThickness="0,0,0,1" Padding="0,7">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="125"/>
-                                                            <ColumnDefinition Width="140"/>
-                                                            <ColumnDefinition Width="155"/>
-                                                            <ColumnDefinition Width="95"/>
-                                                            <ColumnDefinition Width="100"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding RecordCode}" FontWeight="Bold" Foreground="#70000F" FontSize="12" Padding="10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="1" Text="{Binding Party}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Grid.Column="2" Text="{Binding PeriodDate}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="3" Text="{Binding Odometer}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center"/>
-                                                        <Border Grid.Column="4" Background="{Binding ResultBg}" CornerRadius="6" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0">
-                                                            <TextBlock Text="{Binding Result}" FontSize="11" FontWeight="Bold" Foreground="{Binding ResultFg}"/>
-                                                        </Border>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
+                                        <!-- Items List -->
+                                        <ItemsControl x:Name="IcVehHistory">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#F0EDE9" BorderThickness="0,0,0,1" Padding="0,7">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="125"/>
+                                                                <ColumnDefinition Width="140"/>
+                                                                <ColumnDefinition Width="155"/>
+                                                                <ColumnDefinition Width="95"/>
+                                                                <ColumnDefinition Width="100"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding RecordCode}" FontWeight="Bold" Foreground="#70000F" FontSize="12" Padding="10,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Party}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding PeriodDate}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding Odometer}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center"/>
+                                                            <Border Grid.Column="4" Background="{Binding ResultBg}" CornerRadius="6" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                                <TextBlock Text="{Binding Result}" FontSize="11" FontWeight="Bold" Foreground="{Binding ResultFg}"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
 
-                    <!-- Bottom Section: Dated status history (Full Width Card) -->
-                    <Border Background="White"
+                        <!-- Bottom Section: Dated status history (Full Width Card) -->
+                        <Border Background="White"
                             BorderBrush="#E8E5E1"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="20,18">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
-                        </Border.Effect>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.04" Color="#000"/>
+                            </Border.Effect>
 
-                        <StackPanel>
-                            <TextBlock Text="Dated status history"
+                            <StackPanel>
+                                <TextBlock Text="Dated status history"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#1F1D1B"/>
-                            <TextBlock Text="Immutable status audit trail"
+                                <TextBlock Text="Immutable status audit trail"
                                        FontSize="11.5"
                                        Foreground="#7A746D"
                                        Margin="0,2,0,12"/>
 
-                            <!-- Audit Table Header -->
-                            <Grid Background="#F8F7F5" Margin="0,0,0,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="140"/>
-                                    <ColumnDefinition Width="170"/>
-                                    <ColumnDefinition Width="160"/>
-                                    <ColumnDefinition Width="290"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Timestamp" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                <TextBlock Grid.Column="1" Text="Transition" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                <TextBlock Grid.Column="2" Text="Authorized staff" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                <TextBlock Grid.Column="3" Text="Reason" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                                <TextBlock Grid.Column="4" Text="Checks" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
-                            </Grid>
+                                <!-- Audit Table Header -->
+                                <Grid Background="#F8F7F5" Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="170"/>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="290"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Timestamp" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                    <TextBlock Grid.Column="1" Text="Transition" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                    <TextBlock Grid.Column="2" Text="Authorized staff" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                    <TextBlock Grid.Column="3" Text="Reason" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                    <TextBlock Grid.Column="4" Text="Checks" FontSize="11" FontWeight="Bold" Foreground="#7A746D" Padding="10,8"/>
+                                </Grid>
 
-                            <!-- Audit Items List -->
-                            <ItemsControl x:Name="IcVehAudit">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border BorderBrush="#F0EDE9" BorderThickness="0,0,0,1" Padding="0,8">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="140"/>
-                                                    <ColumnDefinition Width="170"/>
-                                                    <ColumnDefinition Width="160"/>
-                                                    <ColumnDefinition Width="290"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Timestamp}" FontWeight="Bold" Foreground="#70000F" FontSize="12" Padding="10,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding Transition}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="{Binding Staff}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="3" Text="{Binding Reason}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="4" Text="{Binding Checks}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
+                                <!-- Audit Items List -->
+                                <ItemsControl x:Name="IcVehAudit">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#F0EDE9" BorderThickness="0,0,0,1" Padding="0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="170"/>
+                                                        <ColumnDefinition Width="160"/>
+                                                        <ColumnDefinition Width="290"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp}" FontWeight="Bold" Foreground="#70000F" FontSize="12" Padding="10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Transition}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Staff}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding Reason}" FontSize="12" Foreground="#2B2927" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="4" Text="{Binding Checks}" FontSize="12" Foreground="#5C5750" Padding="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
 
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
     </Grid>
-</Grid>
 </UserControl>
