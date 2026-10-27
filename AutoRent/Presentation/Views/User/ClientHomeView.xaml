@@ -21,7 +21,7 @@
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="HorizontalContentAlignment" Value="Left"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="Padding" Value="10,12"/>
                 <Setter Property="BorderBrush" Value="#E8E5E1"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
             </Style>
@@ -32,7 +32,7 @@
 
             <!-- Modern Table Cell Style -->
             <Style x:Key="ModernTableCell" TargetType="{x:Type DataGridCell}">
-                <Setter Property="Padding" Value="16,10"/>
+                <Setter Property="Padding" Value="8,9"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="BorderBrush" Value="#F0EEEB"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -357,7 +357,7 @@
 
                         <DataGrid.Columns>
                             <!-- Reservation ID -->
-                            <DataGridTemplateColumn Header="BOOKING ID" Width="120"
+                            <DataGridTemplateColumn Header="BOOKING ID" Width="102"
                                                     HeaderStyle="{StaticResource ModernTableHeaderCenter}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -371,7 +371,7 @@
                             </DataGridTemplateColumn>
 
                             <!-- Customer with Avatar -->
-                            <DataGridTemplateColumn Header="CUSTOMER" Width="2*">
+                            <DataGridTemplateColumn Header="CUSTOMER" Width="2.0*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -379,7 +379,7 @@
                                                 <TextBlock Text="{Binding CustomerInitials}" Foreground="{Binding CustomerAvatarFg}"
                                                            FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="{Binding Customer}" FontWeight="Bold" FontSize="13" Foreground="#2B2927"
+                                            <TextBlock Text="{Binding Customer}" FontWeight="Bold" FontSize="12" TextWrapping="Wrap" Foreground="#2B2927"
                                                        Margin="10,0,0,0" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -387,26 +387,24 @@
                             </DataGridTemplateColumn>
 
                             <!-- Vehicle -->
-                            <DataGridTemplateColumn Header="VEHICLE" Width="2*">
+                            <DataGridTemplateColumn Header="VEHICLE" Width="3.0*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Border Background="#F4F3F1" BorderBrush="#E0DDD9" BorderThickness="1"
-                                                    CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                                <TextBlock Text="{Binding Plate}" FontWeight="Bold" FontSize="11" Foreground="#5F5B56"/>
-                                            </Border>
-                                            <TextBlock Text="{Binding Vehicle}" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,3">
+                                            <TextBlock Text="{Binding Plate}" FontWeight="Bold" FontSize="10.5" Foreground="#77716B"/>
+                                            <TextBlock Text="{Binding Vehicle}" FontSize="12.5" FontWeight="SemiBold"
+                                                       Foreground="#2B2927" TextWrapping="Wrap" MaxWidth="360"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
                             <!-- Dates -->
-                            <DataGridTemplateColumn Header="RENTAL PERIOD" Width="2*">
+                            <DataGridTemplateColumn Header="RENTAL PERIOD" Width="1.85*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DateRangeDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                            <TextBlock Text="{Binding DateRangeDisplay}" TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold" Foreground="#2B2927"/>
                                             <TextBlock Text="{Binding DurationDisplay}" FontSize="11" Foreground="#8C857B" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -414,7 +412,7 @@
                             </DataGridTemplateColumn>
 
                             <!-- Total -->
-                            <DataGridTemplateColumn Header="TOTAL" Width="1.2*">
+                            <DataGridTemplateColumn Header="TOTAL" Width="1.05*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding TotalDisplay}" FontSize="13" FontWeight="Bold" Foreground="#70000F" VerticalAlignment="Center"/>
@@ -423,7 +421,7 @@
                             </DataGridTemplateColumn>
 
                             <!-- Status -->
-                            <DataGridTemplateColumn Header="STATUS" Width="140"
+                            <DataGridTemplateColumn Header="STATUS" Width="126"
                                                     HeaderStyle="{StaticResource ModernTableHeaderCenter}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
