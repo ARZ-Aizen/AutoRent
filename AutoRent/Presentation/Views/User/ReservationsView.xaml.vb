@@ -22,6 +22,7 @@ Namespace Presentation.Views.User
         Private _page As Integer = 1
         Private _totalPages As Integer = 1
         Private _initialized As Boolean = False
+        Private _editingReservation As ReservationItem = Nothing
 
         Public Sub New()
             InitializeComponent()
@@ -237,10 +238,16 @@ Namespace Presentation.Views.User
         ' =========================
 
         Private Sub BtnOpenNewReservation_Click(sender As Object, e As RoutedEventArgs)
-            CmbModalCustomer.ItemsSource = _customers
+            _editingReservation = Nothing
 
-            ' Show categories first; do not populate the vehicle list until
-            ' the user chooses one. Exclude categories with no available cars.
+            TxtModalIcon.Text = ChrW(&HE787)
+            TxtModalTitle.Text = "New Vehicle Reservation"
+            TxtModalSubtitle.Text = "Book an available fleet vehicle for a customer with a verified driver's license"
+            BtnSaveReservation.Content = "Confirm Booking"
+
+            Dim licensedCustomers = _customers.Where(Function(c) c.HasLicense).OrderBy(Function(c) c.Name).ToList()
+            CmbModalCustomer.ItemsSource = licensedCustomers
+
             Dim availableCars = _fleet.Where(Function(f) String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase)).ToList()
             Dim categories = availableCars.Select(Function(f) If(f.Category, String.Empty).Trim()).Where(Function(c) c <> "").Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(Function(c) c, StringComparer.OrdinalIgnoreCase).ToList()
 
@@ -266,10 +273,58 @@ Namespace Presentation.Views.User
             RecalculateModalCost()
         End Sub
 
+        Private Sub BtnEditRow_Click(sender As Object, e As RoutedEventArgs)
+            Dim res = TryCast(CType(sender, FrameworkElement).Tag, ReservationItem)
+            If res Is Nothing Then Return
+
+            _editingReservation = res
+
+            TxtModalIcon.Text = ChrW(&HE70F)
+            TxtModalTitle.Text = "Edit Reservation"
+            TxtModalSubtitle.Text = $"Modify booking details for reservation {res.Id}"
+            BtnSaveReservation.Content = "Save Changes"
+
+            Dim licensedCustomers = _customers.Where(Function(c) c.HasLicense).OrderBy(Function(c) c.Name).ToList()
+            CmbModalCustomer.ItemsSource = licensedCustomers
+            CmbModalCustomer.SelectedItem = licensedCustomers.FirstOrDefault(Function(c) String.Equals(c.Name, res.Customer, StringComparison.OrdinalIgnoreCase))
+
+            Dim currentVeh = _fleet.FirstOrDefault(Function(f) f.DbId = res.VehicleId)
+            Dim eligibleCars = _fleet.Where(Function(f) String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase) OrElse f.DbId = res.VehicleId).ToList()
+            Dim categories = eligibleCars.Select(Function(f) If(f.Category, String.Empty).Trim()).Where(Function(c) c <> "").Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(Function(c) c, StringComparer.OrdinalIgnoreCase).ToList()
+
+            CmbModalCategory.ItemsSource = categories
+            If currentVeh IsNot Nothing AndAlso Not String.IsNullOrWhiteSpace(currentVeh.Category) Then
+                CmbModalCategory.SelectedItem = categories.FirstOrDefault(Function(c) String.Equals(c, currentVeh.Category, StringComparison.OrdinalIgnoreCase))
+
+                Dim matchingCars = eligibleCars.Where(Function(f) String.Equals(f.Category, currentVeh.Category, StringComparison.OrdinalIgnoreCase)).
+                                                OrderBy(Function(f) f.Make, StringComparer.OrdinalIgnoreCase).
+                                                ThenBy(Function(f) f.Model, StringComparer.OrdinalIgnoreCase).
+                                                ThenBy(Function(f) f.Plate, StringComparer.OrdinalIgnoreCase).
+                                                ToList()
+                CmbModalVehicle.ItemsSource = matchingCars
+                CmbModalVehicle.IsEnabled = (matchingCars.Count > 0)
+                CmbModalVehicle.SelectedItem = matchingCars.FirstOrDefault(Function(f) f.DbId = res.VehicleId)
+                Dim vehicleWord = If(matchingCars.Count = 1, "vehicle", "vehicles")
+                TxtAvailableVehicleCount.Text = $"{matchingCars.Count} available {vehicleWord} in {currentVeh.Category}."
+            Else
+                CmbModalCategory.SelectedIndex = -1
+                CmbModalVehicle.ItemsSource = Nothing
+                CmbModalVehicle.IsEnabled = False
+                TxtAvailableVehicleCount.Text = "Select a category to see available vehicles."
+            End If
+
+            DpModalPickup.SelectedDate = res.PickupDate
+            DpModalReturn.SelectedDate = res.ReturnDate
+
+            BorderModalError.Visibility = Visibility.Collapsed
+            BorderCustomerLicenseNotice.Visibility = Visibility.Collapsed
+            ReservationModalOverlay.Visibility = Visibility.Visible
+            RecalculateModalCost()
+        End Sub
+
         Private Sub CmbModalCategory_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
             If CmbModalVehicle Is Nothing OrElse TxtAvailableVehicleCount Is Nothing Then Return
 
-            ' Always clear the old selection when switching categories.
             CmbModalVehicle.ItemsSource = Nothing
             CmbModalVehicle.SelectedIndex = -1
             CmbModalVehicle.IsEnabled = False
@@ -282,7 +337,8 @@ Namespace Presentation.Views.User
             End If
 
             Dim matchingCars = _fleet.Where(Function(f)
-                                                Return String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase) AndAlso
+                                                Dim isCurrent = (_editingReservation IsNot Nothing AndAlso f.DbId = _editingReservation.VehicleId)
+                                                Return (isCurrent OrElse String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase)) AndAlso
                                                        String.Equals(f.Category, selectedCategory, StringComparison.OrdinalIgnoreCase)
                                             End Function).
                                      OrderBy(Function(f) f.Make, StringComparer.OrdinalIgnoreCase).
@@ -318,10 +374,12 @@ Namespace Presentation.Views.User
         End Sub
 
         Private Sub BtnCloseModal_Click(sender As Object, e As RoutedEventArgs)
+            _editingReservation = Nothing
             ReservationModalOverlay.Visibility = Visibility.Collapsed
         End Sub
 
         Private Sub ModalBackdrop_MouseDown(sender As Object, e As MouseButtonEventArgs)
+            _editingReservation = Nothing
             ReservationModalOverlay.Visibility = Visibility.Collapsed
         End Sub
 
@@ -402,16 +460,25 @@ Namespace Presentation.Views.User
             Dim total As Decimal = days * veh.DailyRate
 
             Try
-                Dim problem = ClientRepository.CreateReservation(cust.Name, veh.DbId, pickup, dropoff, total)
-                If problem IsNot Nothing Then
-                    ShowModalError(problem)
-                    Return
+                If _editingReservation Is Nothing Then
+                    Dim problem = ClientRepository.CreateReservation(cust.Name, veh.DbId, pickup, dropoff, total)
+                    If problem IsNot Nothing Then
+                        ShowModalError(problem)
+                        Return
+                    End If
+                Else
+                    Dim problem = ClientRepository.UpdateReservation(_editingReservation.DbId, cust.Name, veh.DbId, _editingReservation.VehicleId, pickup, dropoff, total)
+                    If problem IsNot Nothing Then
+                        ShowModalError(problem)
+                        Return
+                    End If
                 End If
             Catch ex As Exception
                 ShowModalError($"Database error: {ex.Message}")
                 Return
             End Try
 
+            _editingReservation = Nothing
             ReservationModalOverlay.Visibility = Visibility.Collapsed
             ReloadData()
         End Sub

@@ -119,7 +119,42 @@
                 </Setter>
             </Style>
 
-            <!-- Action Complete Button -->
+            <Style x:Key="RowEditBtn" TargetType="Button">
+                <Setter Property="Background" Value="#F0F4FF"/>
+                <Setter Property="Foreground" Value="#1A56DB"/>
+                <Setter Property="BorderBrush" Value="#C3D9FF"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="9,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#E1ECFF"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#7EA5F8"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#D0E1FD"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.35"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="RowCompleteBtn" TargetType="Button">
                 <Setter Property="Background" Value="#F1F8F3"/>
                 <Setter Property="Foreground" Value="#137333"/>
@@ -491,12 +526,22 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Actions -->
-                                <DataGridTemplateColumn Header="ACTIONS" Width="180"
+                                <DataGridTemplateColumn Header="ACTIONS" Width="235"
                                                         HeaderStyle="{StaticResource ModernTableHeaderCenter}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowEditBtn}"
+                                                        Click="BtnEditRow_Click"
+                                                        Tag="{Binding}"
+                                                        IsEnabled="{Binding CanBeManaged}"
+                                                        Margin="0,0,6,0"
+                                                        ToolTip="Edit reservation details">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="10.5" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Edit" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
                                                 <Button Style="{StaticResource RowCompleteBtn}"
                                                         Click="BtnCompleteRow_Click"
                                                         Tag="{Binding}"
@@ -597,13 +642,13 @@
                         </Grid.ColumnDefinitions>
 
                         <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12" Background="#F7E9EB" Margin="0,0,14,0">
-                            <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#70000F"
+                            <TextBlock x:Name="TxtModalIcon" Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#70000F"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Create New Reservation" FontSize="18" FontWeight="Bold" Foreground="#1F1D1B"/>
-                            <TextBlock Text="Book an available fleet vehicle for a customer" FontSize="12.5" Foreground="#7A746D" Margin="0,2,0,0"/>
+                            <TextBlock x:Name="TxtModalTitle" Text="Create New Reservation" FontSize="18" FontWeight="Bold" Foreground="#1F1D1B"/>
+                            <TextBlock x:Name="TxtModalSubtitle" Text="Book an available fleet vehicle for a customer" FontSize="12.5" Foreground="#7A746D" Margin="0,2,0,0"/>
                         </StackPanel>
 
                         <Button Grid.Column="2" Width="32" Height="32" Background="Transparent" BorderThickness="0" Cursor="Hand"
@@ -728,7 +773,7 @@
                     <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
                                 Width="110" Height="38" Click="BtnCloseModal_Click"/>
-                        <Button DockPanel.Dock="Right" Content="Confirm Booking" Style="{StaticResource PrimaryActionBtn}"
+                        <Button x:Name="BtnSaveReservation" DockPanel.Dock="Right" Content="Confirm Booking" Style="{StaticResource PrimaryActionBtn}"
                                 Width="160" Height="38" Click="BtnSaveReservation_Click"/>
                     </DockPanel>
                   </StackPanel>

@@ -125,8 +125,7 @@ Namespace Presentation.Views.Admin
                 End If
                 If _totalFleetVehicles = 0 Then _totalFleetVehicles = 1
 
-                ' Retrieve staff clerks
-                Dim clerkNames As New List(Of String) From {"Maya Chen", "Noah Brooks", "Sebastian Vance", "Elena Rostova", "Marcus Thorne"}
+                Dim clerkNames As New List(Of String) From {"Andrei Balboa", "Zake Yurtas", "Princess Santander", "Jerome Lumbao", "Jonathan Balboa"}
                 Try
                     Dim staffUsers = UserAdminRepository.GetAll()
                     If staffUsers IsNot Nothing AndAlso staffUsers.Count > 0 Then
