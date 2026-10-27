@@ -42,11 +42,11 @@ Namespace Presentation.Views.Admin
         End Sub
 
         Private Sub SettingsView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
-            Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-            Dim currentUser = app.CurrentUser
+            Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
+            Dim currentUser = app?.CurrentUser
 
             ' Access control guard: Strictly for System Administrator only (no manager, no rental staff)
-            If currentUser Is Nothing OrElse Not currentUser.IsAdmin Then
+            If currentUser IsNot Nothing AndAlso Not currentUser.IsAdmin Then
                 AlertUtil.ShowWarning("Access Denied: Settings and centralized data exports are restricted strictly to System Administrators.", "Access Restricted", Window.GetWindow(Me))
                 Me.IsEnabled = False
                 Return
@@ -413,8 +413,8 @@ Namespace Presentation.Views.Admin
             Try
                 TxtStatus.Text = $"Exporting 8 tables for {periodDisplay} to ZIP archive..."
 
-                Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-                Dim exportedBy = If(app.CurrentUser IsNot Nothing, app.CurrentUser.DisplayName, "System Administrator")
+                Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
+                Dim exportedBy = If(app?.CurrentUser IsNot Nothing, app.CurrentUser.DisplayName, "System Administrator")
 
                 Using fileStream As New FileStream(sfd.FileName, FileMode.Create, FileAccess.Write)
                     Using archive As New ZipArchive(fileStream, ZipArchiveMode.Create)
@@ -482,8 +482,8 @@ Namespace Presentation.Views.Admin
             Try
                 TxtStatus.Text = $"Exporting 8 CSV tables to folder '{targetFolder}'..."
 
-                Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-                Dim exportedBy = If(app.CurrentUser IsNot Nothing, app.CurrentUser.DisplayName, "System Administrator")
+                Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
+                Dim exportedBy = If(app?.CurrentUser IsNot Nothing, app.CurrentUser.DisplayName, "System Administrator")
 
                 ' Write manifest
                 Dim manifestPath = Path.Combine(targetFolder, $"00_Export_Manifest_{periodSlug}.txt")

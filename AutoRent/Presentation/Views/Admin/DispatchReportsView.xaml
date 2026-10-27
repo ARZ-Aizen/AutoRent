@@ -130,30 +130,13 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- ROW 0: Page Heading & Authorized Export -->
-                <DockPanel Grid.Row="0" Margin="0,0,0,20" LastChildFill="False">
-                    <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                        <TextBlock Text="Daily Dispatch Reports" FontSize="26" FontWeight="Bold" Foreground="#1F1D1B"/>
-                        <TextBlock x:Name="TxtHeaderSubtitle"
-                                   Text="14 Oct 2026 · HQ branch · concise timestamps in branch timezone · last prepared at 17:05"
-                                   FontSize="12.5" Foreground="#7A746D" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="BtnAuthorizedExport"
-                                Style="{StaticResource OutlineButton}"
-                                Height="36"
-                                Padding="16,0"
-                                Click="BtnAuthorizedExport_Click"
-                                ToolTip="Export authorized dispatch register">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                           Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Authorized export" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </DockPanel>
+                <!-- ROW 0: Page Heading -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,20" VerticalAlignment="Center">
+                    <TextBlock Text="Daily Dispatch Reports" FontSize="26" FontWeight="Bold" Foreground="#1F1D1B"/>
+                    <TextBlock x:Name="TxtHeaderSubtitle"
+                               Text="14 Oct 2026 · HQ branch · concise timestamps in branch timezone · last prepared at 17:05"
+                               FontSize="12.5" Foreground="#7A746D" Margin="0,4,0,0"/>
+                </StackPanel>
 
                 <!-- ROW 1: 7 Top Metric Cards -->
                 <Grid Grid.Row="1" Margin="0,0,0,16">
@@ -311,20 +294,6 @@
                                                Text="Date + 24-hour time · — means not yet recorded · selected BK-9841"
                                                FontSize="12" Foreground="#7A746D" Margin="0,2,0,0"/>
                                 </StackPanel>
-
-                                <Button x:Name="BtnPrintReport"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource OutlineButton}"
-                                        Height="32"
-                                        Padding="14,0"
-                                        VerticalAlignment="Center"
-                                        Click="BtnPrintReport_Click">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="12.5"
-                                                   Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Print report" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
                             </DockPanel>
                         </Border>
 

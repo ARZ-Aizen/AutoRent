@@ -22,8 +22,8 @@ Namespace Presentation.Views.Admin
         End Sub
 
         Private Function CurrentUserId() As Integer
-            Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-            Return If(app.CurrentUser IsNot Nothing, app.CurrentUser.UserId, 0)
+            Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
+            Return If(app?.CurrentUser IsNot Nothing, app.CurrentUser.UserId, 0)
         End Function
 
         Private Sub UserManagementView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded

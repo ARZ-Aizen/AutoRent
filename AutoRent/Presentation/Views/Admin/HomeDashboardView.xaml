@@ -84,8 +84,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Disabled"
+                  HorizontalScrollBarVisibility="Disabled">
 
         <StackPanel Margin="24" MinWidth="840">
 
@@ -350,10 +350,12 @@
                                    Margin="0,0,0,7"/>
 
                         <DataGrid x:Name="DgCategories"
-                                  Height="166"
+                                  Height="150"
                                   RowHeight="30"
                                   FontSize="11"
-                                  BorderThickness="0">
+                                  BorderThickness="0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Category"
                                                     Binding="{Binding category}"
@@ -371,124 +373,141 @@
                 </Border>
             </Grid>
 
-            <!-- RECENT RESERVATIONS -->
-            <Border Style="{StaticResource DashboardCard}"
-                    Margin="0,0,0,12">
+            <!-- RECENT RESERVATIONS & UPCOMING MAINTENANCE SIDE-BY-SIDE -->
+            <Grid Margin="0,0,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
 
-                <StackPanel>
+                <!-- RECENT RESERVATIONS -->
+                <Border Grid.Column="0" Style="{StaticResource DashboardCard}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Text="Recent reservations"
-                               Style="{StaticResource PanelHeading}"/>
-
-                    <TextBlock Text="Latest records from your rental system"
-                               Style="{StaticResource SmallNote}"
-                               Margin="0,3,0,12"/>
-
-                    <DataGrid x:Name="DgRecent"
-                              Height="245"
-                              RowHeight="39"
-                              BorderThickness="0">
-
-                        <DataGrid.Columns>
-
-                            <DataGridTextColumn Header="Customer"
-                                                Binding="{Binding customer_name}"
-                                                Width="1.15*"/>
-
-                            <DataGridTextColumn Header="Vehicle"
-                                                Binding="{Binding vehicle}"
-                                                Width="1.7*"/>
-
-                            <DataGridTextColumn Header="Pickup"
-                                                Binding="{Binding pickup_date, StringFormat='MMM dd, yyyy'}"
-                                                Width="1*"/>
-
-                            <DataGridTextColumn Header="Return"
-                                                Binding="{Binding return_date, StringFormat='MMM dd, yyyy'}"
-                                                Width="1*"/>
-
-                            <DataGridTextColumn Header="Total"
-                                                Binding="{Binding total, StringFormat=N2}"
-                                                Width="0.85*"/>
-
-                            <DataGridTextColumn Header="Status"
-                                                Binding="{Binding status}"
-                                                ElementStyle="{StaticResource StatusText}"
-                                                Width="0.8*"/>
-
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                </StackPanel>
-            </Border>
-
-            <!-- UPCOMING MAINTENANCE -->
-            <Border Style="{StaticResource DashboardCard}">
-                <StackPanel>
-
-                    <Grid Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel>
-                            <TextBlock Text="Upcoming maintenance"
-                                       Style="{StaticResource PanelHeading}"/>
-
-                            <TextBlock Text="Next scheduled vehicle services"
-                                       Style="{StaticResource SmallNote}"
-                                       Margin="0,3,0,0"/>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Recent reservations" Style="{StaticResource PanelHeading}"/>
+                            <TextBlock Text="Latest records from your rental system" Style="{StaticResource SmallNote}" Margin="0,3,0,12"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1"
-                                    HorizontalAlignment="Right">
+                        <DataGrid Grid.Row="1" x:Name="DgRecent"
+                                  Height="240"
+                                  RowHeight="38"
+                                  BorderThickness="0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto">
 
-                            <TextBlock x:Name="TxtCost"
-                                       FontSize="12"
-                                       Foreground="#5E585C"
-                                       TextAlignment="Right"/>
+                            <DataGrid.Columns>
 
-                            <TextBlock x:Name="TxtOverdue"
-                                       FontSize="11"
-                                       Foreground="#7B1325"
-                                       TextAlignment="Right"/>
+                                <DataGridTextColumn Header="Customer"
+                                                    Binding="{Binding customer_name}"
+                                                    Width="1.15*"/>
 
-                            <TextBlock x:Name="TxtUsers"
-                                       FontSize="11"
-                                       Foreground="#8B8588"
-                                       TextAlignment="Right"/>
-                        </StackPanel>
+                                <DataGridTextColumn Header="Vehicle"
+                                                    Binding="{Binding vehicle}"
+                                                    Width="1.4*"/>
+
+                                <DataGridTextColumn Header="Pickup"
+                                                    Binding="{Binding pickup_date, StringFormat='MMM dd, yyyy'}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="Return"
+                                                    Binding="{Binding return_date, StringFormat='MMM dd, yyyy'}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="Total"
+                                                    Binding="{Binding total, StringFormat=N2}"
+                                                    Width="0.85*"/>
+
+                                <DataGridTextColumn Header="Status"
+                                                    Binding="{Binding status}"
+                                                    ElementStyle="{StaticResource StatusText}"
+                                                    Width="0.8*"/>
+
+                            </DataGrid.Columns>
+                        </DataGrid>
+
                     </Grid>
+                </Border>
 
-                    <DataGrid x:Name="DgUpcoming"
-                              Height="224"
-                              RowHeight="38"
-                              BorderThickness="0">
-                        <DataGrid.Columns>
+                <!-- UPCOMING MAINTENANCE -->
+                <Border Grid.Column="2" Style="{StaticResource DashboardCard}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                            <DataGridTextColumn Header="Vehicle"
-                                                Binding="{Binding vehicle}"
-                                                Width="1.6*"/>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                            <DataGridTextColumn Header="Service"
-                                                Binding="{Binding service_type}"
-                                                Width="1.5*"/>
+                            <StackPanel>
+                                <TextBlock Text="Upcoming maintenance"
+                                           Style="{StaticResource PanelHeading}"/>
 
-                            <DataGridTextColumn Header="Scheduled"
-                                                Binding="{Binding scheduled_date, StringFormat='MMM dd, yyyy'}"
-                                                Width="1*"/>
+                                <TextBlock Text="Next scheduled vehicle services"
+                                           Style="{StaticResource SmallNote}"
+                                           Margin="0,3,0,0"/>
+                            </StackPanel>
 
-                            <DataGridTextColumn Header="Status"
-                                                Binding="{Binding status}"
-                                                ElementStyle="{StaticResource StatusText}"
-                                                Width="0.8*"/>
+                            <StackPanel Grid.Column="1"
+                                        HorizontalAlignment="Right">
 
-                        </DataGrid.Columns>
-                    </DataGrid>
+                                <TextBlock x:Name="TxtCost"
+                                           FontSize="11.5"
+                                           Foreground="#5E585C"
+                                           TextAlignment="Right"/>
 
-                </StackPanel>
-            </Border>
+                                <TextBlock x:Name="TxtOverdue"
+                                           FontSize="10.5"
+                                           Foreground="#7B1325"
+                                           TextAlignment="Right"/>
+
+                                <TextBlock x:Name="TxtUsers"
+                                           FontSize="10.5"
+                                           Foreground="#8B8588"
+                                           TextAlignment="Right"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid Grid.Row="1" x:Name="DgUpcoming"
+                                  Height="240"
+                                  RowHeight="38"
+                                  BorderThickness="0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+
+                                <DataGridTextColumn Header="Vehicle"
+                                                    Binding="{Binding vehicle}"
+                                                    Width="1.5*"/>
+
+                                <DataGridTextColumn Header="Service"
+                                                    Binding="{Binding service_type}"
+                                                    Width="1.4*"/>
+
+                                <DataGridTextColumn Header="Scheduled"
+                                                    Binding="{Binding scheduled_date, StringFormat='MMM dd, yyyy'}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="Status"
+                                                    Binding="{Binding status}"
+                                                    ElementStyle="{StaticResource StatusText}"
+                                                    Width="0.8*"/>
+
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                    </Grid>
+                </Border>
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>

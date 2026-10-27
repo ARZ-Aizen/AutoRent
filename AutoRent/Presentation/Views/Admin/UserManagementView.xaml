@@ -360,14 +360,14 @@
 
                             <DockPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,8">
                                 <TextBlock Text="Created" FontSize="11.5" Foreground="#7A746D" DockPanel.Dock="Left"/>
-                                <TextBlock x:Name="TxtSelCreated" Text="14 Oct 2026 · 11:26" FontSize="12.5" FontWeight="SemiBold"
+                                <TextBlock x:Name="TxtSelCreated" Text="14 Oct 2026 · 11:26 AM" FontSize="12.5" FontWeight="SemiBold"
                                            Foreground="#2B2927" HorizontalAlignment="Right"/>
                             </DockPanel>
 
                             <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" BorderBrush="#F0EEEB" BorderThickness="0,1,0,0" Padding="0,8,0,0">
                                 <DockPanel>
                                     <TextBlock Text="Last activity" FontSize="11.5" Foreground="#7A746D" DockPanel.Dock="Left"/>
-                                    <TextBlock x:Name="TxtSelActivity" Text="Authenticated · 14 Oct, 08:05" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock x:Name="TxtSelActivity" Text="Authenticated · 14 Oct, 08:05 AM" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="#2B2927" HorizontalAlignment="Right"/>
                                 </DockPanel>
                             </Border>

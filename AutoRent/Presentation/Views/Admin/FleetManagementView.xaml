@@ -382,14 +382,17 @@
                                 <DataTemplate>
                                     <Border x:Name="StatusPill"
                                             HorizontalAlignment="Left"
-                                            CornerRadius="3"
-                                            Padding="7,4"
+                                            VerticalAlignment="Center"
+                                            CornerRadius="6"
+                                            Padding="9,3.5"
                                             Background="#F1F0F0">
                                         <TextBlock x:Name="StatusLabel"
                                                    Text="{Binding status}"
-                                                   FontSize="10"
+                                                   FontSize="11"
                                                    Foreground="#686365"
-                                                   FontWeight="SemiBold"/>
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"/>
                                     </Border>
 
                                     <DataTemplate.Triggers>

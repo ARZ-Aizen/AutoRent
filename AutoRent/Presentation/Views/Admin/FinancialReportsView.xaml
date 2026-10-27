@@ -121,22 +121,6 @@
                                Foreground="#898184"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-
-                    <Button x:Name="BtnPrint"
-                            Content="Print Report"
-                            Style="{StaticResource SmallButton}"
-                            Click="BtnPrint_Click"
-                            Margin="0,0,8,0"/>
-
-                    <Button x:Name="BtnExport"
-                            Content="Export CSV"
-                            Style="{StaticResource SmallButton}"
-                            Click="BtnExport_Click"/>
-
-                </StackPanel>
             </Grid>
 
             <!-- PERIOD FILTER -->

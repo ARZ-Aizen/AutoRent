@@ -102,7 +102,7 @@ Namespace Data.Models
         Public ReadOnly Property LastLoginFormatted As String
             Get
                 If Not LastLogin.HasValue Then Return "Never"
-                Return LastLogin.Value.ToString("dd MMM · HH:mm")
+                Return LastLogin.Value.ToString("dd MMM · hh:mm tt")
             End Get
         End Property
 
@@ -115,7 +115,7 @@ Namespace Data.Models
         Public ReadOnly Property CreatedText As String
             Get
                 If CreatedAt <> DateTime.MinValue Then
-                    Return CreatedAt.ToString("dd MMM yyyy · HH:mm")
+                    Return CreatedAt.ToString("dd MMM yyyy · hh:mm tt")
                 End If
                 Return "Recently created"
             End Get
@@ -130,7 +130,7 @@ Namespace Data.Models
         Public ReadOnly Property LastActivityText As String
             Get
                 If LastLogin.HasValue Then
-                    Return $"Authenticated · {LastLogin.Value:dd MMM, HH:mm}"
+                    Return $"Authenticated · {LastLogin.Value:dd MMM, hh:mm tt}"
                 End If
                 Return "Account created · Pending first sign-in"
             End Get

@@ -114,12 +114,20 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid Margin="32,28,32,36">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- 0: Central Export Section -->
-                <RowDefinition Height="Auto"/> <!-- 1: Tables Overview -->
+                <RowDefinition Height="Auto"/> <!-- 0: Page Heading -->
+                <RowDefinition Height="Auto"/> <!-- 1: Central Export Section -->
+                <RowDefinition Height="Auto"/> <!-- 2: Tables Overview -->
             </Grid.RowDefinitions>
 
-            <!-- ROW 0: Centralized Monthly CSV Export Engine -->
-            <Border Grid.Row="0" Background="White" BorderBrush="#E5E0D8" BorderThickness="1" CornerRadius="8" Padding="24" Margin="0,0,0,24">
+            <!-- ROW 0: Page Heading & Subheading -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="System Settings" Style="{StaticResource PageTitle}"/>
+                <TextBlock Text="Centralized database registers, monthly CSV export engine, and system audit configuration"
+                           Style="{StaticResource PageSubtitle}"/>
+            </StackPanel>
+
+            <!-- ROW 1: Centralized Monthly CSV Export Engine -->
+            <Border Grid.Row="1" Background="White" BorderBrush="#E5E0D8" BorderThickness="1" CornerRadius="8" Padding="24" Margin="0,0,0,24">
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,16">
                         <StackPanel DockPanel.Dock="Left">
@@ -221,8 +229,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- ROW 1: Tables Overview & Quick Single Export -->
-            <Border Grid.Row="1" Background="White" BorderBrush="#E5E0D8" BorderThickness="1" CornerRadius="8" Padding="24">
+            <!-- ROW 2: Tables Overview & Quick Single Export -->
+            <Border Grid.Row="2" Background="White" BorderBrush="#E5E0D8" BorderThickness="1" CornerRadius="8" Padding="24">
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,14">
                         <StackPanel DockPanel.Dock="Left">
