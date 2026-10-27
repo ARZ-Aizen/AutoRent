@@ -21,6 +21,7 @@ Namespace Presentation.Views.Admin
         Inherits UserControl
 
         Private _records As DataTable
+        Private _vehiclePickList As DataTable
         Private _selectedId As Integer = 0
         Private _ready As Boolean = False
 
@@ -87,39 +88,228 @@ Namespace Presentation.Views.Admin
         ' LOAD VEHICLE DROPDOWN
         ' ==========================================
 
+
         Private Sub LoadVehicles()
 
             Try
 
-                Dim vehicles As DataTable =
-                    VehicleRepository.GetPickList()
+                ' Load vehicles and their categories.
+                _vehiclePickList = VehicleRepository.GetAll()
 
-                CmbVehicle.ItemsSource =
-                    vehicles.DefaultView
+                ' Add the display column used by CmbVehicle.
+                If Not _vehiclePickList.Columns.Contains("display") Then
+                    _vehiclePickList.Columns.Add("display", GetType(String))
+                End If
 
-                If vehicles.Rows.Count = 0 Then
+                Dim categories As New SortedSet(Of String)(
+            StringComparer.OrdinalIgnoreCase
+        )
+
+                For Each vehicle As DataRow In _vehiclePickList.Rows
+
+                    Dim plate As String =
+                Convert.ToString(vehicle("plate"))
+
+                    Dim makeName As String =
+                Convert.ToString(vehicle("make"))
+
+                    Dim modelName As String =
+                Convert.ToString(vehicle("model"))
+
+                    Dim categoryName As String =
+                Convert.ToString(vehicle("category")).Trim()
+
+                    Dim statusValue As String =
+                Convert.ToString(vehicle("status"))
+
+                    vehicle("display") =
+                plate & " - " & (makeName & " " & modelName).Trim()
+
+                    ' Retired vehicles cannot be scheduled.
+                    If Not String.Equals(
+                statusValue,
+                "Retired",
+                StringComparison.OrdinalIgnoreCase
+            ) AndAlso
+               Not String.IsNullOrWhiteSpace(categoryName) Then
+
+                        categories.Add(categoryName)
+
+                    End If
+
+                Next
+
+                ' Populate categories, but leave Vehicle empty.
+                CmbCategory.ItemsSource = categories.ToList()
+                CmbCategory.SelectedIndex = -1
+                CmbCategory.IsEnabled = (categories.Count > 0)
+
+                CmbVehicle.ItemsSource = Nothing
+                CmbVehicle.SelectedIndex = -1
+                CmbVehicle.IsEnabled = False
+
+                TxtCategoryVehicleCount.Text =
+            If(
+                categories.Count > 0,
+                "Select a category to see vehicles.",
+                "No eligible vehicles found. Check Fleet Management."
+            )
+
+                If categories.Count = 0 Then
 
                     AlertUtil.ShowWarning(
-                        "No active vehicles were found. " &
-                        "Please check Fleet Management.",
-                        "Maintenance Scheduler",
-                        ViewHelpers.Owner(Me)
-                    )
+                "No eligible vehicles were found. " &
+                "Please check Fleet Management.",
+                "Maintenance Scheduler",
+                ViewHelpers.Owner(Me)
+            )
 
                 End If
 
             Catch ex As Exception
 
                 AlertUtil.ShowError(
-                    "Could not load vehicles: " &
-                    ex.Message,
-                    "Maintenance Scheduler",
-                    ViewHelpers.Owner(Me)
-                )
+            "Could not load vehicles: " & ex.Message,
+            "Maintenance Scheduler",
+            ViewHelpers.Owner(Me)
+        )
 
             End Try
 
         End Sub
+
+        ' ==========================================
+        ' FILTER VEHICLES BY SELECTED CATEGORY
+        ' ==========================================
+
+        Private Sub CmbCategory_SelectionChanged(
+    sender As Object,
+    e As SelectionChangedEventArgs
+)
+
+            If CmbVehicle Is Nothing OrElse
+       TxtCategoryVehicleCount Is Nothing Then
+                Return
+            End If
+
+            ' Clear the previous vehicle selection.
+            CmbVehicle.ItemsSource = Nothing
+            CmbVehicle.SelectedIndex = -1
+            CmbVehicle.IsEnabled = False
+
+            Dim selectedCategory As String =
+        TryCast(CmbCategory.SelectedItem, String)
+
+            If _vehiclePickList Is Nothing OrElse
+       String.IsNullOrWhiteSpace(selectedCategory) Then
+
+                TxtCategoryVehicleCount.Text =
+            "Select a category to see vehicles."
+
+                Return
+
+            End If
+
+            Dim filteredVehicles As DataTable =
+        _vehiclePickList.Clone()
+
+            For Each vehicle As DataRow In _vehiclePickList.Rows
+
+                Dim categoryName As String =
+            Convert.ToString(vehicle("category"))
+
+                Dim statusValue As String =
+            Convert.ToString(vehicle("status"))
+
+                If String.Equals(
+            categoryName,
+            selectedCategory,
+            StringComparison.OrdinalIgnoreCase
+        ) AndAlso
+           Not String.Equals(
+               statusValue,
+               "Retired",
+               StringComparison.OrdinalIgnoreCase
+           ) Then
+
+                    filteredVehicles.ImportRow(vehicle)
+
+                End If
+
+            Next
+
+            CmbVehicle.ItemsSource =
+        filteredVehicles.DefaultView
+
+            CmbVehicle.IsEnabled =
+        (filteredVehicles.Rows.Count > 0)
+
+            Dim vehicleCount As Integer =
+        filteredVehicles.Rows.Count
+
+            If vehicleCount = 0 Then
+
+                TxtCategoryVehicleCount.Text =
+            "No eligible vehicles in this category."
+
+            ElseIf vehicleCount = 1 Then
+
+                TxtCategoryVehicleCount.Text =
+            "1 vehicle available in " & selectedCategory & "."
+
+            Else
+
+                TxtCategoryVehicleCount.Text =
+            vehicleCount.ToString() &
+            " vehicles available in " &
+            selectedCategory & "."
+
+            End If
+
+        End Sub
+
+
+        ' ==========================================
+        ' RESTORE CATEGORY WHEN EDITING A SCHEDULE
+        ' ==========================================
+
+        Private Sub SelectVehicleAndCategory(vehicleId As Integer)
+
+            If _vehiclePickList Is Nothing Then Return
+
+            For Each vehicle As DataRow In _vehiclePickList.Rows
+
+                If Convert.ToInt32(vehicle("vehicle_id")) = vehicleId Then
+
+                    Dim categoryName As String =
+                Convert.ToString(vehicle("category")).Trim()
+
+                    For Each category As String In CmbCategory.Items
+
+                        If String.Equals(
+                    category,
+                    categoryName,
+                    StringComparison.OrdinalIgnoreCase
+                ) Then
+
+                            ' This automatically filters the vehicle list.
+                            CmbCategory.SelectedItem = category
+
+                            ' Select the vehicle from the filtered list.
+                            CmbVehicle.SelectedValue = vehicleId
+
+                            Return
+
+                        End If
+
+                    Next
+
+                End If
+
+            Next
+
+        End Sub
+
 
         ' ==========================================
         ' LOAD MAINTENANCE RECORDS
@@ -833,11 +1023,14 @@ Namespace Presentation.Views.Admin
                     "maintenance_id"
                 )
 
-            CmbVehicle.SelectedValue =
+
+            SelectVehicleAndCategory(
                 ViewHelpers.IntOf(
                     record,
                     "vehicle_id"
                 )
+            )
+
 
             CmbService.Text =
                 ViewHelpers.Str(
@@ -905,7 +1098,17 @@ Namespace Presentation.Views.Admin
 
             DgMaintenance.SelectedItem = Nothing
 
+
+            ' Reset the category and vehicle.
+            CmbCategory.SelectedIndex = -1
+
+            CmbVehicle.ItemsSource = Nothing
             CmbVehicle.SelectedIndex = -1
+            CmbVehicle.IsEnabled = False
+
+            TxtCategoryVehicleCount.Text =
+             "Select a category to see vehicles."
+
             CmbService.Text = ""
 
             DpDate.SelectedDate =
@@ -939,9 +1142,17 @@ Namespace Presentation.Views.Admin
             ByRef statusValue As String
         ) As String
 
-            If CmbVehicle.SelectedValue Is Nothing Then
-                Return "Please choose a vehicle."
+
+            ' Category must be selected first.
+            If CmbCategory.SelectedItem Is Nothing Then
+                Return "Please choose a vehicle category first."
             End If
+
+            ' Vehicle must belong to the selected category.
+            If CmbVehicle.SelectedValue Is Nothing Then
+                Return "Please choose a vehicle from the selected category."
+            End If
+
 
             vehicleId =
                 Convert.ToInt32(

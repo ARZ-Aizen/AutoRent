@@ -6,378 +6,493 @@
              mc:Ignorable="d"
              d:DesignHeight="760"
              d:DesignWidth="1120"
-             Loaded="FinancialReportsView_Loaded"
              FontFamily="Segoe UI"
-             Background="#F7F6F5">
+             Background="#F8F7F7"
+             Loaded="FinancialReportsView_Loaded">
 
     <UserControl.Resources>
 
-        <SolidColorBrush x:Key="Wine" Color="#76091F"/>
-
-        <Style x:Key="Card" TargetType="Border">
+        <!-- CONTENT CARD -->
+        <Style x:Key="ReportCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E8E3E2"/>
+            <Setter Property="BorderBrush" Value="#E7E2E3"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="18"/>
         </Style>
 
-        <Style x:Key="SmallButton" TargetType="Button">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#393438"/>
-            <Setter Property="BorderBrush" Value="#DBD5D5"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="14,0"/>
+        <!-- DATE FILTER BUTTON -->
+        <Style x:Key="PeriodButton" TargetType="Button">
             <Setter Property="Height" Value="36"/>
-            <Setter Property="MinWidth" Value="88"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinWidth" Value="94"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#302D2E"/>
+            <Setter Property="BorderBrush" Value="#D9D4D3"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Outer"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="5">
-
-                            <ContentPresenter
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Outer"
-                                        Property="Opacity"
-                                        Value="0.86"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
-        <Style x:Key="StatHeading" TargetType="TextBlock">
+        <!-- ACTION BUTTON -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="115"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#302D2E"/>
+            <Setter Property="BorderBrush" Value="#D9D4D3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- SUMMARY LABEL -->
+        <Style x:Key="SummaryLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#746D70"/>
+            <Setter Property="Foreground" Value="#777174"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
-        <Style x:Key="StatNumber" TargetType="TextBlock">
+        <!-- SUMMARY VALUE -->
+        <Style x:Key="SummaryValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="25"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="{StaticResource Wine}"/>
-            <Setter Property="Margin" Value="0,7,0,3"/>
+            <Setter Property="Foreground" Value="#76091F"/>
+            <Setter Property="Margin" Value="0,9,0,5"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
 
-        <Style x:Key="ReportGrid" TargetType="DataGrid">
+        <!-- SECTION TITLE -->
+        <Style x:Key="SectionHeading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#252123"/>
+        </Style>
+
+        <!-- TABLE STYLE -->
+        <Style x:Key="ReportTable" TargetType="DataGrid">
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="CanUserAddRows" Value="False"/>
             <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="RowHeight" Value="40"/>
+            <Setter Property="ColumnHeaderHeight" Value="42"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="RowHeight" Value="36"/>
-            <Setter Property="ColumnHeaderHeight" Value="37"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="AlternatingRowBackground" Value="#FAF8F8"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="MinColumnWidth" Value="75"/>
+            <Setter Property="SelectionMode" Value="Single"/>
             <Setter Property="SelectionUnit" Value="FullRow"/>
-            <Setter Property="CanUserSortColumns" Value="True"/>
         </Style>
 
     </UserControl.Resources>
 
+    <!-- PAGE CONTAINER -->
+    <Grid>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-              HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer
+            VerticalScrollBarVisibility="Auto"
+            HorizontalScrollBarVisibility="Disabled"
+            CanContentScroll="False"
+            PanningMode="VerticalOnly">
 
+            <StackPanel Margin="24,24,24,35">
 
+                <!-- HEADER -->
+                <Grid Margin="0,0,0,20">
 
-        <StackPanel Margin="24">
-
-
-            <!-- HEADER -->
-            <Grid Margin="0,0,0,15">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel>
-                    <TextBlock Text="Financial Reports"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Foreground="#302B2D"/>
-
-                    <TextBlock Text="Real rental revenue and completed maintenance costs"
-                               FontSize="12"
-                               Margin="0,4,0,0"
-                               Foreground="#898184"/>
-                </StackPanel>
-
-            </Grid>
-
-            <!-- PERIOD FILTER -->
-            <Border Style="{StaticResource Card}"
-                    Margin="0,0,0,12"
-                    Padding="12">
-
-                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Grid.Column="0">
 
-                        <Button x:Name="BtnToday"
+                        <TextBlock
+                            Text="Financial Reports"
+                            FontSize="29"
+                            FontWeight="Bold"
+                            Foreground="#231F20"/>
+
+                        <TextBlock
+                            Text="Track rental revenue, maintenance expenses, and financial performance."
+                            FontSize="12"
+                            Foreground="#817B7E"
+                            TextWrapping="Wrap"
+                            Margin="0,5,12,0"/>
+
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+
+                        <Button
+                            x:Name="BtnPrint"
+                            Content="Print Report"
+                            Style="{StaticResource ActionButton}"
+                            Click="BtnPrint_Click"
+                            Margin="0,0,9,0"/>
+
+                        <Button
+                            x:Name="BtnExport"
+                            Content="Export CSV"
+                            Style="{StaticResource ActionButton}"
+                            Click="BtnExport_Click"/>
+
+                    </StackPanel>
+
+                </Grid>
+
+                <!-- DATE FILTER -->
+                <Border
+                    Style="{StaticResource ReportCard}"
+                    Margin="0,0,0,18">
+
+                    <Grid>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel
+                            Grid.Column="0"
+                            Orientation="Horizontal">
+
+                            <Button
+                                x:Name="BtnToday"
                                 Content="Today"
-                                Style="{StaticResource SmallButton}"
-                                Click="BtnToday_Click"
-                                Margin="0,0,6,0"/>
+                                Style="{StaticResource PeriodButton}"
+                                Click="BtnToday_Click"/>
 
-                        <Button x:Name="BtnWeek"
+                            <Button
+                                x:Name="BtnWeek"
                                 Content="This Week"
-                                Style="{StaticResource SmallButton}"
-                                Click="BtnWeek_Click"
-                                Margin="0,0,6,0"/>
+                                Style="{StaticResource PeriodButton}"
+                                Click="BtnWeek_Click"/>
 
-                        <Button x:Name="BtnMonth"
+                            <Button
+                                x:Name="BtnMonth"
                                 Content="This Month"
-                                Style="{StaticResource SmallButton}"
+                                Style="{StaticResource PeriodButton}"
                                 Click="BtnMonth_Click"/>
 
-                    </StackPanel>
+                        </StackPanel>
 
-                    <TextBlock x:Name="TxtRange"
-                               Grid.Column="1"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               Foreground="#777075"/>
-                </Grid>
-            </Border>
+                        <TextBlock
+                            x:Name="TxtRange"
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="12,0,0,0"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Foreground="#777174"/>
 
-            <!-- SUMMARY CARDS -->
-            <UniformGrid Columns="4" Margin="0,0,0,12">
+                    </Grid>
 
-                <Border Style="{StaticResource Card}"
+                </Border>
+
+                <!-- FINANCIAL SUMMARY -->
+                <UniformGrid Columns="4" Margin="0,0,0,18">
+
+                    <!-- REVENUE -->
+                    <Border
+                        Style="{StaticResource ReportCard}"
                         Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="Rental Revenue"
-                                   Style="{StaticResource StatHeading}"/>
 
-                        <TextBlock x:Name="TxtRevenue"
-                                   Text="₱0.00"
-                                   Style="{StaticResource StatNumber}"/>
+                        <StackPanel>
 
-                        <TextBlock Text="Completed rentals"
-                                   FontSize="11"
-                                   Foreground="#999295"/>
-                    </StackPanel>
-                </Border>
+                            <TextBlock
+                                Text="Total Revenue"
+                                Style="{StaticResource SummaryLabel}"/>
 
-                <Border Style="{StaticResource Card}"
+                            <TextBlock
+                                x:Name="TxtRevenue"
+                                Text="₱0.00"
+                                Style="{StaticResource SummaryValue}"/>
+
+                            <TextBlock
+                                Text="Completed rental earnings"
+                                FontSize="11"
+                                Foreground="#948D90"
+                                TextWrapping="Wrap"/>
+
+                        </StackPanel>
+
+                    </Border>
+
+                    <!-- EXPENSES -->
+                    <Border
+                        Style="{StaticResource ReportCard}"
                         Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="Maintenance Expenses"
-                                   Style="{StaticResource StatHeading}"/>
 
-                        <TextBlock x:Name="TxtExpenses"
-                                   Text="₱0.00"
-                                   Style="{StaticResource StatNumber}"/>
+                        <StackPanel>
 
-                        <TextBlock Text="Completed maintenance"
-                                   FontSize="11"
-                                   Foreground="#999295"/>
-                    </StackPanel>
-                </Border>
+                            <TextBlock
+                                Text="Maintenance Expenses"
+                                Style="{StaticResource SummaryLabel}"/>
 
-                <Border Style="{StaticResource Card}"
+                            <TextBlock
+                                x:Name="TxtExpenses"
+                                Text="₱0.00"
+                                Style="{StaticResource SummaryValue}"
+                                Foreground="#D97706"/>
+
+                            <TextBlock
+                                Text="Completed maintenance costs"
+                                FontSize="11"
+                                Foreground="#948D90"
+                                TextWrapping="Wrap"/>
+
+                        </StackPanel>
+
+                    </Border>
+
+                    <!-- NET -->
+                    <Border
+                        Style="{StaticResource ReportCard}"
                         Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="Net After Maintenance"
-                                   Style="{StaticResource StatHeading}"/>
 
-                        <TextBlock x:Name="TxtNet"
-                                   Text="₱0.00"
-                                   Style="{StaticResource StatNumber}"/>
+                        <StackPanel>
 
-                        <TextBlock Text="Revenue minus maintenance"
-                                   FontSize="11"
-                                   Foreground="#999295"/>
-                    </StackPanel>
-                </Border>
+                            <TextBlock
+                                Text="Net Income"
+                                Style="{StaticResource SummaryLabel}"/>
 
-                <Border Style="{StaticResource Card}">
-                    <StackPanel>
-                        <TextBlock Text="Completed Rentals"
-                                   Style="{StaticResource StatHeading}"/>
+                            <TextBlock
+                                x:Name="TxtNet"
+                                Text="₱0.00"
+                                Style="{StaticResource SummaryValue}"/>
 
-                        <TextBlock x:Name="TxtRentals"
-                                   Text="0"
-                                   Style="{StaticResource StatNumber}"/>
+                            <TextBlock
+                                Text="Revenue minus maintenance"
+                                FontSize="11"
+                                Foreground="#948D90"
+                                TextWrapping="Wrap"/>
 
-                        <TextBlock Text="Transactions in the period"
-                                   FontSize="11"
-                                   Foreground="#999295"/>
-                    </StackPanel>
-                </Border>
+                        </StackPanel>
 
-            </UniformGrid>
+                    </Border>
 
-            <!-- REVENUE GRAPH + CATEGORY TABLE -->
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.8*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
+                    <!-- RENTALS -->
+                    <Border Style="{StaticResource ReportCard}">
+
+                        <StackPanel>
+
+                            <TextBlock
+                                Text="Completed Rentals"
+                                Style="{StaticResource SummaryLabel}"/>
+
+                            <TextBlock
+                                x:Name="TxtRentals"
+                                Text="0"
+                                Style="{StaticResource SummaryValue}"
+                                Foreground="#2563EB"/>
+
+                            <TextBlock
+                                Text="Completed transactions"
+                                FontSize="11"
+                                Foreground="#948D90"
+                                TextWrapping="Wrap"/>
+
+                        </StackPanel>
+
+                    </Border>
+
+                </UniformGrid>
 
                 <!-- REVENUE CHART -->
-                <Border Grid.Column="0"
-                        Style="{StaticResource Card}">
+                <Border
+                    Style="{StaticResource ReportCard}"
+                    Margin="0,0,0,18">
 
                     <StackPanel>
 
-                        <TextBlock Text="Revenue Trend"
-                                   FontSize="17"
-                                   FontWeight="Bold"
-                                   Foreground="#302B2D"/>
+                        <TextBlock
+                            Text="Revenue Trend"
+                            Style="{StaticResource SectionHeading}"/>
 
-                        <TextBlock x:Name="TxtTrendCaption"
-                                   FontSize="11"
-                                   Foreground="#888184"
-                                   Margin="0,4,0,12"/>
+                        <TextBlock
+                            x:Name="TxtTrendCaption"
+                            Text="Revenue performance"
+                            FontSize="12"
+                            Foreground="#817B7E"
+                            Margin="0,5,0,15"/>
 
-                        <Canvas x:Name="GraphCanvas"
-                                Background="Transparent"
-                                Height="254"
-                                SizeChanged="GraphCanvas_SizeChanged"
-                                ClipToBounds="True"/>
+                        <!-- CHART CANVAS -->
+                        <Canvas
+                            x:Name="GraphCanvas"
+                            Height="265"
+                            Background="Transparent"
+                            ClipToBounds="True"
+                            HorizontalAlignment="Stretch"
+                            SizeChanged="GraphCanvas_SizeChanged"/>
 
-                        <Grid Margin="0,8,0,0">
+                        <!-- CHART SUMMARY -->
+                        <Grid Margin="0,14,0,0">
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock x:Name="TxtTrendTotal"
-                                       FontSize="11"
-                                       Foreground="#6B6568"/>
+                            <TextBlock
+                                x:Name="TxtTrendTotal"
+                                Grid.Column="0"
+                                Text="Period total: ₱0.00"
+                                FontSize="12"
+                                Foreground="#777174"
+                                VerticalAlignment="Center"/>
 
-                            <TextBlock x:Name="TxtPeak"
-                                       Grid.Column="1"
-                                       FontSize="11"
-                                       Foreground="#76091F"/>
+                            <TextBlock
+                                x:Name="TxtPeak"
+                                Grid.Column="1"
+                                Text="No revenue data"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="#76091F"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                Margin="12,0,0,0"/>
+
                         </Grid>
 
+                        <TextBlock
+                            Text="Based on completed rental transactions."
+                            FontSize="11"
+                            Foreground="#948D90"
+                            Margin="0,10,0,0"/>
+
                     </StackPanel>
+
                 </Border>
 
-                <!-- CATEGORY BREAKDOWN -->
-                <Border Grid.Column="2"
-                        Style="{StaticResource Card}">
+                <!-- REVENUE BY CATEGORY -->
+                <Border
+                    Style="{StaticResource ReportCard}"
+                    Margin="0,0,0,18">
 
                     <StackPanel>
 
-                        <TextBlock Text="Revenue by Category"
-                                   FontSize="17"
-                                   FontWeight="Bold"
-                                   Foreground="#302B2D"/>
+                        <TextBlock
+                            Text="Revenue by Category"
+                            Style="{StaticResource SectionHeading}"/>
 
-                        <TextBlock Text="Completed rentals by vehicle type"
-                                   FontSize="11"
-                                   Foreground="#888184"
-                                   Margin="0,4,0,10"/>
+                        <TextBlock
+                            Text="Completed rental revenue by vehicle category."
+                            FontSize="12"
+                            Foreground="#817B7E"
+                            Margin="0,5,0,14"/>
 
-
-                        <DataGrid x:Name="DgCategory"
-          Style="{StaticResource ReportGrid}"
-          Height="230"
-          HorizontalAlignment="Stretch"
-          HorizontalScrollBarVisibility="Auto"
-          ColumnWidth="*"
-          MinColumnWidth="75">
+                        <DataGrid
+                            x:Name="DgCategory"
+                            Style="{StaticResource ReportTable}"
+                            Height="205"
+                            HorizontalAlignment="Stretch">
 
                             <DataGrid.Columns>
 
-                                <DataGridTextColumn Header="Category"
-                            Binding="{Binding category}"
-                            Width="2*"
-                            MinWidth="125"/>
+                                <DataGridTextColumn
+                                    Header="Category"
+                                    Binding="{Binding category}"
+                                    Width="2*"
+                                    MinWidth="150"/>
 
-                                <DataGridTextColumn Header="Rentals"
-                            Binding="{Binding rentals}"
-                            Width="1*"
-                            MinWidth="75"/>
+                                <DataGridTextColumn
+                                    Header="Rentals"
+                                    Binding="{Binding rentals}"
+                                    Width="1*"
+                                    MinWidth="90"/>
 
-                                <DataGridTextColumn Header="Revenue"
-                            Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
-                            Width="1.5*"
-                            MinWidth="110"/>
+                                <DataGridTextColumn
+                                    Header="Revenue"
+                                    Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
+                                    Width="1.5*"
+                                    MinWidth="135"/>
 
                             </DataGrid.Columns>
 
                         </DataGrid>
 
                     </StackPanel>
+
                 </Border>
-            </Grid>
 
-            <!-- MONTHLY SUMMARY -->
-            <Border Style="{StaticResource Card}">
+                <!-- MONTHLY SUMMARY -->
+                <Border Style="{StaticResource ReportCard}">
 
-                <StackPanel>
+                    <StackPanel>
 
-                    <TextBlock Text="Monthly Summary"
-                               FontSize="17"
-                               FontWeight="Bold"
-                               Foreground="#302B2D"/>
+                        <TextBlock
+                            Text="Monthly Summary"
+                            Style="{StaticResource SectionHeading}"/>
 
-                    <TextBlock Text="Breakdown for the selected reporting period"
-                               FontSize="11"
-                               Foreground="#888184"
-                               Margin="0,4,0,10"/>
+                        <TextBlock
+                            Text="Monthly rental revenue, maintenance expenses, and net income."
+                            FontSize="12"
+                            Foreground="#817B7E"
+                            Margin="0,5,0,14"/>
 
-                    <DataGrid x:Name="DgMonth"
-                              Style="{StaticResource ReportGrid}"
-                              Height="215">
+                        <DataGrid
+                            x:Name="DgMonth"
+                            Style="{StaticResource ReportTable}"
+                            Height="225"
+                            HorizontalAlignment="Stretch">
 
-                        <DataGrid.Columns>
+                            <DataGrid.Columns>
 
-                            <DataGridTextColumn Header="Month"
-                                                Binding="{Binding month}"
-                                                Width="1.3*"/>
+                                <DataGridTextColumn
+                                    Header="Month"
+                                    Binding="{Binding month}"
+                                    Width="1.3*"
+                                    MinWidth="115"/>
 
-                            <DataGridTextColumn Header="Rentals"
-                                                Binding="{Binding rentals}"
-                                                Width="*"/>
+                                <DataGridTextColumn
+                                    Header="Rentals"
+                                    Binding="{Binding rentals}"
+                                    Width="0.8*"
+                                    MinWidth="85"/>
 
-                            <DataGridTextColumn Header="Revenue"
-                                                Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
-                                                Width="*"/>
+                                <DataGridTextColumn
+                                    Header="Revenue"
+                                    Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
+                                    Width="1.4*"
+                                    MinWidth="125"/>
 
-                            <DataGridTextColumn Header="Maintenance"
-                                                Binding="{Binding expenses, StringFormat='₱{0:N2}'}"
-                                                Width="*"/>
+                                <DataGridTextColumn
+                                    Header="Maintenance"
+                                    Binding="{Binding expenses, StringFormat='₱{0:N2}'}"
+                                    Width="1.4*"
+                                    MinWidth="135"/>
 
-                            <DataGridTextColumn Header="Net"
-                                                Binding="{Binding net, StringFormat='₱{0:N2}'}"
-                                                Width="*"/>
+                                <DataGridTextColumn
+                                    Header="Net Income"
+                                    Binding="{Binding net, StringFormat='₱{0:N2}'}"
+                                    Width="1.4*"
+                                    MinWidth="125"/>
 
-                        </DataGrid.Columns>
-                    </DataGrid>
+                            </DataGrid.Columns>
 
-                </StackPanel>
-            </Border>
+                        </DataGrid>
 
-        </StackPanel>
-    </ScrollViewer>
+                    </StackPanel>
+
+                </Border>
+
+            </StackPanel>
+
+        </ScrollViewer>
+
+    </Grid>
+
 </UserControl>

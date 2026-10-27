@@ -544,18 +544,17 @@ Namespace Presentation.Views.Admin
             ) As Decimal
 
             Dim rows = Db.Query(
-                "SELECT [return_date], [total] " &
+                "SELECT [completed_at], [return_date], [total] " &
                 "FROM [Reservations] " &
                 "WHERE [status] = 'Completed' " &
-                "AND [return_date] >= ? " &
-                "AND [return_date] < ?",
-                Db.Dt(startDate),
-                Db.Dt(endDate)
+                "AND (([completed_at] >= ? AND [completed_at] < ?) " &
+                "OR ([completed_at] IS NULL AND [return_date] >= ? AND [return_date] < ?))",
+                Db.Dt(startDate), Db.Dt(endDate), Db.Dt(startDate), Db.Dt(endDate)
             )
 
             For Each record As DataRow In rows.Rows
 
-                If IsDBNull(record("return_date")) OrElse
+                If (IsDBNull(record("completed_at")) AndAlso IsDBNull(record("return_date"))) OrElse
                    IsDBNull(record("total")) Then
 
                     Continue For
@@ -564,7 +563,7 @@ Namespace Presentation.Views.Admin
 
                 Dim completedAt =
                     Convert.ToDateTime(
-                        record("return_date")
+                        If(IsDBNull(record("completed_at")), record("return_date"), record("completed_at"))
                     )
 
                 Dim index As Integer

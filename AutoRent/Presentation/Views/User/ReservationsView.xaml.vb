@@ -238,7 +238,21 @@ Namespace Presentation.Views.User
 
         Private Sub BtnOpenNewReservation_Click(sender As Object, e As RoutedEventArgs)
             CmbModalCustomer.ItemsSource = _customers
-            CmbModalVehicle.ItemsSource = _fleet.Where(Function(f) String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase)).ToList()
+
+            ' Show categories first; do not populate the vehicle list until
+            ' the user chooses one. Exclude categories with no available cars.
+            Dim availableCars = _fleet.Where(Function(f) String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase)).ToList()
+            Dim categories = availableCars.Select(Function(f) If(f.Category, String.Empty).Trim()).Where(Function(c) c <> "").Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(Function(c) c, StringComparer.OrdinalIgnoreCase).ToList()
+
+            CmbModalCategory.ItemsSource = categories
+            CmbModalCategory.SelectedIndex = -1
+            CmbModalCategory.IsEnabled = (categories.Count > 0)
+            CmbModalVehicle.ItemsSource = Nothing
+            CmbModalVehicle.SelectedIndex = -1
+            CmbModalVehicle.IsEnabled = False
+            TxtAvailableVehicleCount.Text = If(categories.Count = 0,
+                                               "No vehicles are available for booking. Check Fleet Inventory.",
+                                               "Select a category to see available vehicles.")
 
             DpModalPickup.SelectedDate = Date.Today
             DpModalReturn.SelectedDate = Date.Today.AddDays(1)
@@ -249,6 +263,42 @@ Namespace Presentation.Views.User
             BorderModalError.Visibility = Visibility.Collapsed
             BorderCustomerLicenseNotice.Visibility = Visibility.Collapsed
             ReservationModalOverlay.Visibility = Visibility.Visible
+            RecalculateModalCost()
+        End Sub
+
+        Private Sub CmbModalCategory_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            If CmbModalVehicle Is Nothing OrElse TxtAvailableVehicleCount Is Nothing Then Return
+
+            ' Always clear the old selection when switching categories.
+            CmbModalVehicle.ItemsSource = Nothing
+            CmbModalVehicle.SelectedIndex = -1
+            CmbModalVehicle.IsEnabled = False
+
+            Dim selectedCategory = TryCast(CmbModalCategory.SelectedItem, String)
+            If String.IsNullOrWhiteSpace(selectedCategory) Then
+                TxtAvailableVehicleCount.Text = "Select a category to see available vehicles."
+                RecalculateModalCost()
+                Return
+            End If
+
+            Dim matchingCars = _fleet.Where(Function(f)
+                                                Return String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase) AndAlso
+                                                       String.Equals(f.Category, selectedCategory, StringComparison.OrdinalIgnoreCase)
+                                            End Function).
+                                     OrderBy(Function(f) f.Make, StringComparer.OrdinalIgnoreCase).
+                                     ThenBy(Function(f) f.Model, StringComparer.OrdinalIgnoreCase).
+                                     ThenBy(Function(f) f.Plate, StringComparer.OrdinalIgnoreCase).
+                                     ToList()
+
+            CmbModalVehicle.ItemsSource = matchingCars
+            CmbModalVehicle.IsEnabled = (matchingCars.Count > 0)
+            Dim vehicleWord = If(matchingCars.Count = 1, "vehicle", "vehicles")
+            TxtAvailableVehicleCount.Text = If(matchingCars.Count = 0,
+                                               "No available vehicles in this category.",
+                                               $"{matchingCars.Count} available {vehicleWord} in {selectedCategory}.")
+            CmbModalVehicle.ToolTip = If(matchingCars.Count = 0,
+                                         "No available vehicles in this category",
+                                         "Choose an available vehicle")
             RecalculateModalCost()
         End Sub
 
@@ -307,6 +357,7 @@ Namespace Presentation.Views.User
 
         Private Sub BtnSaveReservation_Click(sender As Object, e As RoutedEventArgs)
             Dim cust = TryCast(CmbModalCustomer.SelectedItem, CustomerItem)
+            Dim selectedCategory = TryCast(CmbModalCategory.SelectedItem, String)
             Dim veh = TryCast(CmbModalVehicle.SelectedItem, FleetItem)
 
             If cust Is Nothing Then
@@ -319,8 +370,18 @@ Namespace Presentation.Views.User
                 Return
             End If
 
+            If String.IsNullOrWhiteSpace(selectedCategory) Then
+                ShowModalError("Please select a vehicle category first.")
+                Return
+            End If
+
             If veh Is Nothing Then
-                ShowModalError("Please select an available fleet vehicle.")
+                ShowModalError("Please select an available vehicle from that category.")
+                Return
+            End If
+
+            If Not String.Equals(veh.Category, selectedCategory, StringComparison.OrdinalIgnoreCase) Then
+                ShowModalError("Selected vehicle does not match the chosen category. Please choose again.")
                 Return
             End If
 

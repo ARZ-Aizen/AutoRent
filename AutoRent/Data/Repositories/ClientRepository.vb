@@ -105,6 +105,14 @@ Namespace Data.Repositories
                 connection.Open()
                 Using tx = connection.BeginTransaction()
                     Run(connection, tx, "UPDATE [Reservations] SET [status] = ? WHERE [reservation_id] = ?", Db.Text(newStatus, 20), Db.Int(reservationId))
+                    If String.Equals(newStatus, "Completed", StringComparison.OrdinalIgnoreCase) Then
+                        ' Record the actual completion time once, without changing the
+                        ' originally scheduled return date or an existing timestamp.
+                        Run(connection, tx,
+                            "UPDATE [Reservations] SET [completed_at] = ? " &
+                            "WHERE [reservation_id] = ? AND [completed_at] IS NULL",
+                            Db.Dt(DateTime.Now), Db.Int(reservationId))
+                    End If
                     Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ? AND ([status] = 'Reserved' OR [status] = 'Rented')", Db.Int(vehicleId))
                     Run(connection, tx, "UPDATE [Dispatches] SET [status] = ? WHERE [reservation_id] = ? AND [status] = 'Scheduled'", Db.Text(dispatchStatus, 20), Db.Int(reservationId))
                     tx.Commit()
@@ -135,6 +143,10 @@ Namespace Data.Repositories
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Rented' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
                     Else
                         Run(connection, tx, "UPDATE [Reservations] SET [status] = 'Completed' WHERE [reservation_id] = ?", Db.Int(reservationId))
+                        Run(connection, tx,
+                            "UPDATE [Reservations] SET [completed_at] = ? " &
+                            "WHERE [reservation_id] = ? AND [completed_at] IS NULL",
+                            Db.Dt(DateTime.Now), Db.Int(reservationId))
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ? AND [status] <> 'Maintenance'", Db.Int(vehicleId))
                     End If
                     tx.Commit()

@@ -52,7 +52,13 @@ Namespace Data.Repositories
             Dim monthStart As New DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)
             Dim nextMonth = monthStart.AddMonths(1)
 
-            stats.RevenueThisMonth = Db.Sum("SELECT SUM([total]) FROM [Reservations] WHERE [status] = 'Completed' AND [return_date] >= ? AND [return_date] < ?", Db.Dt(monthStart), Db.Dt(nextMonth))
+            ' Current rentals use the actual completion date. Pre-upgrade rows
+            ' with no timestamp retain their original scheduled-return fallback.
+            stats.RevenueThisMonth = Db.Sum(
+                "SELECT SUM([total]) FROM [Reservations] WHERE [status] = 'Completed' " &
+                "AND (([completed_at] >= ? AND [completed_at] < ?) " &
+                "OR ([completed_at] IS NULL AND [return_date] >= ? AND [return_date] < ?))",
+                Db.Dt(monthStart), Db.Dt(nextMonth), Db.Dt(monthStart), Db.Dt(nextMonth))
             stats.MaintenanceCostThisMonth = Db.Sum("SELECT SUM([cost]) FROM [Maintenance] WHERE [status] = 'Completed' AND [completed_at] >= ? AND [completed_at] < ?", Db.Dt(monthStart), Db.Dt(nextMonth))
             stats.OverdueMaintenance = Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [status] = 'Scheduled' AND [scheduled_date] < ?", Db.Dt(DateTime.Today))
             stats.ActiveUsers = UserAdminRepository.ActiveUserCount()
@@ -72,10 +78,12 @@ Namespace Data.Repositories
             Dim summary As New FinancialSummary()
 
             Dim rentals = Db.Query(
-                "SELECT r.[return_date], r.[total], v.[category] " &
+                "SELECT r.[completed_at], r.[return_date], r.[total], v.[category] " &
                 "FROM [Reservations] AS r LEFT JOIN [Vehicles] AS v ON r.[vehicle_id] = v.[vehicle_id] " &
-                "WHERE r.[status] = 'Completed' AND r.[return_date] >= ? AND r.[return_date] < ?",
-                Db.Dt(startAt), Db.Dt(endBefore))
+                "WHERE r.[status] = 'Completed' " &
+                "AND ((r.[completed_at] >= ? AND r.[completed_at] < ?) " &
+                "OR (r.[completed_at] IS NULL AND r.[return_date] >= ? AND r.[return_date] < ?))",
+                Db.Dt(startAt), Db.Dt(endBefore), Db.Dt(startAt), Db.Dt(endBefore))
 
             Dim expenses = Db.Query(
                 "SELECT [completed_at], [cost] FROM [Maintenance] WHERE [status] = 'Completed' AND [completed_at] >= ? AND [completed_at] < ?",
@@ -90,7 +98,10 @@ Namespace Data.Repositories
             For Each row As DataRow In rentals.Rows
                 Dim amount = If(IsDBNull(row("total")), 0D, Convert.ToDecimal(row("total")))
                 Dim category = If(IsDBNull(row("category")), "(Unassigned)", Convert.ToString(row("category")))
-                Dim monthKey = Convert.ToDateTime(row("return_date")).ToString("yyyy-MM")
+                Dim earnedAt = If(IsDBNull(row("completed_at")),
+                                  Convert.ToDateTime(row("return_date")),
+                                  Convert.ToDateTime(row("completed_at")))
+                Dim monthKey = earnedAt.ToString("yyyy-MM")
 
                 summary.Revenue += amount
                 summary.CompletedRentals += 1

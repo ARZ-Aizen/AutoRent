@@ -258,24 +258,24 @@ Namespace Presentation.Views.Admin
 
             Dim rentalRows As DataTable =
                 Db.Query(
-                    "SELECT [return_date], [total] " &
+                    "SELECT [completed_at], [return_date], [total] " &
                     "FROM [Reservations] " &
                     "WHERE [status] = 'Completed' " &
-                    "AND [return_date] >= ? " &
-                    "AND [return_date] < ?",
-                    Db.Dt(_fromDate.Date),
-                    Db.Dt(_toDate.Date.AddDays(1))
+                    "AND (([completed_at] >= ? AND [completed_at] < ?) " &
+                    "OR ([completed_at] IS NULL AND [return_date] >= ? AND [return_date] < ?))",
+                    Db.Dt(_fromDate.Date), Db.Dt(_toDate.Date.AddDays(1)),
+                    Db.Dt(_fromDate.Date), Db.Dt(_toDate.Date.AddDays(1))
                 )
 
             For Each record As DataRow In rentalRows.Rows
 
-                If IsDBNull(record("return_date")) Then
+                If IsDBNull(record("completed_at")) AndAlso IsDBNull(record("return_date")) Then
                     Continue For
                 End If
 
                 Dim completedDate As DateTime =
                     Convert.ToDateTime(
-                        record("return_date")
+                        If(IsDBNull(record("completed_at")), record("return_date"), record("completed_at"))
                     )
 
                 Dim index As Integer =
