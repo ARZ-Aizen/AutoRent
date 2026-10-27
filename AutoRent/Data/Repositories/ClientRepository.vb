@@ -98,6 +98,45 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
+        Public Shared Function UpdateReservation(reservationId As Integer, customerName As String, vehicleId As Integer, oldVehicleId As Integer, pickup As Date, dropoff As Date, total As Decimal) As String
+            Using connection = AccessDatabaseConnection.CreateConnection()
+                connection.Open()
+                Using tx = connection.BeginTransaction()
+                    Using cmdLic = connection.CreateCommand()
+                        cmdLic.Transaction = tx
+                        cmdLic.CommandText = "SELECT [license_no] FROM [Customers] WHERE [full_name] = ?"
+                        cmdLic.Parameters.Add(Db.Text(customerName, 100))
+                        Dim licObj = cmdLic.ExecuteScalar()
+                        Dim licStr As String = If(licObj Is Nothing OrElse IsDBNull(licObj), "", Convert.ToString(licObj).Trim())
+                        If String.IsNullOrWhiteSpace(licStr) Then
+                            tx.Rollback()
+                            Return "Customer does not have a verified driver's license on file and cannot rent a vehicle."
+                        End If
+                    End Using
+
+                    If vehicleId <> oldVehicleId Then
+                        If Scalar(connection, tx, "SELECT COUNT(*) FROM [Vehicles] WHERE [vehicle_id] = ? AND [status] = 'Available'", Db.Int(vehicleId)) = 0 Then
+                            tx.Rollback()
+                            Return "That vehicle is no longer available."
+                        End If
+                        Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ?", Db.Int(oldVehicleId))
+                        Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Reserved' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
+                    End If
+
+                    Run(connection, tx, "UPDATE [Reservations] SET [customer_name] = ?, [vehicle_id] = ?, [pickup_date] = ?, [return_date] = ?, [total] = ? WHERE [reservation_id] = ?",
+                        Db.Text(customerName, 100), Db.Int(vehicleId), Db.Dt(pickup), Db.Dt(dropoff), Db.Money(total), Db.Int(reservationId))
+
+                    Run(connection, tx, "UPDATE [Dispatches] SET [scheduled_at] = ? WHERE [reservation_id] = ? AND [dispatch_type] = 'Pickup' AND [status] = 'Scheduled'",
+                        Db.Dt(pickup.Date.AddHours(9)), Db.Int(reservationId))
+                    Run(connection, tx, "UPDATE [Dispatches] SET [scheduled_at] = ? WHERE [reservation_id] = ? AND [dispatch_type] = 'Return' AND [status] = 'Scheduled'",
+                        Db.Dt(dropoff.Date.AddHours(17)), Db.Int(reservationId))
+
+                    tx.Commit()
+                End Using
+            End Using
+            Return Nothing
+        End Function
+
         Public Shared Sub CloseReservation(reservationId As Integer, vehicleId As Integer, newStatus As String)
             Dim dispatchStatus = If(newStatus = "Completed", "Completed", "Cancelled")
 

@@ -335,7 +335,7 @@
                 <Border Grid.Column="0" Background="White" BorderBrush="#E8E5E1" BorderThickness="1"
                         CornerRadius="10" Padding="18,16">
                     <StackPanel>
-                        <TextBlock x:Name="TxtSelTitle" Text="Selected account · Maya Chen"
+                        <TextBlock x:Name="TxtSelTitle" Text="Selected account · Allan Poe"
                                    FontSize="15" FontWeight="Bold" Foreground="#2B2927"/>
                         <TextBlock x:Name="TxtSelSubtitle"
                                    Text="Account status and security verification"
