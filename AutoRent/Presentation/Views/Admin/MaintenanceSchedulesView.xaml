@@ -139,8 +139,14 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="22">
-        <Grid.RowDefinitions>
+    <ScrollViewer x:Name="MaintenancePageScroll"
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Disabled"
+              PanningMode="VerticalOnly"
+              CanContentScroll="False">
+
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -485,12 +491,10 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- SCROLLABLE INPUT FIELDS -->
-                    <ScrollViewer Grid.Row="0"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
+                        <!-- MAINTENANCE FORM CONTENT -->
+                        <Border Grid.Row="0">
 
-                        <StackPanel Margin="0,0,8,10">
+                            <StackPanel Margin="0,0,8,10">
 
                             <!-- HEADER -->
                             <TextBlock Text="Schedule maintenance"
@@ -503,29 +507,60 @@
                            Foreground="#8A8385"
                            Margin="0,4,0,14"/>
 
-                            <!-- VEHICLE -->
+
+                            <!-- VEHICLE CATEGORY -->
                             <StackPanel Margin="0,0,0,11">
 
-                                <TextBlock Text="Vehicle *"
-                               Style="{StaticResource FieldTitleStyle}"/>
+                                <TextBlock
+            Text="Vehicle category *"
+            Style="{StaticResource FieldTitleStyle}"/>
 
-                                <ComboBox x:Name="CmbVehicle"
-                              Height="36"
-                              DisplayMemberPath="display"
-                              SelectedValuePath="vehicle_id"/>
+                                    <ComboBox
+            x:Name="CmbCategory"
+            Height="36"
+            SelectionChanged="CmbCategory_SelectionChanged"
+            ToolTip="Choose a vehicle category first"/>
+
+                                </StackPanel>
+
+                                <!-- VEHICLE -->
+                                <StackPanel Margin="0,0,0,11">
+
+                                    <TextBlock
+                            Text="Vehicle *"
+                            Style="{StaticResource FieldTitleStyle}"/>
+
+                                                    <ComboBox
+                            x:Name="CmbVehicle"
+                            Height="36"
+                            DisplayMemberPath="display"
+                            SelectedValuePath="vehicle_id"
+                            IsEnabled="False"
+                            ToolTip="Select a category to see matching vehicles"/>
+
+                                                <TextBlock
+                            x:Name="TxtCategoryVehicleCount"
+                            Text="Select a category to see vehicles."
+                            FontSize="10"
+                            Foreground="#8A8385"
+                            TextWrapping="Wrap"
+                            Margin="0,5,0,0"/>  
+
                             </StackPanel>
 
                             <!-- MAINTENANCE TYPE -->
                             <StackPanel Margin="0,0,0,11">
 
                                 <TextBlock Text="Maintenance type *"
-                               Style="{StaticResource FieldTitleStyle}"/>
+               Style="{StaticResource FieldTitleStyle}"/>
 
                                 <ComboBox x:Name="CmbService"
-                              Height="36"
-                              IsEditable="True"/>
-                            </StackPanel>
+              Height="36"
+              IsEditable="True"
+              ToolTip="Choose or enter a maintenance type"/>
 
+                            </StackPanel>
+                            
                             <!-- SCHEDULED DATE -->
                             <StackPanel Margin="0,0,0,11">
 
@@ -596,11 +631,11 @@
                                 </StackPanel>
                             </Border>
 
-                        </StackPanel>
-                    </ScrollViewer>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- FIXED ACTION BUTTONS -->
-                    <Border Grid.Row="1"
+                        <!-- FIXED ACTION BUTTONS -->
+                        <Border Grid.Row="1"
                 BorderBrush="#EAE6E5"
                 BorderThickness="0,1,0,0"
                 Padding="0,12,0,0"
@@ -645,6 +680,8 @@
                 </Grid>
             </Border>
 
+            </Grid>
         </Grid>
-    </Grid>
+
+    </ScrollViewer>
 </UserControl>

@@ -579,12 +579,15 @@
         <Grid x:Name="ReservationModalOverlay" Visibility="Collapsed" Panel.ZIndex="100">
             <Border Background="#66000000" MouseDown="ModalBackdrop_MouseDown"/>
             <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="16"
-                    Width="520" Padding="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    Width="520" MaxHeight="650" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="28" ShadowDepth="4" Direction="270" Opacity="0.18" Color="#000"/>
                 </Border.Effect>
 
-                <StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="False">
+                  <StackPanel>
                     <!-- Header -->
                     <Grid Margin="0,0,0,18">
                         <Grid.ColumnDefinitions>
@@ -656,11 +659,24 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- Available Vehicle Picker -->
+                    <!-- Category-first picker: only categories with available vehicles -->
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="Vehicle Category" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="CmbModalCategory" Height="38"
+                                  SelectionChanged="CmbModalCategory_SelectionChanged"
+                                  ToolTip="Choose a category before selecting a vehicle"/>
+                    </StackPanel>
+
+                    <!-- Available Vehicle Picker (filtered by category) -->
                     <StackPanel Margin="0,0,0,14">
                         <TextBlock Text="Select Available Vehicle" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox x:Name="CmbModalVehicle" Height="38" DisplayMemberPath="Display"
+                        <ComboBox x:Name="CmbModalVehicle" Height="38" DisplayMemberPath="Display" IsEnabled="False"
+                                  ToolTip="Select a vehicle category first"
                                   SelectionChanged="ModalInputs_Changed"/>
+                        <TextBlock x:Name="TxtAvailableVehicleCount"
+                                   Text="Select a category to see available vehicles."
+                                   FontSize="11" Foreground="#7A746D"
+                                   TextWrapping="Wrap" Margin="0,5,0,0"/>
                     </StackPanel>
 
                     <!-- Dates side-by-side -->
@@ -715,7 +731,8 @@
                         <Button DockPanel.Dock="Right" Content="Confirm Booking" Style="{StaticResource PrimaryActionBtn}"
                                 Width="160" Height="38" Click="BtnSaveReservation_Click"/>
                     </DockPanel>
-                </StackPanel>
+                  </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>

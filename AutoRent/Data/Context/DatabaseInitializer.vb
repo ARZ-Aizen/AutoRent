@@ -65,8 +65,29 @@ Namespace Data.Context
                         "[return_date] DATETIME, " &
                         "[total] CURRENCY, " &
                         "[status] VARCHAR(20), " &
+                        "[completed_at] DATETIME, " &
                         "[created_at] DATETIME)")
                 End If
+
+                ' Preserve existing reservations while adding an actual completion timestamp.
+                If Not ColumnExists(connection, "Reservations", "completed_at") Then
+                    Run(connection, "ALTER TABLE [Reservations] ADD COLUMN [completed_at] DATETIME")
+                End If
+
+                ' Legacy early completions have no recorded completion time. Where a
+                ' completed rental's planned return is still in the future, recognize
+                ' it when this upgraded version first observes it (an estimate, not
+                ' a historical timestamp). Older records retain the return-date
+                ' fallback in the reporting queries.
+                Using legacy = connection.CreateCommand()
+                    legacy.CommandText =
+                        "UPDATE [Reservations] SET [completed_at] = ? " &
+                        "WHERE [status] = 'Completed' AND [completed_at] IS NULL " &
+                        "AND [return_date] >= ?"
+                    legacy.Parameters.Add("completedAt", OleDbType.Date).Value = DateTime.Now
+                    legacy.Parameters.Add("tomorrow", OleDbType.Date).Value = DateTime.Today.AddDays(1)
+                    legacy.ExecuteNonQuery()
+                End Using
 
                 If Not TableExists(connection, "Customers") Then
                     Run(connection, "CREATE TABLE [Customers] (" &
