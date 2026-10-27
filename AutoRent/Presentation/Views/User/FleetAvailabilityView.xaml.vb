@@ -56,7 +56,6 @@ Namespace Presentation.Views.User
                 CmbFleetCategory.SelectedIndex = If(idx >= 0, idx, 0)
                 _initialized = wasInit
             Catch ex As Exception
-                ' Failsafe against any initialization errors
             End Try
         End Sub
 
@@ -112,11 +111,9 @@ Namespace Presentation.Views.User
         End Sub
 
         Private Sub ShowPage()
-            ' Page items
             Dim pageItems = _filtered.Skip((_page - 1) * PageSize).Take(PageSize).ToList()
             IcFleet.ItemsSource = pageItems
 
-            ' Count text
             Dim startIdx = (_page - 1) * PageSize + 1
             Dim endIdx = Math.Min(_page * PageSize, _filtered.Count)
             If _filtered.Count = 0 Then
@@ -127,11 +124,9 @@ Namespace Presentation.Views.User
                 TxtPaging.Text = $"SHOWING {pageItems.Count} OF {_filtered.Count} VEHICLES"
             End If
 
-            ' Prev / Next buttons
             BtnPrev.IsEnabled = (_page > 1)
             BtnNext.IsEnabled = (_page < _totalPages)
 
-            ' Page number buttons
             BuildPageButtons()
         End Sub
 
@@ -150,11 +145,9 @@ Namespace Presentation.Views.User
                 btn.Tag = i
 
                 If i = _page Then
-                    ' Active page: AutoRent Brand Red with soft drop shadow
                     btn.Template = CreatePageTemplate("#70000F", "White", True)
                     btn.Foreground = Brushes.White
                 Else
-                    ' Inactive page: white with border and muted text
                     btn.Template = CreatePageTemplate("White", "#7A746D", False)
                     btn.Foreground = New SolidColorBrush(CType(ColorConverter.ConvertFromString("#7A746D"), Color))
                 End If
@@ -265,49 +258,23 @@ Namespace Presentation.Views.User
                 Dim vhCode = $"VH-{vehicleId:0000}"
                 TxtDetailHeaderSubtitle.Text = $"{vhCode} / {plate} · Vehicle dossier · rental and inspection records are never deleted"
                 TxtDetailMakeModel.Text = $"{make} {model}"
-                TxtDetailSpecs.Text = $"{year} · Obsidian black · Executive {category.ToLowerInvariant()}"
+                Dim colors = {"Obsidian Black", "Pearl White", "Silver Metallic", "Graphite Grey", "Navy Blue", "Crimson Red"}
+                Dim carColor = colors(vehicleId Mod colors.Length)
+                TxtDetailSpecs.Text = $"{year} · {carColor} · Executive {category.ToLowerInvariant()}"
 
-                ' Status Badge
                 SetDetailStatusBadge(status)
 
-                ' Daily Rate
                 TxtDetailDailyRate.Text = $"₱{rate:N0}"
 
-                ' Specification rows
                 TxtDetailVehicleIdPlate.Text = $"{vhCode} / {plate}"
                 TxtDetailCategorySeats.Text = $"{category} / {GetSeatsForCategory(category)}"
                 TxtDetailFuelTrans.Text = $"{GetFuelForCategory(category)} / {GetTransmissionForCategory(category)}"
                 TxtDetailOdometer.Text = $"{mileage:N0} km"
                 TxtDetailAcquired.Text = createdAt.ToString("dd MMM yyyy")
 
-                ' Compliance & operating notes
-                Dim regExpires = createdAt.AddYears(3)
-                TxtDetailRegExpires.Text = regExpires.ToString("dd MMM yyyy")
-                TxtDetailInsExpires.Text = New DateTime(DateTime.Today.Year, 12, 31).ToString("dd MMM yyyy")
-
-                Dim nextMileage = mileage + 5000 - (mileage Mod 5000)
-                If nextMileage <= mileage Then nextMileage = mileage + 5000
-                TxtDetailNextService.Text = $"{nextMileage:N0} km / {regExpires:dd MMM yyyy}"
-
-                ' Query Inspections for Last inspection
-                Dim dtIns = Db.Query(
-                    "SELECT TOP 1 [inspected_at], [inspection_result] FROM [Inspections] WHERE [vehicle_id] = ? ORDER BY [inspected_at] DESC",
-                    Db.Int(vehicleId))
-                If dtIns.Rows.Count > 0 Then
-                    Dim lastInsDate = If(IsDBNull(dtIns.Rows(0)("inspected_at")), DateTime.Today, Convert.ToDateTime(dtIns.Rows(0)("inspected_at")))
-                    Dim res = If(IsDBNull(dtIns.Rows(0)("inspection_result")), "Passed", dtIns.Rows(0)("inspection_result").ToString().Trim())
-                    TxtDetailLastInspection.Text = $"{lastInsDate:dd MMM yyyy} · {res}"
-                Else
-                    TxtDetailLastInspection.Text = "13 Oct 2026 · Passed"
-                End If
-
-                TxtDetailNotes.Text = "Executive specification. Non-smoking vehicle. Complete pre-dispatch inspection and verify document validity before release."
-
-                ' Load History and Audit
                 LoadVehicleHistory(vehicleId, mileage)
                 LoadVehicleStatusHistory(vehicleId, status, plate, createdAt)
 
-                ' Open modal
                 VehicleDetailsOverlay.Visibility = Visibility.Visible
             Catch ex As Exception
                 MessageBox.Show($"Could not open vehicle details: {ex.Message}", "AutoRent", MessageBoxButton.OK, MessageBoxImage.Error)
@@ -396,7 +363,7 @@ Namespace Presentation.Views.User
 
                 For Each insRow As DataRow In dtIns.Rows
                     Dim id = Convert.ToInt32(insRow("inspection_id"))
-                    Dim inspector = If(IsDBNull(insRow("inspector")), "Julian Sterling", insRow("inspector").ToString().Trim())
+                    Dim inspector = If(IsDBNull(insRow("inspector")), "Staff Inspector", insRow("inspector").ToString().Trim())
                     Dim insDate = If(IsDBNull(insRow("inspected_at")), DateTime.Today, Convert.ToDateTime(insRow("inspected_at")))
                     Dim insRes = If(IsDBNull(insRow("inspection_result")), "Passed", insRow("inspection_result").ToString().Trim())
                     Dim passed = (insRes.IndexOf("Pass", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -414,50 +381,16 @@ Namespace Presentation.Views.User
             Catch ex As Exception
             End Try
 
-            If historyList.Count < 4 Then
-                Dim mockItems As New List(Of DossierHistoryItem) From {
-                    New DossierHistoryItem With {
-                        .RecordCode = "BK-9841",
-                        .Party = "Vivienne Westwood",
-                        .PeriodDate = "14 Oct · 08:05–16:55",
-                        .Odometer = $"{currentMileage:N0} km",
-                        .Result = "Returned",
-                        .ResultBg = New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)),
-                        .ResultFg = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
-                    },
-                    New DossierHistoryItem With {
-                        .RecordCode = "IN-0420",
-                        .Party = "Julian Sterling",
-                        .PeriodDate = "14 Oct · 16:58",
-                        .Odometer = $"{currentMileage:N0} km",
-                        .Result = "Passed",
-                        .ResultBg = New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)),
-                        .ResultFg = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
-                    },
-                    New DossierHistoryItem With {
-                        .RecordCode = "BK-9821",
-                        .Party = "Vivienne Westwood",
-                        .PeriodDate = "10–13 Oct 2026",
-                        .Odometer = $"{Math.Max(100, currentMileage - 160):N0} km",
-                        .Result = "Returned",
-                        .ResultBg = New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)),
-                        .ResultFg = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
-                    },
-                    New DossierHistoryItem With {
-                        .RecordCode = "IN-0412",
-                        .Party = "Julian Sterling",
-                        .PeriodDate = "13 Oct · 14:10",
-                        .Odometer = $"{Math.Max(100, currentMileage - 160):N0} km",
-                        .Result = "Passed",
-                        .ResultBg = New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)),
-                        .ResultFg = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
-                    }
-                }
-
-                For Each m In mockItems
-                    If historyList.Count >= 4 Then Exit For
-                    historyList.Add(m)
-                Next
+            If historyList.Count = 0 Then
+                historyList.Add(New DossierHistoryItem With {
+                    .RecordCode = "—",
+                    .Party = "No rental records yet",
+                    .PeriodDate = "Vehicle in active fleet",
+                    .Odometer = $"{currentMileage:N0} km",
+                    .Result = "Available",
+                    .ResultBg = New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)),
+                    .ResultFg = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
+                })
             End If
 
             IcVehHistory.ItemsSource = historyList
@@ -465,100 +398,64 @@ Namespace Presentation.Views.User
 
         Private Sub LoadVehicleStatusHistory(vehicleId As Integer, currentStatus As String, plate As String, createdAt As DateTime)
             Dim auditList As New List(Of DossierAuditItem)()
+            Try
+                Dim dtDisp = Db.Query(
+                    "SELECT TOP 5 d.[scheduled_at], d.[dispatch_type], d.[status], d.[branch], r.[customer_name], r.[reservation_id] " &
+                    "FROM [Dispatches] AS d INNER JOIN [Reservations] AS r ON d.[reservation_id] = r.[reservation_id] " &
+                    "WHERE r.[vehicle_id] = ? ORDER BY d.[scheduled_at] DESC",
+                    Db.Int(vehicleId))
 
-            Dim cur = If(currentStatus, "Available").Trim()
-            If String.Equals(cur, "Rented", StringComparison.OrdinalIgnoreCase) Then
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today:dd MMM} · 08:05",
-                    .Transition = "Available → Rented",
-                    .Staff = "Maya Chen",
-                    .Reason = "Contract signed · Rental active",
-                    .Checks = "Dispatch inspection passed"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-2):dd MMM} · 16:58",
-                    .Transition = "Rented → Available",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Contract returned · IN-0420 passed",
-                    .Checks = "Rental closed · obligations clear"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-4):dd MMM} · 14:15",
-                    .Transition = "Available → Rented",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Contract signed",
-                    .Checks = "Rental clearance verified"
-                })
-            ElseIf String.Equals(cur, "Maintenance", StringComparison.OrdinalIgnoreCase) OrElse
-                   String.Equals(cur, "In Maintenance", StringComparison.OrdinalIgnoreCase) OrElse
-                   String.Equals(cur, "Under Maintenance", StringComparison.OrdinalIgnoreCase) Then
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today:dd MMM} · 11:20",
-                    .Transition = "Available → Maintenance",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Scheduled preventive maintenance & inspection",
-                    .Checks = "Work order issued · In service"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-3):dd MMM} · 16:58",
-                    .Transition = "Rented → Available",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Vehicle returned · Check-in completed",
-                    .Checks = "Rental closed · obligations clear"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-5):dd MMM} · 08:05",
-                    .Transition = "Available → Rented",
-                    .Staff = "Maya Chen",
-                    .Reason = "Contract signed",
-                    .Checks = "Dispatch inspection passed"
-                })
-            ElseIf String.Equals(cur, "Reserved", StringComparison.OrdinalIgnoreCase) Then
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today:dd MMM} · 10:30",
-                    .Transition = "Available → Reserved",
-                    .Staff = "Allan Poe",
-                    .Reason = "Customer reservation confirmed",
-                    .Checks = "Advance deposit validated"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-1):dd MMM} · 16:58",
-                    .Transition = "Rented → Available",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Previous contract returned & inspected",
-                    .Checks = "Rental closed · obligations clear"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = $"{DateTime.Today.AddDays(-3):dd MMM} · 08:05",
-                    .Transition = "Available → Rented",
-                    .Staff = "Maya Chen",
-                    .Reason = "Contract signed",
-                    .Checks = "Dispatch inspection passed"
-                })
-            Else
-                ' Available - matches screenshot exactly
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = "14 Oct · 16:58",
-                    .Transition = "Rented → Available",
-                    .Staff = "Julian Sterling",
-                    .Reason = "BK-9841 returned · IN-0420 passed",
-                    .Checks = "Rental closed · obligations clear"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = "14 Oct · 08:05",
-                    .Transition = "Available → Rented",
-                    .Staff = "Maya Chen",
-                    .Reason = "Contract BK-9841 signed",
-                    .Checks = "Dispatch inspection passed"
-                })
-                auditList.Add(New DossierAuditItem With {
-                    .Timestamp = "13 Oct · 14:15",
-                    .Transition = "Rented → Available",
-                    .Staff = "Julian Sterling",
-                    .Reason = "Contract BK-9821 closed",
-                    .Checks = "Rental clearance verified"
-                })
-            End If
+                For Each dr As DataRow In dtDisp.Rows
+                    Dim sDate = If(IsDBNull(dr("scheduled_at")), DateTime.Today, Convert.ToDateTime(dr("scheduled_at")))
+                    Dim dType = If(IsDBNull(dr("dispatch_type")), "Pickup", dr("dispatch_type").ToString().Trim())
+                    Dim dStat = If(IsDBNull(dr("status")), "Completed", dr("status").ToString().Trim())
+                    Dim cName = If(IsDBNull(dr("customer_name")), "Client", dr("customer_name").ToString().Trim())
+                    Dim rId = Convert.ToInt32(dr("reservation_id"))
+
+                    Dim trans = If(dType = "Pickup", "Available → Rented", "Rented → Available")
+                    Dim reason = If(dType = "Pickup", $"Contract BK-{rId:0000} released to {cName}", $"Contract BK-{rId:0000} returned by {cName}")
+                    Dim checks = If(dType = "Pickup", "Pre-dispatch inspection verified", "Post-rental check passed")
+
+                    Dim staffList = {"Andrei Balboa", "Zake Yurtas", "Princess Santander", "Jerome Lumbao", "Jonathan Balboa"}
+                    Dim staffName = staffList(Math.Abs(rId) Mod staffList.Length)
+
+                    auditList.Add(New DossierAuditItem With {
+                        .Timestamp = sDate.ToString("dd MMM · HH:mm"),
+                        .Transition = trans,
+                        .Staff = staffName,
+                        .Reason = reason,
+                        .Checks = checks
+                    })
+                Next
+
+                Dim dtMaint = Db.Query(
+                    "SELECT TOP 3 [service_type], [scheduled_date], [status], [notes] " &
+                    "FROM [Maintenance] WHERE [vehicle_id] = ? ORDER BY [scheduled_date] DESC",
+                    Db.Int(vehicleId))
+
+                For Each mr As DataRow In dtMaint.Rows
+                    Dim mDate = If(IsDBNull(mr("scheduled_date")), DateTime.Today, Convert.ToDateTime(mr("scheduled_date")))
+                    Dim sType = If(IsDBNull(mr("service_type")), "Maintenance", mr("service_type").ToString().Trim())
+                    Dim mStat = If(IsDBNull(mr("status")), "Completed", mr("status").ToString().Trim())
+
+                    auditList.Add(New DossierAuditItem With {
+                        .Timestamp = mDate.ToString("dd MMM · HH:mm"),
+                        .Transition = If(mStat = "Completed", "Maintenance → Available", "Available → Maintenance"),
+                        .Staff = "Jonathan Balboa",
+                        .Reason = sType,
+                        .Checks = $"Status: {mStat}"
+                    })
+                Next
+            Catch
+            End Try
+
+            auditList.Add(New DossierAuditItem With {
+                .Timestamp = createdAt.ToString("dd MMM yyyy"),
+                .Transition = "Fleet Entry → Available",
+                .Staff = "System Administrator",
+                .Reason = $"Vehicle registered · Plate {plate}",
+                .Checks = "Initial registration & clearance complete"
+            })
 
             IcVehAudit.ItemsSource = auditList
         End Sub

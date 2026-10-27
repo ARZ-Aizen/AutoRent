@@ -475,10 +475,9 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- Vehicle / Clerk -->
                                 <StackPanel Grid.Row="0" Grid.Column="0">
                                     <TextBlock Text="Vehicle / clerk" FontSize="11.5" Foreground="#7A746D"/>
-                                    <TextBlock x:Name="TxtDetailVehicleClerk" Text="VH-0001 / Maya Chen" FontSize="12.5" FontWeight="Bold" Foreground="#2B2927" Margin="0,2,0,0"/>
+                                    <TextBlock x:Name="TxtDetailVehicleClerk" Text="VH-0001 / Andrei Balboa" FontSize="12.5" FontWeight="Bold" Foreground="#2B2927" Margin="0,2,0,0"/>
                                 </StackPanel>
 
                                 <!-- Contract / Payment -->
