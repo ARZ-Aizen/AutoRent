@@ -1,5 +1,6 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Data.OleDb
+Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -19,6 +20,12 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function AddCustomer(name As String, phone As String, email As String, license As String) As String
+            name = InputValidation.Clean(name)
+            phone = If(phone, "").Trim()
+            email = If(email, "").Trim()
+            license = If(license, "").Trim().ToUpperInvariant()
+            Dim issue = ValidateCustomer(name, phone, email, license, 0)
+            If issue IsNot Nothing Then Return issue
             If Db.Count("SELECT COUNT(*) FROM [Customers] WHERE [full_name] = ? AND [phone] = ?", Db.Text(name, 100), Db.Text(phone, 30)) > 0 Then
                 Return "A customer with the same name and phone already exists."
             End If
@@ -29,6 +36,19 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function UpdateCustomer(customerId As Integer, name As String, phone As String, email As String, license As String) As String
+            name = InputValidation.Clean(name)
+            phone = If(phone, "").Trim()
+            email = If(email, "").Trim()
+            license = If(license, "").Trim().ToUpperInvariant()
+            Dim issue = ValidateCustomer(name, phone, email, license, customerId)
+            If issue IsNot Nothing Then Return issue
+            Dim oldRecord = Db.Query("SELECT [full_name] FROM [Customers] WHERE [customer_id] = ?", Db.Int(customerId))
+            If oldRecord.Rows.Count = 0 Then Return "Customer record no longer exists."
+            Dim oldName = Convert.ToString(oldRecord.Rows(0)("full_name"))
+            If Not String.Equals(oldName, name, StringComparison.OrdinalIgnoreCase) AndAlso
+               Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [customer_name] = ?", Db.Text(oldName, 100)) > 0 Then
+                Return "This customer already has reservation history. Contact an administrator before changing their legal name."
+            End If
             If Db.Count("SELECT COUNT(*) FROM [Customers] WHERE [full_name] = ? AND [phone] = ? AND [customer_id] <> ?", Db.Text(name, 100), Db.Text(phone, 30), Db.Int(customerId)) > 0 Then
                 Return "Another customer with the same name and phone already exists."
             End If
@@ -38,9 +58,41 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
+        Private Shared Function ValidateCustomer(name As String, phone As String, email As String,
+                                                 license As String, excludedId As Integer) As String
+            Dim issue = InputValidation.FullName(name)
+            If issue IsNot Nothing Then Return issue
+            issue = InputValidation.PhilippineMobile(phone)
+            If issue IsNot Nothing Then Return issue
+            issue = InputValidation.EmailAddress(email)
+            If issue IsNot Nothing Then Return issue
+            issue = InputValidation.License(license)
+            If issue IsNot Nothing Then Return issue
+
+            ' Requested policy: do not register the same full name twice.
+            ' Also protect stronger identifiers against duplicates.
+            If Db.Count("SELECT COUNT(*) FROM [Customers] WHERE UCASE(TRIM([full_name])) = ? AND [customer_id] <> ?",
+                        Db.Text(name.ToUpperInvariant(), 100), Db.Int(excludedId)) > 0 Then
+                Return "A customer with this full name is already registered. Check the existing record before adding another."
+            End If
+            If Db.Count("SELECT COUNT(*) FROM [Customers] WHERE [phone] = ? AND [customer_id] <> ?",
+                        Db.Text(phone, 30), Db.Int(excludedId)) > 0 Then
+                Return "That phone number already belongs to another customer."
+            End If
+            If email <> "" AndAlso Db.Count("SELECT COUNT(*) FROM [Customers] WHERE UCASE(TRIM([email])) = ? AND [customer_id] <> ?",
+                                           Db.Text(email.ToUpperInvariant(), 100), Db.Int(excludedId)) > 0 Then
+                Return "That email address is already registered."
+            End If
+            If license <> "" AndAlso Db.Count("SELECT COUNT(*) FROM [Customers] WHERE UCASE(TRIM([license_no])) = ? AND [customer_id] <> ?",
+                                             Db.Text(license.ToUpperInvariant(), 50), Db.Int(excludedId)) > 0 Then
+                Return "That driver's license number is already registered."
+            End If
+            Return Nothing
+        End Function
+
         Public Shared Function DeleteCustomer(customerId As Integer, customerName As String) As String
-            If Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [customer_name] = ? AND ([status] = 'Confirmed' OR [status] = 'Active')", Db.Text(customerName, 100)) > 0 Then
-                Return $"{customerName} still has an open reservation and cannot be deleted."
+            If Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [customer_name] = ?", Db.Text(customerName, 100)) > 0 Then
+                Return $"{customerName} has reservation history and cannot be deleted. Keep the customer record for audit integrity."
             End If
 
             Db.Execute("DELETE FROM [Customers] WHERE [customer_id] = ?", Db.Int(customerId))
@@ -56,6 +108,10 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function CreateReservation(customerName As String, vehicleId As Integer, pickup As Date, dropoff As Date, total As Decimal) As String
+            If String.IsNullOrWhiteSpace(customerName) Then Return "Choose a registered customer."
+            If vehicleId <= 0 Then Return "Choose a valid vehicle."
+            If dropoff.Date <= pickup.Date Then Return "Return date must be after pickup date."
+            If total <= 0D OrElse total > 100000000D Then Return "Reservation amount must be greater than zero and within allowed limits."
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
                 Using tx = connection.BeginTransaction()
@@ -99,6 +155,10 @@ Namespace Data.Repositories
         End Function
 
         Public Shared Function UpdateReservation(reservationId As Integer, customerName As String, vehicleId As Integer, oldVehicleId As Integer, pickup As Date, dropoff As Date, total As Decimal) As String
+            If String.IsNullOrWhiteSpace(customerName) Then Return "Choose a registered customer."
+            If vehicleId <= 0 Then Return "Choose a valid vehicle."
+            If dropoff.Date <= pickup.Date Then Return "Return date must be after pickup date."
+            If total <= 0D OrElse total > 100000000D Then Return "Reservation amount must be greater than zero and within allowed limits."
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
                 Using tx = connection.BeginTransaction()
@@ -193,26 +253,6 @@ Namespace Data.Repositories
             End Using
         End Sub
 
-        Public Shared Function GetInspections() As DataTable
-            Return Db.Query(
-                "SELECT TOP 200 i.[inspected_at], i.[inspector], i.[fuel], i.[findings], i.[inspection_result], v.[plate], v.[make], v.[model], v.[model_year] " &
-                "FROM [Inspections] AS i LEFT JOIN [Vehicles] AS v ON i.[vehicle_id] = v.[vehicle_id] " &
-                "ORDER BY i.[inspected_at] DESC")
-        End Function
-
-        Public Shared Sub AddInspection(vehicleId As Integer, inspector As String, fuel As String, findings As String, passed As Boolean)
-            Using connection = AccessDatabaseConnection.CreateConnection()
-                connection.Open()
-                Using tx = connection.BeginTransaction()
-                    Run(connection, tx, "INSERT INTO [Inspections] ([vehicle_id], [inspected_at], [inspector], [fuel], [findings], [inspection_result]) VALUES (?, ?, ?, ?, ?, ?)",
-                        Db.Int(vehicleId), Db.Dt(DateTime.Now), Db.Text(inspector, 100), Db.Text(fuel, 20), Db.Memo(findings), Db.Text(If(passed, "Pass", "Needs Attention"), 20))
-                    If Not passed Then
-                        Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Maintenance' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
-                    End If
-                    tx.Commit()
-                End Using
-            End Using
-        End Sub
 
         Private Shared Sub Run(connection As OleDbConnection, tx As OleDbTransaction, sql As String, ParamArray args() As OleDbParameter)
             Using command = connection.CreateCommand()

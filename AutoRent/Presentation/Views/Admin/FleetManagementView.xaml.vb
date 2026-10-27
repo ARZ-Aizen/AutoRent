@@ -1,4 +1,4 @@
-
+﻿
 Imports System.Collections.Generic
 Imports System.Data
 Imports System.IO
@@ -320,6 +320,7 @@ Namespace Presentation.Views.Admin
 
 
             DgVehicles.ItemsSource = pageRows
+            TxtEmptyFleet.Visibility = If(filteredCount = 0, Visibility.Visible, Visibility.Collapsed)
 
             Dim startRow = If(
                 filteredCount = 0,
@@ -615,6 +616,7 @@ Namespace Presentation.Views.Admin
 
         Private ReadOnly _photo As New Image()
         Private ReadOnly _photoLabel As New TextBlock()
+        Private ReadOnly _fieldErrors As New Dictionary(Of Control, TextBlock)()
 
         Private _selectedPhoto As String = Nothing
         Private _oldPhoto As String = Nothing
@@ -648,10 +650,10 @@ Namespace Presentation.Views.Admin
                 )
             )
 
-            Width = 760
-            Height = 675
-            MinWidth = 640
-            MinHeight = 570
+            Width = 860
+            Height = 590
+            MinWidth = 760
+            MinHeight = 515
 
             WindowStartupLocation =
                 WindowStartupLocation.CenterOwner
@@ -740,23 +742,51 @@ Namespace Presentation.Views.Admin
 
         End Sub
 
-        Private Shared Function Field(
+        Private Function Field(
             caption As String,
             element As Control
         ) As StackPanel
 
             Dim container As New StackPanel With {
-                .Margin = New Thickness(0, 0, 14, 15)
+                .Margin = New Thickness(0, 10, 12, 6)
             }
 
             Dim header = TextLabel(caption, 11, True)
-            header.Margin = New Thickness(0, 0, 0, 6)
-
+            header.Margin = New Thickness(0, 0, 0, 5)
             container.Children.Add(header)
             container.Children.Add(element)
 
+            If _mode <> "View" Then
+                Dim errorText As New TextBlock With {
+                    .Foreground = Brushes.Firebrick,
+                    .FontSize = 10,
+                    .TextWrapping = TextWrapping.Wrap,
+                    .Margin = New Thickness(1, 4, 0, 0),
+                    .Visibility = Visibility.Collapsed
+                }
+                _fieldErrors(element) = errorText
+                container.Children.Add(errorText)
+            End If
+
             Return container
 
+        End Function
+
+        Private Sub ClearFieldErrors()
+            For Each fieldError As TextBlock In _fieldErrors.Values
+                fieldError.Text = String.Empty
+                fieldError.Visibility = Visibility.Collapsed
+            Next
+        End Sub
+
+        Private Function FieldProblem(element As Control, message As String) As String
+            Dim fieldError As TextBlock = Nothing
+            If _fieldErrors.TryGetValue(element, fieldError) Then
+                fieldError.Text = message
+                fieldError.Visibility = Visibility.Visible
+            End If
+            element.Focus()
+            Return message
         End Function
 
         ' ========================================
@@ -766,308 +796,197 @@ Namespace Presentation.Views.Admin
         Private Sub BuildWindow()
 
             Dim root As New Grid()
-
-            root.RowDefinitions.Add(
-                New RowDefinition With {
-                    .Height = GridLength.Auto
-                }
-            )
-
-            root.RowDefinitions.Add(
-                New RowDefinition With {
-                    .Height = New GridLength(
-                        1,
-                        GridUnitType.Star
-                    )
-                }
-            )
-
-            root.RowDefinitions.Add(
-                New RowDefinition With {
-                    .Height = GridLength.Auto
-                }
-            )
-
+            root.RowDefinitions.Add(New RowDefinition With {.Height = GridLength.Auto})
+            root.RowDefinitions.Add(New RowDefinition With {.Height = New GridLength(1, GridUnitType.Star)})
+            root.RowDefinitions.Add(New RowDefinition With {.Height = GridLength.Auto})
             Content = root
 
-            ' HEADER
             Dim heading As New StackPanel With {
-                .Margin = New Thickness(26, 22, 26, 16)
+                .Margin = New Thickness(24, 20, 24, 12)
             }
-
-            Dim titleText = TextLabel(Title, 21, True)
-            heading.Children.Add(titleText)
-
+            heading.Children.Add(TextLabel(Title, 21, True))
             Dim subheading = TextLabel(
-                If(
-                    _mode = "View",
-                    "Vehicle information from your fleet records",
-                    "Update vehicle details and its photo"
-                ),
-                12
-            )
-
+                If(_mode = "View",
+                   "Vehicle details from your fleet register",
+                   If(_mode = "Add",
+                      "Enter every vehicle detail. Only the photo is optional.",
+                      "Review the details below before confirming an update.")),
+                12)
             subheading.Foreground = Brushes.Gray
-            subheading.Margin = New Thickness(0, 5, 0, 0)
-
+            subheading.Margin = New Thickness(0, 4, 0, 0)
             heading.Children.Add(subheading)
-
             Grid.SetRow(heading, 0)
             root.Children.Add(heading)
 
-            ' SCROLLABLE CONTENT
             Dim scroll As New ScrollViewer With {
-                .VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+                .VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                .HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                .Padding = New Thickness(0)
             }
-
-            Dim contents As New StackPanel With {
-                .Margin = New Thickness(26, 0, 17, 10)
+            Dim body As New Grid With {
+                .Margin = New Thickness(24, 0, 16, 8)
             }
-
-            scroll.Content = contents
+            body.ColumnDefinitions.Add(New ColumnDefinition With {
+                .Width = New GridLength(2.3, GridUnitType.Star)
+            })
+            body.ColumnDefinitions.Add(New ColumnDefinition With {
+                .Width = New GridLength(1, GridUnitType.Star),
+                .MinWidth = 195
+            })
+            scroll.Content = body
             Grid.SetRow(scroll, 1)
             root.Children.Add(scroll)
 
-            ' PHOTO PANEL
-            Dim photoPanel As New Border With {
-                .Background =
-                    New SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(
-                            249, 247, 247
-                        )
-                    ),
-                .BorderBrush =
-                    New SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(
-                            232, 228, 229
-                        )
-                    ),
-                .BorderThickness = New Thickness(1),
-                .CornerRadius = New CornerRadius(7),
-                .Padding = New Thickness(13),
-                .Margin = New Thickness(0, 0, 0, 19)
-            }
-
-            Dim photoRow As New StackPanel With {
-                .Orientation = Orientation.Horizontal
-            }
-
-            Dim photoFrame As New Border With {
-                .Width = 145,
-                .Height = 98,
-                .Background = Brushes.White,
-                .CornerRadius = New CornerRadius(5),
-                .ClipToBounds = True,
-                .BorderBrush = Brushes.Gainsboro,
-                .BorderThickness = New Thickness(1)
-            }
-
-            _photo.Stretch = Stretch.UniformToFill
-            photoFrame.Child = _photo
-            photoRow.Children.Add(photoFrame)
-
-            Dim photoActions As New StackPanel With {
-                .Margin = New Thickness(17, 5, 0, 0),
-                .VerticalAlignment = VerticalAlignment.Center
-            }
-
-            photoActions.Children.Add(
-                TextLabel("Vehicle photo", 13, True)
-            )
-
-            _photoLabel.Text = "No photo selected"
-            _photoLabel.Foreground = Brushes.Gray
-            _photoLabel.FontSize = 11
-            _photoLabel.Margin = New Thickness(0, 6, 0, 10)
-
-            photoActions.Children.Add(_photoLabel)
-
-            If _mode <> "View" Then
-
-                Dim buttons As New StackPanel With {
-                    .Orientation = Orientation.Horizontal
-                }
-
-                Dim browse =
-                    StyledButton("Choose Photo", False)
-
-                AddHandler browse.Click,
-                    AddressOf ChoosePhoto
-
-                buttons.Children.Add(browse)
-
-                Dim remove =
-                    StyledButton("Remove", False)
-
-                AddHandler remove.Click,
-                    AddressOf RemovePhoto
-
-                buttons.Children.Add(remove)
-
-                photoActions.Children.Add(buttons)
-
-            End If
-
-            photoRow.Children.Add(photoActions)
-            photoPanel.Child = photoRow
-            contents.Children.Add(photoPanel)
-
-            ' TEXT INPUTS
             For Each inputBox As TextBox In New TextBox() {
-                _plate,
-                _make,
-                _model,
-                _year,
-                _mileage
+                _plate, _make, _model, _year, _mileage
             }
-
                 StyleTextInput(inputBox)
                 inputBox.IsReadOnly = (_mode = "View")
-
             Next
 
             _plate.MaxLength = 20
             _make.MaxLength = 50
             _model.MaxLength = 50
             _year.MaxLength = 4
+            _mileage.MaxLength = 7
+            InputBehavior.Attach(_plate, "plate", 20)
+            InputBehavior.Attach(_year, "digits", 4)
+            InputBehavior.Attach(_mileage, "digits", 7)
+            _make.ToolTip = "Vehicle manufacturer; letters, digits and normal brand punctuation."
+            _model.ToolTip = "Vehicle model; letters, numbers, spaces and model punctuation."
 
-            ' COMBOBOXES
-            For Each combo As ComboBox In New ComboBox() {
-                _category,
-                _status
-            }
-
+            For Each combo As ComboBox In New ComboBox() {_category, _status}
                 combo.Height = 37
                 combo.FontSize = 12
                 combo.BorderBrush = Brushes.LightGray
-
-                combo.VerticalContentAlignment =
-                    VerticalAlignment.Center
-
+                combo.VerticalContentAlignment = VerticalAlignment.Center
                 combo.IsEnabled = (_mode <> "View")
-
             Next
 
-            ' CATEGORY RECORDS
             Dim categories = RateRepository.GetCategories()
-
             For Each categoryRow As DataRow In categories.Rows
-
-                _category.Items.Add(
-                    Convert.ToString(
-                        categoryRow("category")
-                    )
-                )
-
+                _category.Items.Add(Convert.ToString(categoryRow("category")))
             Next
 
-            ' STATUS RECORDS
-            For Each statusValue As String In VehicleRepository.Statuses
-                _status.Items.Add(statusValue)
-            Next
-
-            ' TWO-COLUMN FORM
-            Dim columns As New UniformGrid With {
-                .Columns = 2
-            }
-
-            columns.Children.Add(Field("Plate number", _plate))
-            columns.Children.Add(Field("Make", _make))
-            columns.Children.Add(Field("Model", _model))
-            columns.Children.Add(Field("Model year", _year))
-            columns.Children.Add(Field("Category", _category))
-            columns.Children.Add(Field("Mileage (km)", _mileage))
-            columns.Children.Add(Field("Current status", _status))
-
-            contents.Children.Add(columns)
-
-            ' VEHICLE INFORMATION
-            If _mode <> "Add" AndAlso
-               _vehicle IsNot Nothing Then
-
-                Dim information = TextLabel(
-                    "Daily rate: ₱" &
-                    ViewHelpers.DecOf(
-                        _vehicle,
-                        "daily_rate"
-                    ).ToString("N2") &
-                    "  •  Vehicle ID: VH-" &
-                    ViewHelpers.IntOf(
-                        _vehicle,
-                        "vehicle_id"
-                    ).ToString("0000"),
-                    12
-                )
-
-                information.Foreground = Brushes.Gray
-                information.Margin =
-                    New Thickness(0, 1, 0, 12)
-
-                contents.Children.Add(information)
-
+            If _mode <> "Add" Then
+                For Each statusValue As String In VehicleRepository.Statuses
+                    _status.Items.Add(statusValue)
+                Next
             End If
 
-            ' FOOTER
-            Dim footer As New DockPanel With {
-                .Margin = New Thickness(26, 14, 17, 14)
+            ' Six required fields fill the left side without empty rows.
+            Dim fieldsGrid As New UniformGrid With {
+                .Columns = 2,
+                .VerticalAlignment = VerticalAlignment.Top
             }
+            fieldsGrid.Children.Add(Field("Plate number *", _plate))
+            fieldsGrid.Children.Add(Field("Vehicle make *", _make))
+            fieldsGrid.Children.Add(Field("Vehicle model *", _model))
+            fieldsGrid.Children.Add(Field("Model year *", _year))
+            fieldsGrid.Children.Add(Field("Vehicle category *", _category))
+            fieldsGrid.Children.Add(Field("Mileage (km) *", _mileage))
+            Grid.SetColumn(fieldsGrid, 0)
+            body.Children.Add(fieldsGrid)
 
+            ' A compact side panel makes good use of the old empty photo area.
+            Dim photoPanel As New Border With {
+                .Background = New SolidColorBrush(Color.FromRgb(249, 247, 247)),
+                .BorderBrush = New SolidColorBrush(Color.FromRgb(232, 228, 229)),
+                .BorderThickness = New Thickness(1),
+                .CornerRadius = New CornerRadius(7),
+                .Padding = New Thickness(13),
+                .Margin = New Thickness(7, 9, 0, 0),
+                .VerticalAlignment = VerticalAlignment.Top
+            }
+            Dim photoStack As New StackPanel()
+            photoStack.Children.Add(TextLabel("Vehicle photo (optional)", 12, True))
+            Dim photoFrame As New Border With {
+                .Height = 130,
+                .Margin = New Thickness(0, 9, 0, 8),
+                .Background = Brushes.White,
+                .CornerRadius = New CornerRadius(5),
+                .ClipToBounds = True,
+                .BorderBrush = Brushes.Gainsboro,
+                .BorderThickness = New Thickness(1)
+            }
+            _photo.Stretch = Stretch.Uniform
+            photoFrame.Child = _photo
+            photoStack.Children.Add(photoFrame)
+            _photoLabel.Text = "No photo selected"
+            _photoLabel.Foreground = Brushes.Gray
+            _photoLabel.FontSize = 11
+            _photoLabel.TextWrapping = TextWrapping.Wrap
+            _photoLabel.Margin = New Thickness(0, 0, 0, 9)
+            photoStack.Children.Add(_photoLabel)
+
+            If _mode <> "View" Then
+                Dim photoActions As New WrapPanel()
+                Dim browse = StyledButton("Choose Photo", False)
+                browse.Margin = New Thickness(0, 0, 6, 6)
+                AddHandler browse.Click, AddressOf ChoosePhoto
+                photoActions.Children.Add(browse)
+                Dim remove = StyledButton("Remove", False)
+                remove.Margin = New Thickness(0, 0, 0, 6)
+                AddHandler remove.Click, AddressOf RemovePhoto
+                photoActions.Children.Add(remove)
+                photoStack.Children.Add(photoActions)
+            End If
+
+            If _mode = "Add" Then
+                Dim statusNote = TextLabel("Initial status: Available (automatic)", 11, True)
+                statusNote.Foreground = New SolidColorBrush(Color.FromRgb(38, 116, 71))
+                statusNote.TextWrapping = TextWrapping.Wrap
+                statusNote.Margin = New Thickness(0, 6, 0, 0)
+                photoStack.Children.Add(statusNote)
+            Else
+                ' Current status remains available for Edit and View only.
+                Dim statusField = Field("Current status *", _status)
+                statusField.Margin = New Thickness(0, 6, 0, 0)
+                photoStack.Children.Add(statusField)
+            End If
+
+            If _mode <> "Add" AndAlso _vehicle IsNot Nothing Then
+                Dim info = TextLabel(
+                    "Daily rate: ₱" & ViewHelpers.DecOf(_vehicle, "daily_rate").ToString("N2") &
+                    Environment.NewLine & "Vehicle ID: VH-" &
+                    ViewHelpers.IntOf(_vehicle, "vehicle_id").ToString("0000"), 11)
+                info.Foreground = Brushes.Gray
+                info.Margin = New Thickness(0, 10, 0, 0)
+                photoStack.Children.Add(info)
+            End If
+
+            photoPanel.Child = photoStack
+            Grid.SetColumn(photoPanel, 1)
+            body.Children.Add(photoPanel)
+
+            Dim footer As New DockPanel With {
+                .Margin = New Thickness(24, 12, 16, 16),
+                .LastChildFill = False
+            }
             Grid.SetRow(footer, 2)
             root.Children.Add(footer)
 
-            ' DELETE BUTTON IN EDIT MODE
             If _mode = "Edit" Then
-
-                Dim deleteButton =
-                    StyledButton("Delete Vehicle", False)
-
+                Dim deleteButton = StyledButton("Delete Vehicle", False)
                 deleteButton.Foreground = Brushes.Firebrick
-
-                AddHandler deleteButton.Click,
-                    AddressOf DeleteVehicle
-
+                AddHandler deleteButton.Click, AddressOf DeleteVehicle
                 DockPanel.SetDock(deleteButton, Dock.Left)
                 footer.Children.Add(deleteButton)
-
             End If
 
             Dim rightSide As New StackPanel With {
                 .Orientation = Orientation.Horizontal,
                 .HorizontalAlignment = HorizontalAlignment.Right
             }
-
-            Dim cancelButton =
-                StyledButton(
-                    If(_mode = "View", "Close", "Cancel"),
-                    False
-                )
-
-            AddHandler cancelButton.Click,
-                Sub(sender, args)
-                    Me.Close()
-                End Sub
-
+            Dim cancelButton = StyledButton(If(_mode = "View", "Close", "Cancel"), False)
+            AddHandler cancelButton.Click, Sub(sender, args) Me.Close()
             rightSide.Children.Add(cancelButton)
-
             If _mode <> "View" Then
-
-                Dim saveButton =
-                    StyledButton(
-                        If(
-                            _mode = "Add",
-                            "Add Vehicle",
-                            "Save Changes"
-                        ),
-                        True
-                    )
-
-                AddHandler saveButton.Click,
-                    AddressOf SaveVehicle
-
+                Dim saveButton = StyledButton(
+                    If(_mode = "Add", "Add Vehicle", "Save Changes"), True)
+                AddHandler saveButton.Click, AddressOf SaveVehicle
                 rightSide.Children.Add(saveButton)
-
             End If
-
             DockPanel.SetDock(rightSide, Dock.Right)
             footer.Children.Add(rightSide)
 
@@ -1081,13 +1000,10 @@ Namespace Presentation.Views.Admin
 
             If _vehicle Is Nothing Then
 
-                _mileage.Text = "0"
-                _status.SelectedItem = "Available"
-
-                If _category.Items.Count > 0 Then
-                    _category.SelectedIndex = 0
-                End If
-
+                _mileage.Clear()
+                _year.Clear()
+                _category.SelectedIndex = -1
+                _status.SelectedItem = Nothing
                 Return
 
             End If
@@ -1264,60 +1180,50 @@ Namespace Presentation.Views.Admin
             ByRef statusValue As String
         ) As String
 
-            If String.IsNullOrWhiteSpace(_plate.Text) Then
-                Return "Enter the plate number."
+            ClearFieldErrors()
+
+            Dim problem As String = InputValidation.Plate(_plate.Text)
+            If problem IsNot Nothing Then Return FieldProblem(_plate, problem)
+
+            problem = InputValidation.VehicleMake(_make.Text)
+            If problem IsNot Nothing Then Return FieldProblem(_make, problem)
+
+            problem = InputValidation.VehicleModel(_model.Text)
+            If problem IsNot Nothing Then Return FieldProblem(_model, problem)
+
+            If String.IsNullOrWhiteSpace(_year.Text) Then
+                Return FieldProblem(_year, "Model year is required.")
             End If
 
-            If String.IsNullOrWhiteSpace(_make.Text) Then
-                Return "Enter the vehicle make."
+            Dim parsedYear As Integer = 0
+            If Not ViewHelpers.TryParseWhole(_year.Text, parsedYear) OrElse
+               parsedYear < 1980 OrElse
+               parsedYear > DateTime.Today.Year + 1 Then
+                Return FieldProblem(_year,
+                    $"Enter a year between 1980 and {DateTime.Today.Year + 1}.")
             End If
-
-            If String.IsNullOrWhiteSpace(_model.Text) Then
-                Return "Enter the vehicle model."
-            End If
+            modelYear = parsedYear
 
             If _category.SelectedItem Is Nothing Then
-                Return "Choose a category. Add it under Rate Management if needed."
+                Return FieldProblem(_category, "Choose a vehicle category.")
+            End If
+            categoryValue = Convert.ToString(_category.SelectedItem)
+
+            If String.IsNullOrWhiteSpace(_mileage.Text) Then
+                Return FieldProblem(_mileage, "Mileage is required (enter 0 for a new car).")
+            End If
+            If Not ViewHelpers.TryParseWhole(_mileage.Text, mileageValue) OrElse
+               mileageValue < 0 OrElse mileageValue > 5000000 Then
+                Return FieldProblem(_mileage, "Enter mileage from 0 to 5,000,000 km.")
             End If
 
-            categoryValue =
-                Convert.ToString(_category.SelectedItem)
-
-            statusValue =
-                TryCast(_status.SelectedItem, String)
-
-            If String.IsNullOrWhiteSpace(statusValue) Then
-                Return "Choose a status."
-            End If
-
-            modelYear = Nothing
-
-            If Not String.IsNullOrWhiteSpace(_year.Text) Then
-
-                Dim yr As Integer
-
-                If Not ViewHelpers.TryParseWhole(
-                    _year.Text,
-                    yr
-                ) OrElse
-                   yr < 1980 OrElse
-                   yr > DateTime.Today.Year + 1 Then
-
-                    Return $"Year must be between 1980 and {DateTime.Today.Year + 1}."
-
+            If _mode = "Add" Then
+                statusValue = "Available"
+            Else
+                statusValue = TryCast(_status.SelectedItem, String)
+                If String.IsNullOrWhiteSpace(statusValue) Then
+                    Return FieldProblem(_status, "Choose the current vehicle status.")
                 End If
-
-                modelYear = yr
-
-            End If
-
-            If Not ViewHelpers.TryParseWhole(
-                _mileage.Text,
-                mileageValue
-            ) Then
-
-                Return "Mileage must be a whole number of at least 0."
-
             End If
 
             Return Nothing
@@ -1346,17 +1252,33 @@ Namespace Presentation.Views.Admin
             )
 
             If problem IsNot Nothing Then
-
-                MessageBox.Show(
-                    Me,
-                    problem,
-                    "Check vehicle details",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning
-                )
-
+                ' Display validation below the relevant field.
                 Return
+            End If
 
+            ' Confirm EDIT before changing either database or stored pictures.
+            If _mode = "Edit" Then
+                Dim changes As New List(Of String)()
+                If Not String.Equals(_plate.Text.Trim(), ViewHelpers.Str(_vehicle, "plate").Trim(), StringComparison.OrdinalIgnoreCase) Then changes.Add("Plate number")
+                If Not String.Equals(_make.Text.Trim(), ViewHelpers.Str(_vehicle, "make").Trim(), StringComparison.OrdinalIgnoreCase) Then changes.Add("Make")
+                If Not String.Equals(_model.Text.Trim(), ViewHelpers.Str(_vehicle, "model").Trim(), StringComparison.OrdinalIgnoreCase) Then changes.Add("Model")
+                If yearValue.Value <> ViewHelpers.IntOf(_vehicle, "model_year") Then changes.Add("Model year")
+                If mileageValue <> ViewHelpers.IntOf(_vehicle, "mileage") Then changes.Add("Mileage")
+                If Not String.Equals(categoryValue, ViewHelpers.Str(_vehicle, "category"), StringComparison.OrdinalIgnoreCase) Then changes.Add("Category")
+                If Not String.Equals(statusValue, ViewHelpers.Str(_vehicle, "status"), StringComparison.OrdinalIgnoreCase) Then changes.Add("Current status")
+                If _removePhoto OrElse Not String.IsNullOrWhiteSpace(_selectedPhoto) Then changes.Add("Photo")
+                If changes.Count = 0 Then
+                    MessageBox.Show(Me, "No changes were made.", "Edit Vehicle", MessageBoxButton.OK, MessageBoxImage.Information)
+                    Return
+                End If
+                Dim warning As String = "Apply the following updates to vehicle " & _plate.Text.Trim().ToUpperInvariant() & "?" &
+                    Environment.NewLine & Environment.NewLine &
+                    String.Join(", ", changes) & Environment.NewLine & Environment.NewLine &
+                    "This will update the saved fleet record."
+                If MessageBox.Show(Me, warning, "Confirm Vehicle Changes", MessageBoxButton.YesNo,
+                                   MessageBoxImage.Question, MessageBoxResult.No) <> MessageBoxResult.Yes Then
+                    Return
+                End If
             End If
 
             Dim imageSaved As String = Nothing
@@ -1413,6 +1335,9 @@ Namespace Presentation.Views.Admin
                 End If
 
                 If problem IsNot Nothing Then
+                    If problem.IndexOf("plate", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                        FieldProblem(_plate, problem)
+                    End If
 
                     MessageBox.Show(
                         Me,

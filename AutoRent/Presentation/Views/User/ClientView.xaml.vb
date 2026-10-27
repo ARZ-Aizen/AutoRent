@@ -1,4 +1,4 @@
-Imports System.Linq
+﻿Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -73,8 +73,6 @@ Namespace Presentation.Views.User
                     ContentHost.Content = New ReservationsView()
                 Case "Daily Dispatch"
                     ContentHost.Content = New DailyDispatchView()
-                Case "Vehicle Inspection"
-                    ContentHost.Content = New VehicleInspectionView()
             End Select
         End Sub
 
@@ -162,7 +160,7 @@ Namespace Presentation.Views.User
             UserText.Visibility = v
 
             For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch,
-                             BtnVehicleInspection, BtnSwitchAdmin, BtnSignOut}
+                             BtnSwitchAdmin, BtnSignOut}
                 Dim panel = TryCast(btn.Content, StackPanel)
                 If panel Is Nothing Then Continue For
                 For Each label In panel.Children.OfType(Of TextBlock)().Where(Function(t) Equals(t.Tag, "Label"))
@@ -170,7 +168,7 @@ Namespace Presentation.Views.User
                 Next
             Next
 
-            For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch, BtnVehicleInspection}
+            For Each btn In {BtnHome, BtnFleetAvailability, BtnCustomerManagement, BtnReservations, BtnDailyDispatch}
                 btn.ToolTip = If(visible, Nothing, btn.Tag)
             Next
         End Sub

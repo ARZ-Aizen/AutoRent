@@ -1,4 +1,4 @@
-<UserControl x:Class="Presentation.Views.Admin.HomeDashboardView"
+﻿<UserControl x:Class="Presentation.Views.Admin.HomeDashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -119,95 +119,50 @@
                         VerticalAlignment="Center"/>
             </Grid>
 
-            <!-- SIX STATISTICS CARDS -->
+            <!-- EXECUTIVE KPIs: Fleet readiness already covers availability / reserved / rented / maintenance -->
             <UniformGrid Columns="6" Margin="0,0,0,12">
-
-                <Border Style="{StaticResource DashboardCard}"
-                        Margin="0,0,9,0"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="Total Fleet Vehicles"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtTotal"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"/>
-                        <TextBlock Text="Registered vehicles"
-                                   Style="{StaticResource SmallNote}"/>
+                        <TextBlock Text="Revenue This Month" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtRevenue" Style="{StaticResource MetricValue}" Text="—" FontSize="21" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Completed rental revenue" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
-                <Border Style="{StaticResource DashboardCard}"
-                        Margin="0,0,9,0"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="Available Vehicles"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtAvailable"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"/>
-                        <TextBlock Text="Ready for rental"
-                                   Style="{StaticResource SmallNote}"/>
+                        <TextBlock Text="Maintenance Costs" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtAdminMaintCost" Style="{StaticResource MetricValue}" Text="—" FontSize="21" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="This month" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
-                <Border Style="{StaticResource DashboardCard}"
-                        Margin="0,0,9,0"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="Currently Rented"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtOut"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"/>
-                        <TextBlock x:Name="TxtReservedNote"
-                                   Style="{StaticResource SmallNote}"
-                                   Text="Reservations tracked separately"/>
+                        <TextBlock Text="Net After Maintenance" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtAdminNet" Style="{StaticResource MetricValue}" Text="—" FontSize="21" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Revenue minus maintenance" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
-                <Border Style="{StaticResource DashboardCard}"
-                        Margin="0,0,9,0"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="In Maintenance"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtMaint"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"/>
-                        <TextBlock x:Name="TxtMaintNote"
-                                   Style="{StaticResource SmallNote}"
-                                   Text="Scheduled servicing"/>
+                        <TextBlock Text="Fleet Utilization" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtUtilization" Style="{StaticResource MetricValue}" Text="—" FontSize="24" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Rented / active fleet" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
-                <Border Style="{StaticResource DashboardCard}"
-                        Margin="0,0,9,0"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="Revenue This Month"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtRevenue"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"
-                                   FontSize="23"/>
-                        <TextBlock Text="Completed rentals"
-                                   Style="{StaticResource SmallNote}"/>
+                        <TextBlock Text="Overdue Services" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtAdminOverdue" Style="{StaticResource MetricValue}" Text="—" FontSize="24" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Maintenance requiring action" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
-                <Border Style="{StaticResource DashboardCard}"
-                        MinHeight="112">
+                <Border Style="{StaticResource DashboardCard}" Margin="0,0,9,0" MinHeight="112">
                     <StackPanel>
-                        <TextBlock Text="Fleet Utilization"
-                                   Style="{StaticResource MetricTitle}"/>
-                        <TextBlock x:Name="TxtUtilization"
-                                   Style="{StaticResource MetricValue}"
-                                   Text="—"/>
-                        <TextBlock Text="Rented / non-retired fleet"
-                                   Style="{StaticResource SmallNote}"/>
+                        <TextBlock Text="Active User Accounts" Style="{StaticResource MetricTitle}"/>
+                        <TextBlock x:Name="TxtAdminUsers" Style="{StaticResource MetricValue}" Text="—" FontSize="24" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Enabled system users" Style="{StaticResource SmallNote}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-
             </UniformGrid>
 
             <!-- MAIN DASHBOARD PANELS -->

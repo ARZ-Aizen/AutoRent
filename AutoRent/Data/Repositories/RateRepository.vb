@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports AutoRent.Data.Context
@@ -199,6 +199,8 @@ Namespace Data.Repositories
         Public Shared Function Add(category As String, daily As Decimal, weekly As Decimal, monthly As Decimal,
                                    deposit As Decimal, lateFee As Decimal) As String
             category = If(category, "").Trim()
+            Dim issue = ValidateRate(category, daily, weekly, monthly, deposit, lateFee)
+            If issue IsNot Nothing Then Return issue
             If CategoryExists(category, 0) Then Return $"The category '{category}' already exists."
 
             Db.Execute("INSERT INTO [Rates] ([category], [daily_rate], [weekly_rate], [monthly_rate], [deposit], [late_fee_per_day], [updated_at]) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -209,6 +211,8 @@ Namespace Data.Repositories
         Public Shared Function Update(rateId As Integer, oldCategory As String, category As String, daily As Decimal, weekly As Decimal,
                                       monthly As Decimal, deposit As Decimal, lateFee As Decimal) As String
             category = If(category, "").Trim()
+            Dim issue = ValidateRate(category, daily, weekly, monthly, deposit, lateFee)
+            If issue IsNot Nothing Then Return issue
             If CategoryExists(category, rateId) Then Return $"The category '{category}' already exists."
 
             Db.Execute("UPDATE [Rates] SET [category] = ?, [daily_rate] = ?, [weekly_rate] = ?, [monthly_rate] = ?, [deposit] = ?, [late_fee_per_day] = ?, [updated_at] = ? WHERE [rate_id] = ?",
@@ -224,6 +228,17 @@ Namespace Data.Repositories
                     End If
                 End SyncLock
             End If
+            Return Nothing
+        End Function
+
+        Private Shared Function ValidateRate(category As String, daily As Decimal, weekly As Decimal,
+                                            monthly As Decimal, deposit As Decimal, lateFee As Decimal) As String
+            If String.IsNullOrWhiteSpace(category) OrElse category.Length > 50 Then Return "Enter a valid category (1–50 characters)."
+            If daily <= 0D OrElse weekly < 0D OrElse monthly < 0D OrElse deposit < 0D OrElse lateFee < 0D Then
+                Return "Daily rate must be positive; other prices must not be negative."
+            End If
+            If daily > 100000000D OrElse weekly > 100000000D OrElse monthly > 100000000D OrElse
+               deposit > 100000000D OrElse lateFee > 100000000D Then Return "The amount is too large."
             Return Nothing
         End Function
 

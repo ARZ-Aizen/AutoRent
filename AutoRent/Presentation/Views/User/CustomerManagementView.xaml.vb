@@ -1,4 +1,4 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Linq
 Imports System.Text
 Imports System.Windows
@@ -7,6 +7,7 @@ Imports System.Windows.Input
 Imports System.Windows.Media
 Imports System.Windows.Media.Effects
 Imports AutoRent.Data.Repositories
+Imports AutoRent.Common.Utilities
 Imports Microsoft.Win32
 
 Namespace Presentation.Views.User
@@ -24,6 +25,10 @@ Namespace Presentation.Views.User
 
         Public Sub New()
             InitializeComponent()
+            InputBehavior.Attach(TxtModalName, "name", 100)
+            InputBehavior.Attach(TxtModalPhone, "digits", 11)
+            TxtModalEmail.MaxLength = 100
+            TxtModalLicense.MaxLength = 50
             _initialized = True
         End Sub
 
@@ -269,6 +274,7 @@ Namespace Presentation.Views.User
             TxtModalEmail.Clear()
             TxtModalLicense.Clear()
 
+            ResetFieldIssues()
             BorderModalError.Visibility = Visibility.Collapsed
             CustomerModalOverlay.Visibility = Visibility.Visible
             TxtModalName.Focus()
@@ -285,10 +291,12 @@ Namespace Presentation.Views.User
             BtnSaveModal.Content = "Save Changes"
 
             TxtModalName.Text = selected.Name
-            TxtModalPhone.Text = selected.Phone
+            ' Normalize older phone formats containing spaces/hyphens when editing.
+            TxtModalPhone.Text = New String(If(selected.Phone, "").Where(Function(ch) Char.IsDigit(ch)).ToArray())
             TxtModalEmail.Text = selected.Email
             TxtModalLicense.Text = selected.License
 
+            ResetFieldIssues()
             BorderModalError.Visibility = Visibility.Collapsed
             CustomerModalOverlay.Visibility = Visibility.Visible
             TxtModalName.Focus()
@@ -309,11 +317,49 @@ Namespace Presentation.Views.User
             BorderModalError.Visibility = Visibility.Visible
         End Sub
 
+        Private Sub ResetFieldIssues()
+            For Each warningLabel As TextBlock In New TextBlock() {
+                TxtNameIssue, TxtPhoneIssue, TxtEmailIssue, TxtLicenseIssue
+            }
+                warningLabel.Text = ""
+                warningLabel.Visibility = Visibility.Collapsed
+            Next
+        End Sub
+
+        Private Sub ShowFieldIssue(fieldBox As TextBox, warningLabel As TextBlock, issue As String)
+            warningLabel.Text = issue
+            warningLabel.Visibility = Visibility.Visible
+            fieldBox.Focus()
+            fieldBox.SelectAll()
+        End Sub
+
         Private Sub BtnSaveModal_Click(sender As Object, e As RoutedEventArgs)
             Dim name As String = TxtModalName.Text.Trim()
             Dim phone As String = TxtModalPhone.Text.Trim()
             Dim email As String = TxtModalEmail.Text.Trim()
             Dim license As String = TxtModalLicense.Text.Trim()
+            ResetFieldIssues()
+
+            Dim issue = InputValidation.FullName(name)
+            If issue IsNot Nothing Then
+                ShowFieldIssue(TxtModalName, TxtNameIssue, issue)
+                Return
+            End If
+            issue = InputValidation.PhilippineMobile(phone)
+            If issue IsNot Nothing Then
+                ShowFieldIssue(TxtModalPhone, TxtPhoneIssue, issue)
+                Return
+            End If
+            issue = InputValidation.EmailAddress(email)
+            If issue IsNot Nothing Then
+                ShowFieldIssue(TxtModalEmail, TxtEmailIssue, issue)
+                Return
+            End If
+            issue = InputValidation.License(license)
+            If issue IsNot Nothing Then
+                ShowFieldIssue(TxtModalLicense, TxtLicenseIssue, issue)
+                Return
+            End If
 
             If String.IsNullOrWhiteSpace(name) Then
                 ShowModalError("Full name is required.")

@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
@@ -228,7 +228,7 @@ Namespace Presentation.Views.User
         End Sub
 
         Private Sub BtnViewAllHistory_Click(sender As Object, e As RoutedEventArgs)
-            MessageBox.Show("All historical rental and inspection records are retained in the immutable database.", "Vehicle History Archive", MessageBoxButton.OK, MessageBoxImage.Information)
+            MessageBox.Show("Rental and maintenance service history is shown for each vehicle. Use the Maintenance Scheduler for full service records.", "Vehicle History Archive", MessageBoxButton.OK, MessageBoxImage.Information)
         End Sub
 
         Private Sub OpenVehicleDetails(vehicleId As Integer)
@@ -256,7 +256,7 @@ Namespace Presentation.Views.User
                 Dim createdAt = If(IsDBNull(row("created_at")), New DateTime(2024, 1, 12), Convert.ToDateTime(row("created_at")))
 
                 Dim vhCode = $"VH-{vehicleId:0000}"
-                TxtDetailHeaderSubtitle.Text = $"{vhCode} / {plate} · Vehicle dossier · rental and inspection records are never deleted"
+                TxtDetailHeaderSubtitle.Text = $"{vhCode} / {plate} · Vehicle dossier · rental and maintenance service records"
                 TxtDetailMakeModel.Text = $"{make} {model}"
                 Dim colors = {"Obsidian Black", "Pearl White", "Silver Metallic", "Graphite Grey", "Navy Blue", "Crimson Red"}
                 Dim carColor = colors(vehicleId Mod colors.Length)
@@ -333,9 +333,9 @@ Namespace Presentation.Views.User
                     "FROM [Reservations] WHERE [vehicle_id] = ? ORDER BY [reservation_id] DESC",
                     Db.Int(vehicleId))
 
-                Dim dtIns = Db.Query(
-                    "SELECT TOP 5 [inspection_id], [inspected_at], [inspector], [inspection_result] " &
-                    "FROM [Inspections] WHERE [vehicle_id] = ? ORDER BY [inspected_at] DESC",
+                Dim dtMaint = Db.Query(
+                    "SELECT TOP 5 [maintenance_id], [service_type], [scheduled_date], [status] " &
+                    "FROM [Maintenance] WHERE [vehicle_id] = ? ORDER BY [scheduled_date] DESC",
                     Db.Int(vehicleId))
 
                 For Each r As DataRow In dtRes.Rows
@@ -361,21 +361,21 @@ Namespace Presentation.Views.User
                     })
                 Next
 
-                For Each insRow As DataRow In dtIns.Rows
-                    Dim id = Convert.ToInt32(insRow("inspection_id"))
-                    Dim inspector = If(IsDBNull(insRow("inspector")), "Staff Inspector", insRow("inspector").ToString().Trim())
-                    Dim insDate = If(IsDBNull(insRow("inspected_at")), DateTime.Today, Convert.ToDateTime(insRow("inspected_at")))
-                    Dim insRes = If(IsDBNull(insRow("inspection_result")), "Passed", insRow("inspection_result").ToString().Trim())
-                    Dim passed = (insRes.IndexOf("Pass", StringComparison.OrdinalIgnoreCase) >= 0)
+                For Each maintenanceRow As DataRow In dtMaint.Rows
+                    Dim serviceId = Convert.ToInt32(maintenanceRow("maintenance_id"))
+                    Dim serviceName = If(IsDBNull(maintenanceRow("service_type")), "Maintenance", maintenanceRow("service_type").ToString().Trim())
+                    Dim serviceDate = If(IsDBNull(maintenanceRow("scheduled_date")), DateTime.Today, Convert.ToDateTime(maintenanceRow("scheduled_date")))
+                    Dim serviceStatus = If(IsDBNull(maintenanceRow("status")), "Scheduled", maintenanceRow("status").ToString().Trim())
+                    Dim finished = String.Equals(serviceStatus, "Completed", StringComparison.OrdinalIgnoreCase)
 
                     historyList.Add(New DossierHistoryItem With {
-                        .RecordCode = $"IN-{id:0000}",
-                        .Party = inspector,
-                        .PeriodDate = $"{insDate:dd MMM} · {insDate:HH:mm}",
+                        .RecordCode = $"MT-{serviceId:0000}",
+                        .Party = serviceName,
+                        .PeriodDate = serviceDate.ToString("dd MMM yyyy · HH:mm"),
                         .Odometer = $"{currentMileage:N0} km",
-                        .Result = If(passed, "Passed", "Needs Attention"),
-                        .ResultBg = If(passed, New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)), New SolidColorBrush(Color.FromRgb(&HFD, &HF2, &HF2))),
-                        .ResultFg = If(passed, New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33)), New SolidColorBrush(Color.FromRgb(&HC6, &H28, &H28)))
+                        .Result = serviceStatus,
+                        .ResultBg = If(finished, New SolidColorBrush(Color.FromRgb(&HE6, &HF4, &HEA)), New SolidColorBrush(Color.FromRgb(&HFE, &HF7, &HE0))),
+                        .ResultFg = If(finished, New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33)), New SolidColorBrush(Color.FromRgb(&HB0, &H60, &H00)))
                     })
                 Next
             Catch ex As Exception
@@ -414,7 +414,7 @@ Namespace Presentation.Views.User
 
                     Dim trans = If(dType = "Pickup", "Available → Rented", "Rented → Available")
                     Dim reason = If(dType = "Pickup", $"Contract BK-{rId:0000} released to {cName}", $"Contract BK-{rId:0000} returned by {cName}")
-                    Dim checks = If(dType = "Pickup", "Pre-dispatch inspection verified", "Post-rental check passed")
+                    Dim checks = If(dType = "Pickup", "Pickup dispatch recorded", "Return dispatch recorded")
 
                     Dim staffList = {"Andrei Balboa", "Zake Yurtas", "Princess Santander", "Jerome Lumbao", "Jonathan Balboa"}
                     Dim staffName = staffList(Math.Abs(rId) Mod staffList.Length)

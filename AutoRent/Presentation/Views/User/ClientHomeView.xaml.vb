@@ -1,4 +1,4 @@
-Imports System.Linq
+﻿Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
 
@@ -30,6 +30,7 @@ Namespace Presentation.Views.User
                 ' Metric counts
                 Dim totalFleet = fleet.Count
                 Dim availableCount = fleet.Where(Function(f) String.Equals(f.Status, "Available", StringComparison.OrdinalIgnoreCase)).Count()
+                Dim reservedCount = fleet.Where(Function(f) String.Equals(If(f.Status, "").Trim(), "Reserved", StringComparison.OrdinalIgnoreCase)).Count()
                 Dim rentedCount = fleet.Where(Function(f) String.Equals(f.Status, "Rented", StringComparison.OrdinalIgnoreCase)).Count()
                 Dim maintCount = fleet.Where(Function(f)
                                                  Dim s = If(f.Status, "").Trim()
@@ -37,20 +38,22 @@ Namespace Presentation.Views.User
                                                         String.Equals(s, "In Maintenance", StringComparison.OrdinalIgnoreCase) OrElse
                                                         String.Equals(s, "Under Maintenance", StringComparison.OrdinalIgnoreCase)
                                              End Function).Count()
-
-                Dim activeResCount = reservations.Where(Function(r) String.Equals(r.Status, "Confirmed", StringComparison.OrdinalIgnoreCase) OrElse
-                                                                   String.Equals(r.Status, "Active", StringComparison.OrdinalIgnoreCase)).Count()
                 Dim pendingDispatchCount = dispatch.Where(Function(d) String.Equals(d.Status, "Scheduled", StringComparison.OrdinalIgnoreCase)).Count()
 
-                ' Top KPI card text
-                TxtStatTotal.Text = totalFleet.ToString()
-                TxtStatAvailable.Text = availableCount.ToString()
-                TxtStatRented.Text = rentedCount.ToString()
-                TxtStatReservations.Text = activeResCount.ToString()
-                TxtStatDispatch.Text = pendingDispatchCount.ToString()
+                ' Client KPIs focus on bookings; vehicle status is shown in Fleet Readiness.
+                Dim confirmedBookings = reservations.Where(Function(r) String.Equals(r.Status, "Confirmed", StringComparison.OrdinalIgnoreCase)).Count()
+                Dim activeBookings = reservations.Where(Function(r) String.Equals(r.Status, "Active", StringComparison.OrdinalIgnoreCase)).Count()
+                Dim completedBookings = reservations.Where(Function(r) String.Equals(r.Status, "Completed", StringComparison.OrdinalIgnoreCase)).Count()
+                Dim cancelledBookings = reservations.Where(Function(r) String.Equals(r.Status, "Cancelled", StringComparison.OrdinalIgnoreCase) OrElse String.Equals(r.Status, "Canceled", StringComparison.OrdinalIgnoreCase)).Count()
+                TxtBookingsTotal.Text = reservations.Count.ToString("N0")
+                TxtBookingsConfirmed.Text = confirmedBookings.ToString("N0")
+                TxtBookingsActive.Text = activeBookings.ToString("N0")
+                TxtBookingsCompleted.Text = completedBookings.ToString("N0")
+                TxtBookingsCancelled.Text = cancelledBookings.ToString("N0")
 
                 ' Fleet readiness breakdown
                 TxtCountAvailable.Text = $"{availableCount} vehicles"
+                TxtCountReserved.Text = $"{reservedCount} vehicles"
                 TxtCountRented.Text = $"{rentedCount} vehicles"
                 TxtCountMaintenance.Text = $"{maintCount} vehicles"
 
@@ -59,6 +62,7 @@ Namespace Presentation.Views.User
 
                 ' Segmented distribution bar widths
                 ColBarAvailable.Width = New GridLength(Math.Max(0.01, availableCount), GridUnitType.Star)
+                ColBarReserved.Width = New GridLength(Math.Max(0.01, reservedCount), GridUnitType.Star)
                 ColBarRented.Width = New GridLength(Math.Max(0.01, rentedCount), GridUnitType.Star)
                 ColBarMaintenance.Width = New GridLength(Math.Max(0.01, maintCount), GridUnitType.Star)
 

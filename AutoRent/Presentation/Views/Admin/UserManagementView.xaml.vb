@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Linq
 Imports System.Security.Cryptography
 Imports System.Windows
@@ -19,6 +19,10 @@ Namespace Presentation.Views.Admin
 
         Public Sub New()
             InitializeComponent()
+            InputBehavior.Attach(TxtNewFullName, "name", 100)
+            InputBehavior.Attach(TxtEditFullName, "name", 100)
+            TxtNewUsername.MaxLength = 32
+            TxtEditUsername.MaxLength = 32
         End Sub
 
         Private Function CurrentUserId() As Integer

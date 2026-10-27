@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.IO
 Imports System.Linq
@@ -29,7 +29,7 @@ Namespace Presentation.Views.Admin
         Public Property ActualReturn As DateTime?
         Public Property ContractStatus As String
         Public Property ContractPayment As String
-        Public Property InspectionPair As String
+        
         Public Property PostReturnStatus As String
 
         Public ReadOnly Property ScheduledPickupDisplay As String
@@ -179,7 +179,6 @@ Namespace Presentation.Views.Admin
                     ' Deterministic clerk selection
                     Dim clerk = clerkNames(Math.Abs(resId) Mod clerkNames.Count)
                     Dim payment = If(contractStatus = "Returned", $"Closed / TX-{(resId + 1000)} paid", If(contractStatus = "Active", $"Active / TX-{(resId + 1000)} paid", $"Pending / TX-{(resId + 1000)}"))
-                    Dim inspections = $"IN-{(resId * 2 + 400):D4} / IN-{(resId * 2 + 401):D4}"
                     Dim postStatus = If(contractStatus = "Returned", "Available", If(contractStatus = "Active", "Rented", If(vStatus <> "", vStatus, "Available")))
 
                     _allItems.Add(New DispatchReportItem With {
@@ -197,7 +196,6 @@ Namespace Presentation.Views.Admin
                         .ActualReturn = actualReturn,
                         .ContractStatus = contractStatus,
                         .ContractPayment = payment,
-                        .InspectionPair = inspections,
                         .PostReturnStatus = postStatus
                     })
                 Next
@@ -433,7 +431,7 @@ Namespace Presentation.Views.Admin
             TxtSelectedTitle.Text = $"Selected dispatch · {item.BookingId}"
             TxtDetailVehicleClerk.Text = $"{item.VehicleIdDisplay} / {item.AssignedClerk}"
             TxtDetailContractPayment.Text = item.ContractPayment
-            TxtDetailInspection.Text = item.InspectionPair
+            TxtDetailBookingState.Text = item.ContractStatus
             TxtDetailPostStatus.Text = item.PostReturnStatus
 
             If item.PostReturnStatus = "Available" Then
@@ -449,7 +447,7 @@ Namespace Presentation.Views.Admin
             TxtSelectedTitle.Text = "Selected dispatch · —"
             TxtDetailVehicleClerk.Text = "—"
             TxtDetailContractPayment.Text = "—"
-            TxtDetailInspection.Text = "—"
+            TxtDetailBookingState.Text = "—"
             TxtDetailPostStatus.Text = "—"
         End Sub
 
@@ -470,9 +468,8 @@ Namespace Presentation.Views.Admin
                       $"Actual Dispatch: {_selectedItem.ActualDispatchDisplay}{vbCrLf}" &
                       $"Expected Return: {_selectedItem.ExpectedReturnDisplay}{vbCrLf}" &
                       $"Actual Return: {_selectedItem.ActualReturnDisplay}{vbCrLf}" &
-                      $"Inspection Records: {_selectedItem.InspectionPair}{vbCrLf}" &
                       $"Post-Return Status: {_selectedItem.PostReturnStatus}{vbCrLf}{vbCrLf}" &
-                      $"Security Note: Roadworthy safety checks certified and verified by HQ operations branch."
+                      $"Note: Review vehicle maintenance and booking status before dispatch."
 
             MessageBox.Show(msg, $"Authorized Record - {_selectedItem.BookingId}", MessageBoxButton.OK, MessageBoxImage.Information)
         End Sub
@@ -506,7 +503,7 @@ Namespace Presentation.Views.Admin
                     Dim sb As New StringBuilder()
                     sb.AppendLine("# AUTORENT HQ BRANCH - AUTHORIZED DAILY DISPATCH REPORT")
                     sb.AppendLine($"# Prepared: {DateTime.Now:yyyy-MM-dd HH:mm:ss} | Total Records: {_filteredItems.Count}")
-                    sb.AppendLine("Booking ID,Vehicle ID,Plate,Customer,Assigned Clerk,Scheduled Pickup,Actual Dispatch,Expected Return,Actual Return,Contract Status,Payment Status,Inspections")
+                    sb.AppendLine("Booking ID,Vehicle ID,Plate,Customer,Assigned Clerk,Scheduled Pickup,Actual Dispatch,Expected Return,Actual Return,Contract Status,Payment Status")
 
                     For Each item In _filteredItems
                         Dim bId = EscapeCsv(item.BookingId)
@@ -520,9 +517,7 @@ Namespace Presentation.Views.Admin
                         Dim rAct = EscapeCsv(item.ActualReturnDisplay)
                         Dim st = EscapeCsv(item.ContractStatus)
                         Dim pay = EscapeCsv(item.ContractPayment)
-                        Dim insp = EscapeCsv(item.InspectionPair)
-
-                        sb.AppendLine($"{bId},{vId},{pl},{cust},{clerk},{pSched},{pAct},{rSched},{rAct},{st},{pay},{insp}")
+                        sb.AppendLine($"{bId},{vId},{pl},{cust},{clerk},{pSched},{pAct},{rSched},{rAct},{st},{pay}")
                     Next
 
                     File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)

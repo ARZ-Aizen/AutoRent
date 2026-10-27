@@ -1,4 +1,4 @@
-<UserControl x:Class="Presentation.Views.User.ClientView"
+﻿<UserControl x:Class="Presentation.Views.User.ClientView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -141,13 +141,6 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE81D;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
                             <TextBlock Tag="Label" Text="Daily Dispatch" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="BtnVehicleInspection" Style="{StaticResource SidebarButtonStyle}"
-                            Tag="Vehicle Inspection" Click="SidebarOption_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22" VerticalAlignment="Center"/>
-                            <TextBlock Tag="Label" Text="Vehicle Inspection" FontSize="13" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

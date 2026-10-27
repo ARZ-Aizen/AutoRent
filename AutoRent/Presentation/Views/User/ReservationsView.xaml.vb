@@ -1,4 +1,4 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Linq
 Imports System.Text
 Imports System.Windows
@@ -32,7 +32,7 @@ Namespace Presentation.Views.User
         Private Sub ReservationsView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
             CmbStatusFilter.ItemsSource = Nothing
             CmbStatusFilter.Items.Clear()
-            CmbStatusFilter.ItemsSource = New String() {"All Status", "Active", "Confirmed", "Completed", "Cancelled"}
+            CmbStatusFilter.ItemsSource = New String() {"All Status", "Active", "Confirmed"}
             CmbStatusFilter.SelectedIndex = 0
 
             CmbSort.ItemsSource = Nothing
@@ -58,15 +58,27 @@ Namespace Presentation.Views.User
         End Sub
 
         Private Sub UpdateStatCards()
-            Dim total = _reservations.Count
-            Dim active = _reservations.Where(Function(r) String.Equals(r.Status, "Active", StringComparison.OrdinalIgnoreCase)).Count()
-            Dim confirmed = _reservations.Where(Function(r) String.Equals(r.Status, "Confirmed", StringComparison.OrdinalIgnoreCase)).Count()
-            Dim completed = _reservations.Where(Function(r) String.Equals(r.Status, "Completed", StringComparison.OrdinalIgnoreCase)).Count()
-
-            TxtStatTotal.Text = total.ToString()
-            TxtStatActive.Text = active.ToString()
-            TxtStatConfirmed.Text = confirmed.ToString()
-            TxtStatCompleted.Text = completed.ToString()
+            Dim active As Integer = 0
+            Dim confirmed As Integer = 0
+            Dim completed As Integer = 0
+            Dim cancelled As Integer = 0
+            For Each reservation As ReservationItem In _reservations
+                Select Case If(reservation.Status, "").Trim().ToLowerInvariant()
+                    Case "active", "rented"
+                        active += 1
+                    Case "confirmed"
+                        confirmed += 1
+                    Case "completed"
+                        completed += 1
+                    Case "cancelled", "canceled"
+                        cancelled += 1
+                End Select
+            Next
+            TxtStatTotal.Text = _reservations.Count.ToString("N0")
+            TxtStatActive.Text = active.ToString("N0")
+            TxtStatConfirmed.Text = confirmed.ToString("N0")
+            TxtStatCompleted.Text = completed.ToString("N0")
+            TxtStatCancelled.Text = cancelled.ToString("N0")
         End Sub
 
         Private Sub TxtSearchRes_TextChanged(sender As Object, e As TextChangedEventArgs)
@@ -99,6 +111,12 @@ Namespace Presentation.Views.User
             Dim sortOption As String = If(TryCast(CmbSort.SelectedItem, String), "Newest First")
 
             Dim result = _reservations.Where(Function(r)
+                                                 ' Historical records have their own windows.
+                                                 If String.Equals(r.Status, "Completed", StringComparison.OrdinalIgnoreCase) OrElse
+                                                    String.Equals(r.Status, "Cancelled", StringComparison.OrdinalIgnoreCase) OrElse
+                                                    String.Equals(r.Status, "Canceled", StringComparison.OrdinalIgnoreCase) Then
+                                                     Return False
+                                                 End If
                                                  Dim matchQuery = (q = "" OrElse
                                                      (r.Id IsNot Nothing AndAlso r.Id.ToLowerInvariant().Contains(q)) OrElse
                                                      ($"r-{r.DbId:D4}".Contains(q)) OrElse
@@ -231,6 +249,39 @@ Namespace Presentation.Views.User
                 _page += 1
                 ShowPage()
             End If
+        End Sub
+
+        ' ==========================================
+        ' COMPLETED / CANCELLED RESERVATION WINDOWS
+        ' ==========================================
+        Private Sub BtnViewCompleted_Click(sender As Object, e As RoutedEventArgs)
+            OpenReservationHistory("Completed")
+        End Sub
+
+        Private Sub BtnViewCancelled_Click(sender As Object, e As RoutedEventArgs)
+            OpenReservationHistory("Cancelled")
+        End Sub
+
+        Private Sub OpenReservationHistory(requestedStatus As String)
+            Try
+                ' Read all reservations again, not only the currently filtered or paginated rows.
+                Dim allReservations As List(Of ReservationItem) = LoadReservations()
+                Dim matches As New List(Of ReservationItem)
+                For Each res As ReservationItem In allReservations
+                    Dim statusValue As String = If(res.Status, "").Trim()
+                    If String.Equals(statusValue, requestedStatus, StringComparison.OrdinalIgnoreCase) OrElse
+                       (requestedStatus = "Cancelled" AndAlso String.Equals(statusValue, "Canceled", StringComparison.OrdinalIgnoreCase)) Then
+                        matches.Add(res)
+                    End If
+                Next
+                Dim dlg As New ReservationHistoryWindow(requestedStatus, matches)
+                Dim owner As Window = Window.GetWindow(Me)
+                If owner IsNot Nothing Then dlg.Owner = owner
+                dlg.ShowDialog()
+                ReloadData()
+            Catch ex As Exception
+                ShowDbError("open " & requestedStatus.ToLowerInvariant() & " reservations", ex)
+            End Try
         End Sub
 
         ' =========================
@@ -578,4 +629,121 @@ Namespace Presentation.Views.User
             Return """" & val & """"
         End Function
     End Class
+
+    ' Read-only popup. Does not alter reservation status or payments.
+    Public Class ReservationHistoryWindow
+        Inherits Window
+
+        Private ReadOnly _all As List(Of ReservationItem)
+        Private ReadOnly _grid As New DataGrid()
+        Private ReadOnly _search As New TextBox()
+        Private ReadOnly _count As New TextBlock()
+        Private ReadOnly _status As String
+
+        Public Sub New(statusName As String, records As List(Of ReservationItem))
+            _status = statusName
+            _all = records.OrderByDescending(Function(r) r.DbId).ToList()
+            Title = statusName & " Reservations - AutoRent"
+            Width = 1070
+            Height = 630
+            MinWidth = 760
+            MinHeight = 440
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+            Background = New SolidColorBrush(Color.FromRgb(&HF8, &HF7, &HF6))
+            FontFamily = New FontFamily("Segoe UI")
+
+            Dim layout As New Grid With {.Margin = New Thickness(22)}
+            layout.RowDefinitions.Add(New RowDefinition With {.Height = GridLength.Auto})
+            layout.RowDefinitions.Add(New RowDefinition With {.Height = GridLength.Auto})
+            layout.RowDefinitions.Add(New RowDefinition With {.Height = New GridLength(1, GridUnitType.Star)})
+            layout.RowDefinitions.Add(New RowDefinition With {.Height = GridLength.Auto})
+            Content = layout
+
+            Dim titleText As New TextBlock With {
+                .Text = statusName & " Reservations",
+                .FontSize = 23, .FontWeight = FontWeights.Bold,
+                .Foreground = New SolidColorBrush(Color.FromRgb(&H30, &H2A, &H2B))
+            }
+            Grid.SetRow(titleText, 0)
+            layout.Children.Add(titleText)
+
+            Dim searchArea As New Grid With {.Margin = New Thickness(0, 14, 0, 12)}
+            searchArea.ColumnDefinitions.Add(New ColumnDefinition With {.Width = New GridLength(1, GridUnitType.Star)})
+            searchArea.ColumnDefinitions.Add(New ColumnDefinition With {.Width = GridLength.Auto})
+            _search.Height = 36
+            _search.VerticalContentAlignment = VerticalAlignment.Center
+            _search.Padding = New Thickness(9, 0, 9, 0)
+            _search.ToolTip = "Find by booking ID, customer, vehicle or plate number"
+            Grid.SetColumn(_search, 0)
+            searchArea.Children.Add(_search)
+            _count.Margin = New Thickness(12, 0, 0, 0)
+            _count.VerticalAlignment = VerticalAlignment.Center
+            _count.Foreground = Brushes.DimGray
+            Grid.SetColumn(_count, 1)
+            searchArea.Children.Add(_count)
+            Grid.SetRow(searchArea, 1)
+            layout.Children.Add(searchArea)
+
+            _grid.AutoGenerateColumns = False
+            _grid.IsReadOnly = True
+            _grid.CanUserAddRows = False
+            _grid.CanUserDeleteRows = False
+            _grid.RowHeight = 40
+            _grid.ColumnHeaderHeight = 42
+            _grid.GridLinesVisibility = DataGridGridLinesVisibility.None
+            _grid.AlternatingRowBackground = New SolidColorBrush(Color.FromRgb(&HFC, &HFA, &HFA))
+            _grid.Background = Brushes.White
+            _grid.BorderBrush = New SolidColorBrush(Color.FromRgb(&HE8, &HE5, &HE1))
+            _grid.SelectionUnit = DataGridSelectionUnit.FullRow
+            _grid.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+            _grid.VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            AddColumn("Booking ID", "Id", 100)
+            AddColumn("Customer", "Customer", 160)
+            AddColumn("Plate", "Plate", 115)
+            AddColumn("Vehicle", "Vehicle", 200)
+            AddColumn("Pickup Date", "PickupDate", 125, "dd MMM yyyy")
+            AddColumn("Return Date", "ReturnDate", 125, "dd MMM yyyy")
+            AddColumn("Amount", "TotalDisplay", 130)
+            AddColumn("Status", "Status", 105)
+            Grid.SetRow(_grid, 2)
+            layout.Children.Add(_grid)
+
+            Dim close As New Button With {
+                .Content = "Close", .Width = 105, .Height = 36,
+                .HorizontalAlignment = HorizontalAlignment.Right,
+                .Margin = New Thickness(0, 12, 0, 0),
+                .Background = New SolidColorBrush(Color.FromRgb(&H70, &H0, &HF)),
+                .Foreground = Brushes.White, .Cursor = Cursors.Hand
+            }
+            AddHandler close.Click, Sub(sender, e) Me.Close()
+            Grid.SetRow(close, 3)
+            layout.Children.Add(close)
+            AddHandler _search.TextChanged, AddressOf SearchChanged
+            ApplySearch()
+        End Sub
+
+        Private Sub AddColumn(heading As String, field As String, width As Double, Optional fmt As String = Nothing)
+            Dim binding As New System.Windows.Data.Binding(field)
+            If Not String.IsNullOrWhiteSpace(fmt) Then binding.StringFormat = fmt
+            _grid.Columns.Add(New DataGridTextColumn With {.Header = heading, .Binding = binding, .Width = New DataGridLength(width)})
+        End Sub
+
+        Private Sub SearchChanged(sender As Object, e As TextChangedEventArgs)
+            ApplySearch()
+        End Sub
+
+        Private Sub ApplySearch()
+            Dim term As String = _search.Text.Trim()
+            Dim filtered = _all.Where(Function(r)
+                                          Return term.Length = 0 OrElse
+                    If(r.Id, "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                    If(r.Customer, "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                    If(r.Vehicle, "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                    If(r.Plate, "").IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0
+                                      End Function).ToList()
+            _grid.ItemsSource = filtered
+            _count.Text = filtered.Count.ToString("N0") & " / " & _all.Count.ToString("N0") & " records"
+        End Sub
+    End Class
+
 End Namespace

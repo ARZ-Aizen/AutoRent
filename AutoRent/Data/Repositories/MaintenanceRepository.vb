@@ -1,4 +1,5 @@
 ﻿Imports System.Data
+Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -25,6 +26,8 @@ Namespace Data.Repositories
 
         Public Shared Function Add(vehicleId As Integer, serviceType As String, scheduledDate As DateTime,
                                    cost As Decimal, status As String, notes As String) As String
+            Dim issue = ValidateMaintenance(vehicleId, serviceType, cost, status)
+            If issue IsNot Nothing Then Return issue
             Dim completedAt As DateTime? = If(status = "Completed", DateTime.Now, CType(Nothing, DateTime?))
 
             Db.Execute("INSERT INTO [Maintenance] ([vehicle_id], [service_type], [scheduled_date], [cost], [status], [notes], [completed_at], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -36,6 +39,8 @@ Namespace Data.Repositories
 
         Public Shared Function Update(maintenanceId As Integer, vehicleId As Integer, serviceType As String, scheduledDate As DateTime,
                                       cost As Decimal, status As String, notes As String) As String
+            Dim issue = ValidateMaintenance(vehicleId, serviceType, cost, status)
+            If issue IsNot Nothing Then Return issue
             Dim previous = Db.Query("SELECT [vehicle_id], [completed_at] FROM [Maintenance] WHERE [maintenance_id] = ?", Db.Int(maintenanceId))
             If previous.Rows.Count = 0 Then Return "That maintenance record no longer exists."
 
@@ -61,13 +66,36 @@ Namespace Data.Repositories
             Return Nothing
         End Function
 
+        Private Shared Function ValidateMaintenance(vehicleId As Integer, serviceType As String,
+                                                    cost As Decimal, status As String) As String
+            If vehicleId <= 0 Then Return "Select a vehicle."
+            If String.IsNullOrWhiteSpace(serviceType) OrElse serviceType.Trim().Length > 60 Then
+                Return "Maintenance type is required and must be 60 characters or fewer."
+            End If
+            If cost < 0D OrElse cost > 100000000D Then Return "Maintenance cost must be a nonnegative amount."
+            If Array.IndexOf(Statuses, status) < 0 Then Return "Choose a valid maintenance status."
+            If Db.Count("SELECT COUNT(*) FROM [Vehicles] WHERE [vehicle_id] = ? AND [status] <> 'Retired'", Db.Int(vehicleId)) = 0 Then
+                Return "This vehicle does not exist or is retired."
+            End If
+            ' Don't mark a vehicle in progress while someone is renting it.
+            If status = "In Progress" AndAlso Db.Count(
+                "SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] = 'Active'", Db.Int(vehicleId)) > 0 Then
+                Return "This vehicle is currently rented. Complete its rental before starting maintenance."
+            End If
+            Return Nothing
+        End Function
+
         Private Shared Sub SyncVehicleStatus(vehicleId As Integer)
             Dim openJobs = Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [vehicle_id] = ? AND [status] = 'In Progress'", Db.Int(vehicleId))
 
             If openJobs > 0 Then
                 Db.Execute("UPDATE [Vehicles] SET [status] = 'Maintenance' WHERE [vehicle_id] = ? AND [status] <> 'Retired'", Db.Int(vehicleId))
             Else
-                Db.Execute("UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ? AND [status] = 'Maintenance'", Db.Int(vehicleId))
+                Dim hasActive = Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] = 'Active'", Db.Int(vehicleId)) > 0
+                Dim hasConfirmed = Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] = 'Confirmed'", Db.Int(vehicleId)) > 0
+                Dim restoredStatus = If(hasActive, "Rented", If(hasConfirmed, "Reserved", "Available"))
+                Db.Execute("UPDATE [Vehicles] SET [status] = ? WHERE [vehicle_id] = ? AND [status] = 'Maintenance'",
+                           Db.Text(restoredStatus, 20), Db.Int(vehicleId))
             End If
         End Sub
     End Class

@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Windows
 Imports AutoRent.Data.Repositories
 
@@ -123,15 +123,6 @@ Namespace Presentation.Views.User
                 Dim timeText = If(at.Date = Date.Today, at.ToString("hh:mm tt"), at.ToString("MMM d, hh:mm tt"))
                 list.Add(New DispatchItem(timeText, Txt(r, "dispatch_type"), Txt(r, "customer_name"), VehicleName(r), Txt(r, "plate"),
                                           Txt(r, "branch"), Txt(r, "status")) With {.DbId = Num(r, "dispatch_id"), .ReservationId = Num(r, "reservation_id"), .VehicleId = Num(r, "vehicle_id")})
-            Next
-            Return list
-        End Function
-
-        Friend Function LoadInspections() As List(Of InspectionItem)
-            Dim list As New List(Of InspectionItem)
-            For Each r As DataRow In ClientRepository.GetInspections().Rows
-                list.Add(New InspectionItem(Stamp(r, "inspected_at"), VehicleLabel(r), Txt(r, "inspector"), Txt(r, "fuel"),
-                                            Txt(r, "findings"), Txt(r, "inspection_result")))
             Next
             Return list
         End Function

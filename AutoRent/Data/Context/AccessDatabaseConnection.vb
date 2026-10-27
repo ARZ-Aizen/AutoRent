@@ -1,4 +1,4 @@
-Imports System.Data.OleDb
+﻿Imports System.Data.OleDb
 Imports System.IO
 
 Namespace Data.Context
@@ -17,12 +17,19 @@ Namespace Data.Context
                 Return binPath
             End If
 
-            Dim repoPath = "c:\Users\allan\source\repos\AutoRent\AutoRent\Resources\Data\AutoRent.accdb.accdb"
-            If File.Exists(repoPath) Then
-                Return repoPath
-            End If
+            ' Portable fallback for cloned projects and published builds.
+            ' Never depend on a particular developer's Windows username.
+            Dim searchFolder As DirectoryInfo = New DirectoryInfo(AppContext.BaseDirectory)
+            For depth As Integer = 0 To 5
+                If searchFolder Is Nothing Then Exit For
+                Dim candidate = Path.Combine(searchFolder.FullName, "Resources", "Data", "AutoRent.accdb.accdb")
+                If File.Exists(candidate) Then Return candidate
+                searchFolder = searchFolder.Parent
+            Next
 
-            Throw New FileNotFoundException("The AutoRent Access database could not be found.", projectSourcePath)
+            Throw New FileNotFoundException(
+                "The AutoRent Access database could not be found. Verify Resources\Data\AutoRent.accdb.accdb beside your project.",
+                projectSourcePath)
         End Function
 
         Public Shared Function CreateConnection() As OleDbConnection

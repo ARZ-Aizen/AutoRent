@@ -1,4 +1,4 @@
-<UserControl x:Class="Presentation.Views.Admin.SettingsView"
+﻿<UserControl x:Class="Presentation.Views.Admin.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -132,7 +132,7 @@
                     <DockPanel LastChildFill="False" Margin="0,0,0,16">
                         <StackPanel DockPanel.Dock="Left">
                             <TextBlock Text="Centralized CSV Export Engine" FontSize="17" FontWeight="Bold" Foreground="#2B2927"/>
-                            <TextBlock Text="Select a reporting month and year. All transactional logs (Reservations, Dispatches, Inspections, Maintenance) will be filtered by that month, accompanied by complete snapshots of master registers (Vehicles, Customers, Rates, Users)."
+                            <TextBlock Text="Select a reporting month and year. All transactional logs (Reservations, Dispatches, Maintenance) will be filtered by that month, accompanied by complete snapshots of master registers (Vehicles, Customers, Rates, Users)."
                                        FontSize="12.5" Foreground="#7A7570" Margin="0,4,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
@@ -249,7 +249,7 @@
                     Padding="16,0"
                     Margin="8,0,8,0"
                     Click="BtnExportAllZip_Click"
-                    ToolTip="Export all 8 tables as CSV files in a ZIP archive">
+                    ToolTip="Export all 7 tables as CSV files in a ZIP archive">
 
                                     <StackPanel Orientation="Horizontal">
 
@@ -274,7 +274,7 @@
                     Height="38"
                     Padding="14,0"
                     Click="BtnExportAllFolder_Click"
-                    ToolTip="Export all 8 tables as individual CSV files">
+                    ToolTip="Export all 7 tables as individual CSV files">
 
                                     <StackPanel Orientation="Horizontal">
 
@@ -301,7 +301,7 @@
                     <Border x:Name="BorderStatus" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="14,10">
                         <DockPanel LastChildFill="True">
                             <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#2563EB" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtStatus" Text="Ready to export all 8 tables. Select month and click 'Export All Tables to CSV'."
+                            <TextBlock x:Name="TxtStatus" Text="Ready to export all 7 tables. Select month and click 'Export All Tables to CSV'."
                                        FontSize="12.5" Foreground="#1E40AF" VerticalAlignment="Center"/>
                         </DockPanel>
                     </Border>
@@ -313,7 +313,7 @@
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,14">
                         <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="Database Tables Register (8 Tables)" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
+                            <TextBlock Text="Database Tables Register (7 Tables)" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
                             <TextBlock Text="Review record counts and filter rules for each table for the selected period, or export an individual table."
                                        FontSize="12.5" Foreground="#7A7570" Margin="0,2,0,0"/>
                         </StackPanel>

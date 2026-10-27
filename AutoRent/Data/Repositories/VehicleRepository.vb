@@ -1,6 +1,8 @@
-
+﻿
 Imports System.Data
 Imports System.IO
+Imports System.Linq
+Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
 
 Namespace Data.Repositories
@@ -326,7 +328,15 @@ Namespace Data.Repositories
             Optional imageFileName As String = Nothing
         ) As String
 
-            plate = plate.Trim().ToUpperInvariant()
+            plate = If(plate, "").Trim().ToUpperInvariant()
+            make = InputValidation.Clean(make)
+            model = InputValidation.Clean(model)
+
+            ' Every NEW vehicle enters service as Available.
+            ' Caller-supplied status is ignored for creation.
+            status = "Available"
+            Dim problem = ValidateVehicle(plate, make, model, category, modelYear, mileage, status)
+            If problem IsNot Nothing Then Return problem
 
             If PlateExists(plate, 0) Then
                 Return $"A vehicle with plate {plate} already exists."
@@ -369,7 +379,12 @@ Namespace Data.Repositories
             Optional imageFileName As String = Nothing
         ) As String
 
-            plate = plate.Trim().ToUpperInvariant()
+            plate = If(plate, "").Trim().ToUpperInvariant()
+            make = InputValidation.Clean(make)
+            model = InputValidation.Clean(model)
+
+            Dim problem = ValidateVehicle(plate, make, model, category, modelYear, mileage, status)
+            If problem IsNot Nothing Then Return problem
 
             If PlateExists(plate, vehicleId) Then
                 Return $"Another vehicle already uses plate {plate}."
@@ -399,6 +414,25 @@ Namespace Data.Repositories
 
             Return Nothing
 
+        End Function
+
+        Private Shared Function ValidateVehicle(plate As String, make As String, model As String,
+                                               category As String, modelYear As Integer?,
+                                               mileage As Integer, status As String) As String
+            Dim problem = InputValidation.Plate(plate)
+            If problem IsNot Nothing Then Return problem
+            problem = InputValidation.VehicleMake(make)
+            If problem IsNot Nothing Then Return problem
+            problem = InputValidation.VehicleModel(model)
+            If problem IsNot Nothing Then Return problem
+            If String.IsNullOrWhiteSpace(category) OrElse category.Length > 50 Then Return "Choose a valid vehicle category."
+            If Not modelYear.HasValue Then Return "Model year is required."
+            If modelYear.Value < 1980 OrElse modelYear.Value > DateTime.Today.Year + 1 Then
+                Return $"Model year must be between 1980 and {DateTime.Today.Year + 1}."
+            End If
+            If mileage < 0 OrElse mileage > 5000000 Then Return "Mileage must be between 0 and 5,000,000 km."
+            If Not Statuses.Contains(If(status, "")) Then Return "Choose a valid vehicle status."
+            Return Nothing
         End Function
 
         ' ==========================================
@@ -447,10 +481,13 @@ Namespace Data.Repositories
             excludeId As Integer
         ) As Boolean
 
+            ' Compare normalized plates to catch spaces/hyphens variants.
+            Dim canonical As String = plate.Replace(" ", "").Replace("-", "").ToUpperInvariant()
             Return Db.Count(
                 "SELECT COUNT(*) FROM [Vehicles] " &
-                "WHERE [plate] = ? AND [vehicle_id] <> ?",
-                Db.Text(plate, 20),
+                "WHERE UCase(Replace(Replace([plate], ' ', ''), '-', '')) = ? " &
+                "AND [vehicle_id] <> ?",
+                Db.Text(canonical, 20),
                 Db.Int(excludeId)
             ) > 0
 

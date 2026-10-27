@@ -1,4 +1,4 @@
-Namespace Presentation.Views.User
+﻿Namespace Presentation.Views.User
 
     Public Class FleetItem
         Public Property DbId As Integer
@@ -430,77 +430,5 @@ Namespace Presentation.Views.User
         End Sub
     End Class
 
-    Public Class InspectionItem
-        Public Property InspectedOn As Date
-        Public Property Vehicle As String
-        Public Property Inspector As String
-        Public Property Fuel As String
-        Public Property Findings As String
-        Public Property Result As String
-
-        Public ReadOnly Property IsPass As Boolean
-            Get
-                Return String.Equals(Result, "Pass", StringComparison.OrdinalIgnoreCase)
-            End Get
-        End Property
-
-        Public ReadOnly Property ResultUpper As String
-            Get
-                Return If(IsPass, "PASS", "NEEDS ATTENTION")
-            End Get
-        End Property
-
-        Public ReadOnly Property ResultBgColor As String
-            Get
-                Return If(IsPass, "#E6F4EA", "#FDF2F2")
-            End Get
-        End Property
-
-        Public ReadOnly Property ResultFgColor As String
-            Get
-                Return If(IsPass, "#137333", "#C62828")
-            End Get
-        End Property
-
-        Public ReadOnly Property ResultBorderColor As String
-            Get
-                Return If(IsPass, "#CEEAD6", "#F5C2C7")
-            End Get
-        End Property
-
-        Public ReadOnly Property DateDisplay As String
-            Get
-                Return InspectedOn.ToString("MMM dd, yyyy  h:mm tt")
-            End Get
-        End Property
-
-        Public ReadOnly Property FuelDisplay As String
-            Get
-                Return If(String.IsNullOrWhiteSpace(Fuel), "—", Fuel)
-            End Get
-        End Property
-
-        Public ReadOnly Property InspectorInitials As String
-            Get
-                If String.IsNullOrWhiteSpace(Inspector) Then Return "?"
-                Dim parts = Inspector.Trim().Split({" "c}, StringSplitOptions.RemoveEmptyEntries)
-                If parts.Length = 1 Then
-                    Return parts(0).Substring(0, Math.Min(2, parts(0).Length)).ToUpperInvariant()
-                Else
-                    Return (parts(0)(0).ToString() & parts(parts.Length - 1)(0).ToString()).ToUpperInvariant()
-                End If
-            End Get
-        End Property
-
-        Public Sub New(inspectedOn As Date, vehicle As String, inspector As String,
-                       fuel As String, findings As String, result As String)
-            Me.InspectedOn = inspectedOn
-            Me.Vehicle = vehicle
-            Me.Inspector = inspector
-            Me.Fuel = fuel
-            Me.Findings = findings
-            Me.Result = result
-        End Sub
-    End Class
 
 End Namespace

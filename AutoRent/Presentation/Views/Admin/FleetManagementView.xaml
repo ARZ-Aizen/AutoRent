@@ -1,4 +1,4 @@
-<UserControl x:Class="Presentation.Views.Admin.FleetManagementView"
+﻿<UserControl x:Class="Presentation.Views.Admin.FleetManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -81,7 +81,7 @@
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="GridLinesVisibility" Value="None"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="RowHeight" Value="67"/>
+            <Setter Property="RowHeight" Value="61"/>
             <Setter Property="ColumnHeaderHeight" Value="39"/>
             <Setter Property="AlternatingRowBackground" Value="#FCFBFB"/>
             <Setter Property="RowBackground" Value="White"/>
@@ -121,11 +121,14 @@
 
     </UserControl.Resources>
 
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  CanContentScroll="False">
     <Grid Margin="23,21,23,18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- HEADER -->
@@ -289,11 +292,14 @@
                 </Grid>
 
                 <!-- VEHICLE TABLE -->
-                <DataGrid Grid.Row="1"
+                <Grid Grid.Row="1">
+                <DataGrid
                           x:Name="DgVehicles"
                           Style="{StaticResource FleetGrid}"
                           Margin="8,0"
-                          MinHeight="220"
+                          MinHeight="130"
+                          MaxHeight="620"
+                          VerticalScrollBarVisibility="Auto"
                           MouseDoubleClick="Grid_DoubleClick">
 
                     <DataGrid.Columns>
@@ -466,6 +472,18 @@
 
                     </DataGrid.Columns>
                 </DataGrid>
+                <TextBlock x:Name="TxtEmptyFleet"
+                           Text="No matching vehicles. Try clearing the search or changing the filters."
+                           Foreground="#817B7D"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           MaxWidth="400"
+                           Visibility="Collapsed"
+                           IsHitTestVisible="False"/>
+                </Grid>
 
                 <!-- PAGINATION -->
                 <Grid Grid.Row="2" Margin="15,12,15,14">
@@ -518,5 +536,6 @@
             </Grid>
         </Border>
     </Grid>
+    </ScrollViewer>
 
 </UserControl>

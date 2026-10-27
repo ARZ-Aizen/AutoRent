@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports System.Windows
@@ -19,6 +19,12 @@ Namespace Presentation.Views.Admin
 
         Public Sub New()
             InitializeComponent()
+            For Each amountBox As TextBox In New TextBox() {
+                TxtModalDaily, TxtModalWeekly, TxtModalMonthly,
+                TxtModalDeposit, TxtModalLateFee
+            }
+                InputBehavior.Attach(amountBox, "money", 15)
+            Next
         End Sub
 
         Private Sub RateManagementView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded

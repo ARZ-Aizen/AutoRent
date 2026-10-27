@@ -1,4 +1,4 @@
-Imports System
+﻿Imports System
 Imports System.Collections.Generic
 Imports System.Data
 Imports System.Data.OleDb
@@ -136,17 +136,6 @@ Namespace Presentation.Views.Admin
                     .RecordCount = QueryCountDispatches(startDate, endDate)
                 },
                 New TableExportModel With {
-                    .TableKey = "Inspections",
-                    .TableName = "Vehicle Inspections",
-                    .Icon = ChrW(&HE9D9),
-                    .TableType = "Activity Log",
-                    .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(254, 243, 199)),
-                    .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(146, 64, 14)),
-                    .FilterScope = If(isMonthly, $"Safety inspection date within {periodDisplay}", "Full vehicle inspection logs"),
-                    .FileName = $"03_Vehicle_Inspections_{periodSlug}.csv",
-                    .RecordCount = QueryCountInspections(startDate, endDate)
-                },
-                New TableExportModel With {
                     .TableKey = "Maintenance",
                     .TableName = "Maintenance Schedules",
                     .Icon = ChrW(&HE90F),
@@ -154,7 +143,7 @@ Namespace Presentation.Views.Admin
                     .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(254, 243, 199)),
                     .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(146, 64, 14)),
                     .FilterScope = If(isMonthly, $"Scheduled or completed date within {periodDisplay}", "Full maintenance work records"),
-                    .FileName = $"04_Maintenance_{periodSlug}.csv",
+                    .FileName = $"03_Maintenance_{periodSlug}.csv",
                     .RecordCount = QueryCountMaintenance(startDate, endDate)
                 },
                 New TableExportModel With {
@@ -165,7 +154,7 @@ Namespace Presentation.Views.Admin
                     .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(236, 253, 245)),
                     .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(4, 120, 87)),
                     .FilterScope = "Active vehicle inventory & master fleet register snapshot",
-                    .FileName = $"05_Fleet_Vehicles_{periodSlug}.csv",
+                    .FileName = $"04_Fleet_Vehicles_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Vehicles")
                 },
                 New TableExportModel With {
@@ -176,7 +165,7 @@ Namespace Presentation.Views.Admin
                     .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(236, 253, 245)),
                     .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(4, 120, 87)),
                     .FilterScope = "Registered drivers directory & verified license snapshot",
-                    .FileName = $"06_Customers_{periodSlug}.csv",
+                    .FileName = $"05_Customers_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Customers")
                 },
                 New TableExportModel With {
@@ -187,7 +176,7 @@ Namespace Presentation.Views.Admin
                     .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(236, 253, 245)),
                     .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(4, 120, 87)),
                     .FilterScope = "Vehicle category rate cards, weekly & monthly discount tariffs",
-                    .FileName = $"07_Rental_Rates_{periodSlug}.csv",
+                    .FileName = $"06_Rental_Rates_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Rates")
                 },
                 New TableExportModel With {
@@ -198,7 +187,7 @@ Namespace Presentation.Views.Admin
                     .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(238, 242, 255)),
                     .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(67, 56, 202)),
                     .FilterScope = "System user accounts & branch permission roles (Audit Log)",
-                    .FileName = $"08_Users_{periodSlug}.csv",
+                    .FileName = $"07_Users_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Users")
                 }
             }
@@ -206,7 +195,7 @@ Namespace Presentation.Views.Admin
             GridTables.ItemsSource = _tables
 
             Dim totalRecords = _tables.Sum(Function(t) t.RecordCount)
-            TxtStatus.Text = $"Filtered for {periodDisplay} · 8 system tables ready for export ({totalRecords:N0} total records)."
+            TxtStatus.Text = $"Filtered for {periodDisplay} · {_tables.Count} system tables ready for export ({totalRecords:N0} total records)."
         End Sub
 
         ' ========================================================
@@ -235,19 +224,6 @@ Namespace Presentation.Views.Admin
                                     Db.Dt(startDate.Value), Db.Dt(endDate.Value))
                 Else
                     Return Db.Count("SELECT COUNT(*) FROM [Dispatches]")
-                End If
-            Catch ex As Exception
-                Return 0
-            End Try
-        End Function
-
-        Private Function QueryCountInspections(startDate As DateTime?, endDate As DateTime?) As Integer
-            Try
-                If startDate.HasValue AndAlso endDate.HasValue Then
-                    Return Db.Count("SELECT COUNT(*) FROM [Inspections] WHERE [inspected_at] >= ? AND [inspected_at] < ?",
-                                    Db.Dt(startDate.Value), Db.Dt(endDate.Value))
-                Else
-                    Return Db.Count("SELECT COUNT(*) FROM [Inspections]")
                 End If
             Catch ex As Exception
                 Return 0
@@ -304,16 +280,6 @@ Namespace Presentation.Views.Admin
                         dt = Db.Query("SELECT [dispatch_id], [reservation_id], [dispatch_type], [scheduled_at], [branch], [status] FROM [Dispatches] ORDER BY [dispatch_id]")
                     End If
                     Return DataTableToCsv(dt, New String() {"Dispatch ID", "Reservation ID", "Dispatch Type", "Scheduled At", "Branch", "Status"})
-
-                Case "Inspections"
-                    Dim dt As DataTable
-                    If startDate.HasValue AndAlso endDate.HasValue Then
-                        dt = Db.Query("SELECT [inspection_id], [vehicle_id], [inspected_at], [inspector], [fuel], [findings], [inspection_result] FROM [Inspections] WHERE [inspected_at] >= ? AND [inspected_at] < ? ORDER BY [inspection_id]",
-                                      Db.Dt(startDate.Value), Db.Dt(endDate.Value))
-                    Else
-                        dt = Db.Query("SELECT [inspection_id], [vehicle_id], [inspected_at], [inspector], [fuel], [findings], [inspection_result] FROM [Inspections] ORDER BY [inspection_id]")
-                    End If
-                    Return DataTableToCsv(dt, New String() {"Inspection ID", "Vehicle ID", "Inspected At", "Inspector", "Fuel Level", "Findings", "Inspection Result"})
 
                 Case "Maintenance"
                     Dim dt As DataTable
@@ -411,7 +377,7 @@ Namespace Presentation.Views.Admin
             If sfd.ShowDialog() <> True Then Return
 
             Try
-                TxtStatus.Text = $"Exporting 8 tables for {periodDisplay} to ZIP archive..."
+                TxtStatus.Text = $"Exporting {_tables.Count} tables for {periodDisplay} to ZIP archive..."
 
                 Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
                 Dim exportedBy = If(app?.CurrentUser IsNot Nothing, app.CurrentUser.DisplayName, "System Administrator")
@@ -450,8 +416,8 @@ Namespace Presentation.Views.Admin
                     End Using
                 End Using
 
-                TxtStatus.Text = $"Successfully exported all 8 tables to '{Path.GetFileName(sfd.FileName)}' ({periodDisplay})."
-                MessageBox.Show($"Successfully exported all 8 tables for {periodDisplay} into ZIP archive:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}",
+                TxtStatus.Text = $"Successfully exported all {_tables.Count} tables to '{Path.GetFileName(sfd.FileName)}' ({periodDisplay})."
+                MessageBox.Show($"Successfully exported all {_tables.Count} tables for {periodDisplay} into ZIP archive:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}",
                                 "Export Completed", MessageBoxButton.OK, MessageBoxImage.Information)
 
             Catch ex As Exception
@@ -471,7 +437,7 @@ Namespace Presentation.Views.Admin
             GetSelectedPeriod(monthIndex, yearValue, startDate, endDate, periodDisplay, periodSlug)
 
             Dim dialog As New OpenFolderDialog With {
-                .Title = $"Select Target Folder to Export All 8 Tables ({periodDisplay})"
+                .Title = $"Select Target Folder to Export All {_tables.Count} Tables ({periodDisplay})"
             }
 
             If dialog.ShowDialog() <> True Then Return
@@ -513,8 +479,8 @@ Namespace Presentation.Views.Admin
                     File.WriteAllText(filePath, csvContent, New UTF8Encoding(True))
                 Next
 
-                TxtStatus.Text = $"Successfully exported all 8 tables to '{targetFolder}' ({periodDisplay})."
-                MessageBox.Show($"Successfully exported all 8 tables for {periodDisplay} to folder:{Environment.NewLine}{Environment.NewLine}{targetFolder}",
+                TxtStatus.Text = $"Successfully exported all {_tables.Count} tables to '{targetFolder}' ({periodDisplay})."
+                MessageBox.Show($"Successfully exported all {_tables.Count} tables for {periodDisplay} to folder:{Environment.NewLine}{Environment.NewLine}{targetFolder}",
                                 "Export Completed", MessageBoxButton.OK, MessageBoxImage.Information)
 
             Catch ex As Exception

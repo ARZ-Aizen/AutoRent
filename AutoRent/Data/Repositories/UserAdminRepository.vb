@@ -1,4 +1,4 @@
-Imports System.Collections.Generic
+﻿Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports System.Security.Cryptography
@@ -79,7 +79,14 @@ Namespace Data.Repositories
             branch = If(branch, "HQ").Trim()
             role = If(role, "Rental Staff").Trim()
 
-            If username.Length < 3 Then Return "Username must be at least 3 characters."
+            Dim nameIssue = InputValidation.FullName(fullName)
+            If nameIssue IsNot Nothing Then Return nameIssue
+            Dim userIssue = InputValidation.Username(username)
+            If userIssue IsNot Nothing Then Return userIssue
+            If Db.Count("SELECT COUNT(*) FROM [Users] WHERE UCASE(TRIM([full_name])) = ? AND [is_deleted] = False",
+                        Db.Text(fullName.ToUpperInvariant(), 100)) > 0 Then
+                Return "A staff account with this full name already exists."
+            End If
 
             Dim passErr = ValidatePasswordStrength(password)
             If passErr IsNot Nothing Then Return passErr
@@ -209,8 +216,14 @@ Namespace Data.Repositories
             fullName = If(fullName, "").Trim()
             role = If(role, "Rental Staff").Trim()
 
-            If username.Length < 3 Then Return "Username must be at least 3 characters."
-            If String.IsNullOrWhiteSpace(fullName) Then Return "Full name cannot be blank."
+            Dim nameIssue = InputValidation.FullName(fullName)
+            If nameIssue IsNot Nothing Then Return nameIssue
+            Dim userIssue = InputValidation.Username(username)
+            If userIssue IsNot Nothing Then Return userIssue
+            If Db.Count("SELECT COUNT(*) FROM [Users] WHERE UCASE(TRIM([full_name])) = ? AND [user_id] <> ? AND [is_deleted] = False",
+                        Db.Text(fullName.ToUpperInvariant(), 100), Db.Int(userId)) > 0 Then
+                Return "Another staff account already uses this full name."
+            End If
 
             If IsAdminRole(role) AndAlso OtherActiveAdmins(userId) > 0 Then
                 Return "Only one System Administrator is allowed. Another account already holds this role."
@@ -254,10 +267,6 @@ Namespace Data.Repositories
             End If
 
             Try
-                Dim inspectCount = Db.Count("SELECT COUNT(*) FROM [Inspections] WHERE [inspector] = ?", Db.Text(user.DisplayName, 100))
-                If inspectCount > 0 Then
-                    logs.Add($"• Vehicle Inspections: {inspectCount} inspections performed and signed")
-                End If
 
                 Dim dispatchCount = Db.Count("SELECT COUNT(*) FROM [Dispatches] WHERE [branch] = ?", Db.Text(user.Branch, 50))
                 If dispatchCount > 0 Then

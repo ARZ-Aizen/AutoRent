@@ -1,4 +1,5 @@
-Imports System.Data.OleDb
+﻿Imports System.Data.OleDb
+Imports System.IO
 
 Namespace Data.Context
     Public NotInheritable Class DatabaseInitializer
@@ -6,6 +7,14 @@ Namespace Data.Context
         End Sub
 
         Public Shared Sub EnsureSchema()
+            ' Preserve the original Access database once, before removing the
+            ' discontinued Inspections table. Never overwrite an older backup.
+            Dim databasePath As String = AccessDatabaseConnection.GetDatabasePath()
+            Dim retiredBackupPath As String = Path.Combine(Path.GetDirectoryName(databasePath), "AutoRent_Backup_Before_Inspection_Removal.accdb")
+            If Not File.Exists(retiredBackupPath) Then
+                File.Copy(databasePath, retiredBackupPath, False)
+            End If
+
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
 
@@ -109,15 +118,10 @@ Namespace Data.Context
                         "[status] VARCHAR(20))")
                 End If
 
-                If Not TableExists(connection, "Inspections") Then
-                    Run(connection, "CREATE TABLE [Inspections] (" &
-                        "[inspection_id] COUNTER PRIMARY KEY, " &
-                        "[vehicle_id] LONG NOT NULL, " &
-                        "[inspected_at] DATETIME, " &
-                        "[inspector] VARCHAR(100), " &
-                        "[fuel] VARCHAR(20), " &
-                        "[findings] MEMO, " &
-                        "[inspection_result] VARCHAR(20))")
+                ' The old Inspection feature is retired. Remove its Access table
+                ' after the one-time backup above has been successfully created.
+                If TableExists(connection, "Inspections") Then
+                    Run(connection, "DROP TABLE [Inspections]")
                 End If
 
                 Try

@@ -151,54 +151,21 @@ Namespace Presentation.Views.Admin
                 Dim activeFleet =
                     Math.Max(0, total - retired)
 
-                ' STATISTICS CARDS
-                TxtTotal.Text =
-                    total.ToString("N0")
-
-                TxtAvailable.Text =
-                    available.ToString("N0")
-
-                TxtOut.Text =
-                    rented.ToString("N0")
-
-                TxtReservedNote.Text =
-                    $"{reserved:N0} reserved separately"
-
-                TxtMaint.Text =
-                    maintenance.ToString("N0")
-
-
-                ' Get the number of scheduled maintenance jobs.
-                Dim scheduledJobs As Integer = Db.Count(
-                    "SELECT COUNT(*) FROM [Maintenance] " &
-                    "WHERE [status] = 'Scheduled'"
-                )
-
-                ' Display scheduled and overdue maintenance.
-                TxtMaintNote.Text =
-                    $"{scheduledJobs:N0} scheduled • " &
-                    $"{stats.OverdueMaintenance:N0} overdue"
-
-
-                TxtRevenue.Text =
-                    FormatKpiCurrency(
-                        stats.RevenueThisMonth
-                    )
-
-                TxtRevenue.ToolTip =
-                    "₱" &
-                    stats.RevenueThisMonth.ToString("N2")
+                ' Executive KPIs; vehicle counts remain in Fleet Readiness below.
+                TxtRevenue.Text = FormatKpiCurrency(stats.RevenueThisMonth)
+                TxtRevenue.ToolTip = "₱" & stats.RevenueThisMonth.ToString("N2")
+                TxtAdminMaintCost.Text = FormatKpiCurrency(stats.MaintenanceCostThisMonth)
+                TxtAdminMaintCost.ToolTip = "₱" & stats.MaintenanceCostThisMonth.ToString("N2")
+                Dim netAfterMaintenance As Decimal = stats.RevenueThisMonth - stats.MaintenanceCostThisMonth
+                TxtAdminNet.Text = FormatKpiCurrency(netAfterMaintenance)
+                TxtAdminNet.ToolTip = "₱" & netAfterMaintenance.ToString("N2")
+                TxtAdminOverdue.Text = stats.OverdueMaintenance.ToString("N0")
+                TxtAdminUsers.Text = stats.ActiveUsers.ToString("N0")
 
                 If activeFleet = 0 Then
-
                     TxtUtilization.Text = "0.0%"
-
                 Else
-
-                    TxtUtilization.Text =
-                        (100.0 * rented / activeFleet).
-                        ToString("N1") & "%"
-
+                    TxtUtilization.Text = (100.0 * rented / activeFleet).ToString("N1") & "%"
                 End If
 
                 ' MAINTENANCE INFORMATION

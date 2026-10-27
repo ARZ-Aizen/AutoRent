@@ -42,6 +42,8 @@ Namespace Presentation.Views.Admin
 
         Public Sub New()
             InitializeComponent()
+            InputBehavior.Attach(TxtCost, "money", 15)
+            TxtNotes.MaxLength = 2000
         End Sub
 
         ' ==========================================
@@ -65,7 +67,7 @@ Namespace Presentation.Views.Admin
                 "Tire service",
                 "Brake service",
                 "Battery check",
-                "Routine inspection",
+                "Routine service",
                 "Engine check",
                 "Body repair",
                 "Other"

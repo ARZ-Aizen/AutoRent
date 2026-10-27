@@ -1,4 +1,4 @@
-<UserControl x:Class="Presentation.Views.User.CustomerManagementView"
+﻿<UserControl x:Class="Presentation.Views.User.CustomerManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="Manrope, Segoe UI">
@@ -651,6 +651,7 @@
                             <TextBlock Text=" *" Foreground="#C62828" FontWeight="Bold" FontSize="12"/>
                         </StackPanel>
                         <TextBox x:Name="TxtModalName" Tag="e.g. Juan Dela Cruz" Height="38"/>
+                        <TextBlock x:Name="TxtNameIssue" Visibility="Collapsed" Foreground="#B42318" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Phone -->
@@ -659,19 +660,22 @@
                             <TextBlock Text="Phone Number" Style="{StaticResource FieldLabel}" Margin="0"/>
                             <TextBlock Text=" *" Foreground="#C62828" FontWeight="Bold" FontSize="12"/>
                         </StackPanel>
-                        <TextBox x:Name="TxtModalPhone" Tag="e.g. 0917 123 4567" Height="38"/>
+                        <TextBox x:Name="TxtModalPhone" Tag="e.g. 09171234567" Height="38"/>
+                        <TextBlock x:Name="TxtPhoneIssue" Visibility="Collapsed" Foreground="#B42318" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Email -->
                     <StackPanel Margin="0,0,0,14">
                         <TextBlock Text="Email Address" Style="{StaticResource FieldLabel}"/>
                         <TextBox x:Name="TxtModalEmail" Tag="e.g. juan.delacruz@example.com" Height="38"/>
+                        <TextBlock x:Name="TxtEmailIssue" Visibility="Collapsed" Foreground="#B42318" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Driver License No -->
                     <StackPanel Margin="0,0,0,22">
                         <TextBlock Text="Driver's License No." Style="{StaticResource FieldLabel}"/>
                         <TextBox x:Name="TxtModalLicense" Tag="e.g. N01-23-456789" Height="38"/>
+                        <TextBlock x:Name="TxtLicenseIssue" Visibility="Collapsed" Foreground="#B42318" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                         <TextBlock Text="Required for vehicle rental and dispatch. Customers without a license cannot rent." FontSize="11" Foreground="#C62828" Margin="0,4,0,0"/>
                     </StackPanel>
 
