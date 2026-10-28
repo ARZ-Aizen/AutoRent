@@ -4,8 +4,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d"
-             d:DesignHeight="760"
+             mc:Ignorable="d" 
+             d:DesignHeight="780"
              d:DesignWidth="1180"
              FontFamily="Segoe UI"
              Background="#F7F6F5">
@@ -23,7 +23,7 @@
                 <Setter Property="BorderBrush" Value="#E6E3E3"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="8"/>
-                <Setter Property="Padding" Value="14"/>
+                <Setter Property="Padding" Value="12,10"/>
             </Style>
 
             <Style x:Key="MiniStatCard" TargetType="Border">
@@ -31,34 +31,34 @@
                 <Setter Property="BorderBrush" Value="#E6E3E3"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="8"/>
-                <Setter Property="Padding" Value="14"/>
+                <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="Margin" Value="0,0,10,0"/>
-                <Setter Property="MinHeight" Value="95"/>
+                <Setter Property="MinHeight" Value="74"/>
             </Style>
 
             <Style x:Key="StatLabelStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontSize" Value="10.5"/>
                 <Setter Property="Foreground" Value="#726C6D"/>
             </Style>
 
             <Style x:Key="StatValueStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="28"/>
+                <Setter Property="FontSize" Value="22"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Foreground" Value="#7A081F"/>
-                <Setter Property="Margin" Value="0,6,0,2"/>
+                <Setter Property="Margin" Value="0,3,0,1"/>
             </Style>
 
             <Style x:Key="FieldTitleStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontSize" Value="10.5"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="#5E5859"/>
-                <Setter Property="Margin" Value="0,0,0,5"/>
+                <Setter Property="Margin" Value="0,0,0,3"/>
             </Style>
 
             <Style x:Key="SmallActionButton" TargetType="Button">
-                <Setter Property="Height" Value="36"/>
-                <Setter Property="Padding" Value="14,0"/>
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="FontSize" Value="11.5"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="BorderThickness" Value="1"/>
@@ -95,7 +95,7 @@
                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
             </Style>
 
-            <Style x:Key="CleanGrid" TargetType="DataGrid">
+                        <Style x:Key="CleanGrid" TargetType="DataGrid">
                 <Setter Property="AutoGenerateColumns" Value="False"/>
                 <Setter Property="IsReadOnly" Value="True"/>
                 <Setter Property="CanUserAddRows" Value="False"/>
@@ -103,8 +103,8 @@
                 <Setter Property="HeadersVisibility" Value="Column"/>
                 <Setter Property="GridLinesVisibility" Value="None"/>
                 <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="ColumnHeaderHeight" Value="38"/>
-                <Setter Property="RowHeight" Value="38"/>
+                <Setter Property="ColumnHeaderHeight" Value="32"/>
+                <Setter Property="RowHeight" Value="32"/>
                 <Setter Property="AlternatingRowBackground" Value="#FCFBFB"/>
                 <Setter Property="RowBackground" Value="White"/>
                 <Setter Property="SelectionMode" Value="Single"/>
@@ -116,7 +116,7 @@
                             <Setter Property="Background" Value="#F5F3F2"/>
                             <Setter Property="Foreground" Value="#797274"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="FontSize" Value="11"/>
+                            <Setter Property="FontSize" Value="10.5"/>
                             <Setter Property="Padding" Value="10,0"/>
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -127,11 +127,44 @@
                 <Setter Property="CellStyle">
                     <Setter.Value>
                         <Style TargetType="DataGridCell">
-                            <Setter Property="Padding" Value="10,4"/>
                             <Setter Property="BorderBrush" Value="#F0EDED"/>
                             <Setter Property="BorderThickness" Value="0,0,0,1"/>
                             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Background="{TemplateBinding Background}" Padding="10,3">
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CalendarDayButtonStyle" TargetType="Button">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="VerticalContentAlignment" Value="Top"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
@@ -145,7 +178,7 @@
               PanningMode="VerticalOnly"
               CanContentScroll="False">
 
-        <Grid Margin="22">
+        <Grid Margin="18,10,18,12">
             <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -153,7 +186,7 @@
         </Grid.RowDefinitions>
 
         <!-- HEADER -->
-        <Grid Grid.Row="0" Margin="0,0,0,14">
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -161,14 +194,14 @@
 
             <StackPanel>
                 <TextBlock Text="Maintenance Scheduler"
-                           FontSize="24"
+                           FontSize="22"
                            FontWeight="Bold"
                            Foreground="#2F2B2C"/>
                 <TextBlock x:Name="TxtSummary"
                            Text="Plan services and monitor fleet maintenance."
                            FontSize="11"
                            Foreground="#867F81"
-                           Margin="0,4,0,0"/>
+                           Margin="0,2,0,0"/>
             </StackPanel>
 
             <Button x:Name="BtnHistory"
@@ -180,7 +213,7 @@
         </Grid>
 
         <!-- STAT CARDS -->
-        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,14">
+        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,10">
             <Border Style="{StaticResource MiniStatCard}">
                 <StackPanel>
                     <TextBlock Text="Due within 7 days"
@@ -189,7 +222,7 @@
                                Text="0"
                                Style="{StaticResource StatValueStyle}"/>
                     <TextBlock Text="Upcoming planned work"
-                               FontSize="10"
+                               FontSize="9.5"
                                Foreground="#989193"/>
                 </StackPanel>
             </Border>
@@ -202,7 +235,7 @@
                                Text="0"
                                Style="{StaticResource StatValueStyle}"/>
                     <TextBlock Text="Needs attention"
-                               FontSize="10"
+                               FontSize="9.5"
                                Foreground="#989193"/>
                 </StackPanel>
             </Border>
@@ -215,7 +248,7 @@
                                Text="0"
                                Style="{StaticResource StatValueStyle}"/>
                     <TextBlock Text="Currently being serviced"
-                               FontSize="10"
+                               FontSize="9.5"
                                Foreground="#989193"/>
                 </StackPanel>
             </Border>
@@ -228,7 +261,7 @@
                                Text="0"
                                Style="{StaticResource StatValueStyle}"/>
                     <TextBlock Text="Last 7 days"
-                               FontSize="10"
+                               FontSize="9.5"
                                Foreground="#989193"/>
                 </StackPanel>
             </Border>
@@ -238,7 +271,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.5*"/>
-                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
 
@@ -246,15 +279,14 @@
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="12"/>
+                    <RowDefinition Height="10"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-
                 <!-- MODERN MAINTENANCE CALENDAR -->
                 <Border Grid.Row="0"
-        Style="{StaticResource PanelCard}"
-        MinHeight="325">
+                        Style="{StaticResource PanelCard}"
+                        MinHeight="250">
 
                     <Grid>
                         <Grid.RowDefinitions>
@@ -263,425 +295,233 @@
                         </Grid.RowDefinitions>
 
                         <!-- HEADER -->
-                        <Grid Grid.Row="0"
-              Margin="0,0,0,12">
-
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal"
-                        VerticalAlignment="Center">
-
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock x:Name="TxtCalendarMonth"
-                           Text="October 2026"
-                           FontSize="15"
-                           FontWeight="Bold"
-                           Foreground="#302D2E"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0"/>
+                                           Text="October 2026"
+                                           FontSize="14"
+                                           FontWeight="Bold"
+                                           Foreground="#302D2E"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0"/>
 
-                                <Button Content="‹"
-                        Width="27"
-                        Height="27"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="CalendarPrevious_Click"
-                        Margin="0,0,5,0"/>
+                                <Button x:Name="BtnPrevMonth"
+                                        Width="28"
+                                        Height="28"
+                                        Padding="0"
+                                        ToolTip="Previous month"
+                                        Style="{StaticResource SmallActionButton}"
+                                        Click="CalendarPrevious_Click"
+                                        Margin="0,0,4,0">
+                                    <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#383435"/>
+                                </Button>
 
-                                <Button Content="›"
-                        Width="27"
-                        Height="27"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="CalendarNext_Click"/>
+                                <Button x:Name="BtnNextMonth"
+                                        Width="28"
+                                        Height="28"
+                                        Padding="0"
+                                        ToolTip="Next month"
+                                        Style="{StaticResource SmallActionButton}"
+                                        Click="CalendarNext_Click"
+                                        Margin="0,0,6,0">
+                                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#383435"/>
+                                </Button>
 
+                                <Button x:Name="BtnTodayMonth"
+                                        Content="Today"
+                                        Height="28"
+                                        Padding="8,0"
+                                        ToolTip="Go to current month"
+                                        Style="{StaticResource SmallActionButton}"
+                                        Click="CalendarToday_Click"/>
                             </StackPanel>
 
                             <!-- CALENDAR / TABLE TOGGLE -->
-                            <StackPanel Grid.Column="2"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
-
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button x:Name="BtnCalendarMode"
-                        Content="Calendar"
-                        Style="{StaticResource PrimaryActionButton}"
-                        Click="CalendarMode_Click"
-                        Margin="0,0,5,0"/>
+                                        Content="Calendar"
+                                        Style="{StaticResource PrimaryActionButton}"
+                                        Click="CalendarMode_Click"
+                                        Margin="0,0,4,0"/>
 
                                 <Button x:Name="BtnTableMode"
-                        Content="Table view"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="TableMode_Click"/>
+                                        Content="Table view"
+                                        Style="{StaticResource SmallActionButton}"
+                                        Click="TableMode_Click"/>
                             </StackPanel>
-
                         </Grid>
 
                         <!-- Retained for compatibility with existing code -->
-                        <Calendar x:Name="CalMaintenance"
-                  Visibility="Collapsed"/>
+                        <Calendar x:Name="CalMaintenance" Visibility="Collapsed"/>
 
                         <!-- CALENDAR GRID -->
-                        <StackPanel x:Name="CalendarGridPanel"
-                    Grid.Row="1">
-
+                        <StackPanel x:Name="CalendarGridPanel" Grid.Row="1">
                             <!-- DAYS OF WEEK -->
-                            <UniformGrid Columns="7"
-                         Margin="0,0,0,4">
-
-                                <TextBlock Text="MON"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="TUE"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="WED"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="THU"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="FRI"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="SAT"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
-                                <TextBlock Text="SUN"
-                           HorizontalAlignment="Center"
-                           FontSize="10"
-                           FontWeight="SemiBold"
-                           Foreground="#777174"/>
-
+                            <UniformGrid Columns="7" Margin="0,0,0,3">
+                                <TextBlock Text="MON" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="TUE" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="WED" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="THU" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="FRI" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="SAT" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
+                                <TextBlock Text="SUN" HorizontalAlignment="Center" FontSize="9.5" FontWeight="SemiBold" Foreground="#777174"/>
                             </UniformGrid>
 
                             <!-- DYNAMIC DATE CELLS -->
-                            <UniformGrid x:Name="CalendarDayCells"
-                         Columns="7"/>
-
+                            <UniformGrid x:Name="CalendarDayCells" Columns="7"/>
                         </StackPanel>
 
                         <!-- TABLE VIEW -->
                         <DataGrid x:Name="DgMonthEvents"
-                  Grid.Row="1"
-                  Visibility="Collapsed"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  GridLinesVisibility="None"
-                  RowHeight="36"
-                  ColumnHeaderHeight="36"
-                  AlternatingRowBackground="#FAF9F8"
-                  BorderThickness="0">
+                                  Grid.Row="1"
+                                  Visibility="Collapsed"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="None"
+                                  RowHeight="32"
+                                  ColumnHeaderHeight="32"
+                                  AlternatingRowBackground="#FAF9F8"
+                                  BorderThickness="0"
+                                  SelectionChanged="DgMonthEvents_SelectionChanged">
 
                             <DataGrid.Columns>
-
-                                <DataGridTextColumn Header="Date"
-                                    Binding="{Binding scheduled_date, StringFormat='dd MMM, HH:mm'}"
-                                    Width="120"/>
-
-                                <DataGridTextColumn Header="Vehicle"
-                                    Binding="{Binding vehicle}"
-                                    Width="1.5*"/>
-
-                                <DataGridTextColumn Header="Service"
-                                    Binding="{Binding service_type}"
-                                    Width="1.2*"/>
-
-                                <DataGridTextColumn Header="Status"
-                                    Binding="{Binding status}"
-                                    Width="105"/>
-
+                                <DataGridTextColumn Header="Date" Binding="{Binding scheduled_date, StringFormat='dd MMM, HH:mm'}" Width="110"/>
+                                <DataGridTextColumn Header="Vehicle" Binding="{Binding vehicle}" Width="1.5*"/>
+                                <DataGridTextColumn Header="Service" Binding="{Binding service_type}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding status}" Width="95"/>
                             </DataGrid.Columns>
-
                         </DataGrid>
-
                     </Grid>
-
                 </Border>
 
-
-                <!-- UPCOMING APPOINTMENTS -->
-                <Border Grid.Row="2"
-                        Style="{StaticResource PanelCard}">
+                <!-- UPCOMING APPOINTMENTS (Squeezed height to prevent outer scrollbar) -->
+                <Border Grid.Row="2" Style="{StaticResource PanelCard}">
                     <StackPanel>
-                        <Grid Margin="0,0,0,10">
+                        <Grid Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel>
-                                <TextBlock Text="Upcoming service appointments"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Foreground="#2F2B2C"/>
-                                <TextBlock x:Name="TxtUpcomingCount"
-                                           Text="Open maintenance records"
-                                           FontSize="11"
-                                           Foreground="#8A8385"
-                                           Margin="0,4,0,0"/>
+                                <TextBlock Text="Upcoming service appointments" FontSize="14.5" FontWeight="Bold" Foreground="#2F2B2C"/>
+                                <TextBlock x:Name="TxtUpcomingCount" Text="Open maintenance records" FontSize="10.5" Foreground="#8A8385" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Column="1"
-                                       Text="Open jobs only"
-                                       FontSize="11"
-                                       Foreground="#8A8385"
-                                       VerticalAlignment="Top"/>
+                            <TextBlock Grid.Column="1" Text="Open jobs only" FontSize="10.5" Foreground="#8A8385" VerticalAlignment="Top"/>
                         </Grid>
 
                         <DataGrid x:Name="DgMaintenance"
                                   Style="{StaticResource CleanGrid}"
                                   SelectionChanged="DgMaintenance_SelectionChanged"
-                                  Height="245">
+                                  Height="130">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Service ID"
-                                                    Binding="{Binding display_id}"
-                                                    Width="95"/>
-                                <DataGridTextColumn Header="Vehicle"
-                                                    Binding="{Binding vehicle}"
-                                                    Width="1.6*"/>
-                                <DataGridTextColumn Header="Date / Time"
-                                                    Binding="{Binding scheduled_date, StringFormat='dd MMM - HH:mm'}"
-                                                    Width="1*"/>
-                                <DataGridTextColumn Header="Type"
-                                                    Binding="{Binding service_type}"
-                                                    Width="1.2*"/>
-                                <DataGridTextColumn Header="Status"
-                                                    Binding="{Binding status}"
-                                                    Width="0.9*"/>
+                                <DataGridTextColumn Header="Service ID" Binding="{Binding display_id}" Width="85"/>
+                                <DataGridTextColumn Header="Vehicle" Binding="{Binding vehicle}" Width="1.6*"/>
+                                <DataGridTextColumn Header="Date / Time" Binding="{Binding scheduled_date, StringFormat='dd MMM - HH:mm'}" Width="1*"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding service_type}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding status}" Width="0.9*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
                 </Border>
             </Grid>
 
-
-            <!-- RIGHT SIDE - MAINTENANCE FORM -->
-            <Border Grid.Column="2"
-        Style="{StaticResource PanelCard}"
-        MinWidth="320">
-
+            <!-- RIGHT SIDE - MAINTENANCE FORM (Compact) -->
+            <Border Grid.Column="2" Style="{StaticResource PanelCard}" MinWidth="310">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <!-- Scrollable form content -->
                         <RowDefinition Height="*"/>
-
-                        <!-- Fixed action buttons -->
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                        <!-- MAINTENANCE FORM CONTENT -->
-                        <Border Grid.Row="0">
-
-                            <StackPanel Margin="0,0,8,10">
-
+                    <!-- MAINTENANCE FORM CONTENT -->
+                    <Border Grid.Row="0">
+                        <StackPanel Margin="0,0,4,6">
                             <!-- HEADER -->
-                            <TextBlock Text="Schedule maintenance"
-                           FontSize="16"
-                           FontWeight="Bold"
-                           Foreground="#2F2B2C"/>
-
-                            <TextBlock Text="Create or update a maintenance record"
-                           FontSize="11"
-                           Foreground="#8A8385"
-                           Margin="0,4,0,14"/>
-
+                            <TextBlock Text="Schedule maintenance" FontSize="14.5" FontWeight="Bold" Foreground="#2F2B2C"/>
+                            <TextBlock Text="Create or update a maintenance record" FontSize="10.5" Foreground="#8A8385" Margin="0,2,0,8"/>
 
                             <!-- VEHICLE CATEGORY -->
-                            <StackPanel Margin="0,0,0,11">
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Vehicle category *" Style="{StaticResource FieldTitleStyle}"/>
+                                <ComboBox x:Name="CmbCategory" Height="30" SelectionChanged="CmbCategory_SelectionChanged" ToolTip="Choose a vehicle category first"/>
+                            </StackPanel>
 
-                                <TextBlock
-            Text="Vehicle category *"
-            Style="{StaticResource FieldTitleStyle}"/>
-
-                                    <ComboBox
-            x:Name="CmbCategory"
-            Height="36"
-            SelectionChanged="CmbCategory_SelectionChanged"
-            ToolTip="Choose a vehicle category first"/>
-
-                                </StackPanel>
-
-                                <!-- VEHICLE -->
-                                <StackPanel Margin="0,0,0,11">
-
-                                    <TextBlock
-                            Text="Vehicle *"
-                            Style="{StaticResource FieldTitleStyle}"/>
-
-                                                    <ComboBox
-                            x:Name="CmbVehicle"
-                            Height="36"
-                            DisplayMemberPath="display"
-                            SelectedValuePath="vehicle_id"
-                            IsEnabled="False"
-                            ToolTip="Select a category to see matching vehicles"/>
-
-                                                <TextBlock
-                            x:Name="TxtCategoryVehicleCount"
-                            Text="Select a category to see vehicles."
-                            FontSize="10"
-                            Foreground="#8A8385"
-                            TextWrapping="Wrap"
-                            Margin="0,5,0,0"/>  
-
+                            <!-- VEHICLE -->
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Vehicle *" Style="{StaticResource FieldTitleStyle}"/>
+                                <ComboBox x:Name="CmbVehicle" Height="30" DisplayMemberPath="display" SelectedValuePath="vehicle_id" IsEnabled="False" ToolTip="Select a category to see matching vehicles"/>
+                                <TextBlock x:Name="TxtCategoryVehicleCount" Text="Select a category to see vehicles." FontSize="9.5" Foreground="#8A8385" TextWrapping="Wrap" Margin="0,3,0,0"/>  
                             </StackPanel>
 
                             <!-- MAINTENANCE TYPE -->
-                            <StackPanel Margin="0,0,0,11">
-
-                                <TextBlock Text="Maintenance type *"
-               Style="{StaticResource FieldTitleStyle}"/>
-
-                                <ComboBox x:Name="CmbService"
-              Height="36"
-              IsEditable="True"
-              ToolTip="Choose or enter a maintenance type"/>
-
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Maintenance type *" Style="{StaticResource FieldTitleStyle}"/>
+                                <ComboBox x:Name="CmbService" Height="30" IsEditable="False" ToolTip="Select a maintenance type"/>
                             </StackPanel>
                             
                             <!-- SCHEDULED DATE -->
-                            <StackPanel Margin="0,0,0,11">
-
-                                <TextBlock Text="Scheduled date *"
-                               Style="{StaticResource FieldTitleStyle}"/>
-
-                                <DatePicker x:Name="DpDate"
-                                Height="36"/>
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Scheduled date *" Style="{StaticResource FieldTitleStyle}"/>
+                                <DatePicker x:Name="DpDate" Height="30" SelectedDateChanged="DpDate_SelectedDateChanged"/>
                             </StackPanel>
 
                             <!-- STATUS -->
-                            <StackPanel Margin="0,0,0,11">
-
-                                <TextBlock Text="Status *"
-                               Style="{StaticResource FieldTitleStyle}"/>
-
-                                <ComboBox x:Name="CmbStatus"
-                              Height="36"/>
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Status *" Style="{StaticResource FieldTitleStyle}"/>
+                                <ComboBox x:Name="CmbStatus" Height="30"/>
                             </StackPanel>
 
                             <!-- COST -->
-                            <StackPanel Margin="0,0,0,11">
-
-                                <TextBlock Text="Estimated cost (PHP)"
-                               Style="{StaticResource FieldTitleStyle}"/>
-
-                                <TextBox x:Name="TxtCost"
-                             Height="36"
-                             Padding="8,6"
-                             Text="0"/>
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Estimated cost (PHP)" Style="{StaticResource FieldTitleStyle}"/>
+                                <TextBox x:Name="TxtCost" Height="30" Padding="8,4" Text="0"/>
                             </StackPanel>
 
-                            <!-- NOTES -->
-                            <StackPanel Margin="0,0,0,12">
-
-                                <TextBlock Text="Notes"
-                               Style="{StaticResource FieldTitleStyle}"/>
-
-                                <TextBox x:Name="TxtNotes"
-                             Height="80"
-                             AcceptsReturn="True"
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             Padding="8,6"/>
+                            <!-- NOTES (Compact) -->
+                            <StackPanel Margin="0,0,0,6">
+                                <TextBlock Text="Notes" Style="{StaticResource FieldTitleStyle}"/>
+                                <TextBox x:Name="TxtNotes" Height="46" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="8,4"/>
                             </StackPanel>
 
                             <!-- REMINDER -->
-                            <Border Background="#FBF1E6"
-                        BorderBrush="#F2DDC5"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="10"
-                        Margin="0,0,0,10">
-
+                            <Border Background="#FBF1E6" BorderBrush="#F2DDC5" BorderThickness="1" CornerRadius="6" Padding="8,5" Margin="0,0,0,6">
                                 <StackPanel>
-
-                                    <TextBlock Text="Maintenance reminder"
-                                   FontWeight="SemiBold"
-                                   Foreground="#8A5B18"
-                                   FontSize="11"/>
-
-                                    <TextBlock Text="Vehicles marked In Progress will automatically appear as Maintenance in your fleet."
-                                   TextWrapping="Wrap"
-                                   Foreground="#8A5B18"
-                                   FontSize="10"
-                                   Margin="0,4,0,0"/>
-
+                                    <TextBlock Text="Maintenance reminder" FontWeight="SemiBold" Foreground="#8A5B18" FontSize="10"/>
+                                    <TextBlock Text="Vehicles marked In Progress automatically appear as Maintenance in fleet." TextWrapping="Wrap" Foreground="#8A5B18" FontSize="9.5" Margin="0,2,0,0"/>
                                 </StackPanel>
                             </Border>
-
-                            </StackPanel>
-                        </Border>
-
-                        <!-- FIXED ACTION BUTTONS -->
-                        <Border Grid.Row="1"
-                BorderBrush="#EAE6E5"
-                BorderThickness="0,1,0,0"
-                Padding="0,12,0,0"
-                Background="White">
-
-                        <WrapPanel HorizontalAlignment="Right"
-                       Orientation="Horizontal">
-
-                            <!-- CLEAR -->
-                            <Button x:Name="BtnClear"
-                        Content="Clear"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="BtnClear_Click"
-                        Margin="0,0,7,7"/>
-
-                            <!-- DELETE -->
-                            <Button x:Name="BtnDelete"
-                        Content="Delete"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="BtnDelete_Click"
-                        Margin="0,0,7,7"
-                        IsEnabled="False"/>
-
-                            <!-- SAVE CHANGES -->
-                            <Button x:Name="BtnSave"
-                        Content="Save Changes"
-                        Style="{StaticResource SmallActionButton}"
-                        Click="BtnSave_Click"
-                        Margin="0,0,7,7"
-                        IsEnabled="False"/>
-
-                            <!-- SCHEDULE SERVICE -->
-                            <Button x:Name="BtnAdd"
-                        Content="Schedule Service"
-                        Style="{StaticResource PrimaryActionButton}"
-                        Click="BtnAdd_Click"
-                        Margin="0,0,0,7"/>
-
-                        </WrapPanel>
+                        </StackPanel>
                     </Border>
 
+                    <!-- FIXED ACTION BUTTONS -->
+                    <Border Grid.Row="1" BorderBrush="#EAE6E5" BorderThickness="0,1,0,0" Padding="0,8,0,0" Background="White">
+                        <WrapPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                            <!-- CLEAR -->
+                            <Button x:Name="BtnClear" Content="Clear" Style="{StaticResource SmallActionButton}" Click="BtnClear_Click" Margin="0,0,5,5"/>
+                            <!-- DELETE -->
+                            <Button x:Name="BtnDelete" Content="Delete" Style="{StaticResource SmallActionButton}" Click="BtnDelete_Click" Margin="0,0,5,5" IsEnabled="False"/>
+                            <!-- SAVE CHANGES -->
+                            <Button x:Name="BtnSave" Content="Save Changes" Style="{StaticResource SmallActionButton}" Click="BtnSave_Click" Margin="0,0,5,5" IsEnabled="False"/>
+                            <!-- SCHEDULE SERVICE -->
+                            <Button x:Name="BtnAdd" Content="Schedule Service" Style="{StaticResource PrimaryActionButton}" Click="BtnAdd_Click" Margin="0,0,0,5"/>
+                        </WrapPanel>
+                    </Border>
                 </Grid>
             </Border>
-
-            </Grid>
         </Grid>
-
+        </Grid>
     </ScrollViewer>
 </UserControl>

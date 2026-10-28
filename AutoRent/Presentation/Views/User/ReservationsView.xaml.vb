@@ -502,6 +502,11 @@ Namespace Presentation.Views.User
             Dim pickup = DpModalPickup.SelectedDate.Value
             Dim dropoff = DpModalReturn.SelectedDate.Value
 
+            If _editingReservation Is Nothing AndAlso pickup.Date < Date.Today Then
+                ShowModalError("Pickup date cannot be in the past.")
+                Return
+            End If
+
             If dropoff <= pickup Then
                 ShowModalError("Return date must be strictly after the pickup date.")
                 Return
@@ -542,12 +547,7 @@ Namespace Presentation.Views.User
             Dim res = TryCast(CType(sender, FrameworkElement).Tag, ReservationItem)
             If res Is Nothing Then Return
 
-            Dim confirm = MessageBox.Show($"Mark reservation {res.Id} for {res.Customer} as Completed?" & vbCrLf &
-                                          "The vehicle will be released and returned to Available status.",
-                                          "Complete Reservation",
-                                          MessageBoxButton.YesNo,
-                                          MessageBoxImage.Question)
-            If confirm <> MessageBoxResult.Yes Then Return
+            If Not AlertUtil.Confirm($"Mark reservation {res.Id} for {res.Customer} as Completed?" & vbCrLf & $"Vehicle ({res.Plate}) will be marked as Available.", "Complete Reservation", ViewHelpers.Owner(Me)) Then Return
 
             Try
                 ClientRepository.CloseReservation(res.DbId, res.VehicleId, "Completed")
@@ -563,11 +563,7 @@ Namespace Presentation.Views.User
             Dim res = TryCast(CType(sender, FrameworkElement).Tag, ReservationItem)
             If res Is Nothing Then Return
 
-            Dim confirm = MessageBox.Show($"Are you sure you want to cancel reservation {res.Id} for {res.Customer}?",
-                                          "Cancel Reservation",
-                                          MessageBoxButton.YesNo,
-                                          MessageBoxImage.Question)
-            If confirm <> MessageBoxResult.Yes Then Return
+            If Not AlertUtil.Confirm($"Are you sure you want to cancel reservation {res.Id} for {res.Customer}?", "Cancel Reservation", ViewHelpers.Owner(Me)) Then Return
 
             Try
                 ClientRepository.CloseReservation(res.DbId, res.VehicleId, "Cancelled")
@@ -578,56 +574,6 @@ Namespace Presentation.Views.User
 
             ReloadData()
         End Sub
-
-        ' =========================
-        ' CSV EXPORT
-        ' =========================
-
-        Private Sub BtnExportCsv_Click(sender As Object, e As RoutedEventArgs)
-            If _filtered Is Nothing OrElse _filtered.Count = 0 Then
-                MessageBox.Show("There are no reservation records to export.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information)
-                Return
-            End If
-
-            Dim dialog As New SaveFileDialog() With {
-                .FileName = $"AutoRent_Reservations_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
-                .DefaultExt = ".csv",
-                .Filter = "CSV documents (.csv)|*.csv"
-            }
-
-            If dialog.ShowDialog() = True Then
-                Try
-                    Dim sb As New StringBuilder()
-                    sb.AppendLine("Reservation ID,Customer,Vehicle,Plate,Pickup Date,Return Date,Duration Days,Total Amount,Status")
-
-                    For Each r In _filtered
-                        Dim id = EscapeCsv(r.Id)
-                        Dim cust = EscapeCsv(r.Customer)
-                        Dim veh = EscapeCsv(r.Vehicle)
-                        Dim plate = EscapeCsv(r.Plate)
-                        Dim pickup = EscapeCsv(r.PickupDate.ToString("yyyy-MM-dd"))
-                        Dim dropoff = EscapeCsv(r.ReturnDate.ToString("yyyy-MM-dd"))
-                        Dim duration = EscapeCsv(r.DurationDisplay)
-                        Dim total = EscapeCsv(r.Total.ToString("F2"))
-                        Dim status = EscapeCsv(r.StatusUpper)
-                        sb.AppendLine($"{id},{cust},{veh},{plate},{pickup},{dropoff},{duration},{total},{status}")
-                    Next
-
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)
-                    MessageBox.Show($"Successfully exported {_filtered.Count} reservation records to CSV.", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information)
-                Catch ex As Exception
-                    MessageBox.Show($"Could not export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
-                End Try
-            End If
-        End Sub
-
-        Private Function EscapeCsv(val As String) As String
-            If String.IsNullOrEmpty(val) Then Return """" & """"
-            If val.Contains(",") OrElse val.Contains("""") OrElse val.Contains(vbCr) OrElse val.Contains(vbLf) Then
-                Return """" & val.Replace("""", """""") & """"
-            End If
-            Return """" & val & """"
-        End Function
     End Class
 
     ' Read-only popup. Does not alter reservation status or payments.

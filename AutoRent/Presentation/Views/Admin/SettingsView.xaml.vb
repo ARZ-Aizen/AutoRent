@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.Collections.Generic
 Imports System.Data
 Imports System.Data.OleDb
@@ -179,7 +179,7 @@ Namespace Presentation.Views.Admin
                     .FileName = $"06_Rental_Rates_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Rates")
                 },
-                New TableExportModel With {
+                                New TableExportModel With {
                     .TableKey = "Users",
                     .TableName = "User Accounts & Security",
                     .Icon = ChrW(&HE77B),
@@ -189,6 +189,17 @@ Namespace Presentation.Views.Admin
                     .FilterScope = "System user accounts & branch permission roles (Audit Log)",
                     .FileName = $"07_Users_{periodSlug}.csv",
                     .RecordCount = QueryCountMaster("Users")
+                },
+                New TableExportModel With {
+                    .TableKey = "Inspections",
+                    .TableName = "Condition Checklists",
+                    .Icon = ChrW(&HE9D5),
+                    .TableType = "Activity Log",
+                    .TypeBadgeBg = New SolidColorBrush(Color.FromRgb(254, 243, 199)),
+                    .TypeBadgeFg = New SolidColorBrush(Color.FromRgb(146, 64, 14)),
+                    .FilterScope = If(isMonthly, $"Checklist timestamp within {periodDisplay}", "Full vehicle condition & safety inspection register"),
+                    .FileName = $"08_Condition_Checklists_{periodSlug}.csv",
+                    .RecordCount = QueryCountInspections(startDate, endDate)
                 }
             }
 
@@ -245,6 +256,19 @@ Namespace Presentation.Views.Admin
             End Try
         End Function
 
+        
+        Private Function QueryCountInspections(startDate As DateTime?, endDate As DateTime?) As Integer
+            Try
+                If startDate.HasValue AndAlso endDate.HasValue Then
+                    Return Db.Count("SELECT COUNT(*) FROM [Inspections] WHERE [inspected_at] >= ? AND [inspected_at] < ?",
+                                    Db.Dt(startDate.Value), Db.Dt(endDate.Value))
+                Else
+                    Return Db.Count("SELECT COUNT(*) FROM [Inspections]")
+                End If
+            Catch ex As Exception
+                Return 0
+            End Try
+        End Function
         Private Function QueryCountMaster(tableName As String) As Integer
             Try
                 Return Db.Count($"SELECT COUNT(*) FROM [{tableName}]")
@@ -306,8 +330,17 @@ Namespace Presentation.Views.Admin
                     Return DataTableToCsv(dt, New String() {"Rate ID", "Vehicle Category", "Daily Rate (PHP)", "Weekly Rate (PHP)", "Monthly Rate (PHP)", "Deposit (PHP)", "Late Fee Per Day (PHP)", "Last Updated"})
 
                 Case "Users"
-                    Dim dt = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] ORDER BY [user_id]")
-                    Return DataTableToCsv(dt, New String() {"User ID", "Username", "Full Name", "Branch", "Role", "Is Active", "Is Deleted", "Last Login", "Created At"})
+                    Dim dt = Db.Query("SELECT [user_id], [user_code], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] ORDER BY [user_id]")
+                    Return DataTableToCsv(dt, New String() {"User ID", "User Code", "Username", "Full Name", "Branch", "Role", "Is Active", "Is Deleted", "Last Login", "Created At"})
+                Case "Inspections"
+                    Dim dt As DataTable
+                    If startDate.HasValue AndAlso endDate.HasValue Then
+                        dt = Db.Query("SELECT i.[inspection_id], i.[vehicle_id], v.[plate], i.[checklist_type], i.[inspected_at], i.[inspector], i.[odometer], i.[fuel], i.[exterior_ok], i.[tires_ok], i.[lights_ok], i.[interior_ok], i.[fluids_ok], i.[brakes_ok], i.[inspection_result], i.[findings] FROM [Inspections] AS i LEFT JOIN [Vehicles] AS v ON i.[vehicle_id] = v.[vehicle_id] WHERE i.[inspected_at] >= ? AND i.[inspected_at] < ? ORDER BY i.[inspection_id]",
+                                      Db.Dt(startDate.Value), Db.Dt(endDate.Value))
+                    Else
+                        dt = Db.Query("SELECT i.[inspection_id], i.[vehicle_id], v.[plate], i.[checklist_type], i.[inspected_at], i.[inspector], i.[odometer], i.[fuel], i.[exterior_ok], i.[tires_ok], i.[lights_ok], i.[interior_ok], i.[fluids_ok], i.[brakes_ok], i.[inspection_result], i.[findings] FROM [Inspections] AS i LEFT JOIN [Vehicles] AS v ON i.[vehicle_id] = v.[vehicle_id] ORDER BY i.[inspection_id]")
+                    End If
+                    Return DataTableToCsv(dt, New String() {"Inspection ID", "Vehicle ID", "Plate", "Checklist Type", "Inspected Date", "Inspector", "Odometer (km)", "Fuel", "Exterior OK", "Tires OK", "Lights OK", "Interior OK", "Fluids OK", "Brakes OK", "Inspection Result", "Findings"})
 
                 Case Else
                     Return ""
@@ -417,12 +450,11 @@ Namespace Presentation.Views.Admin
                 End Using
 
                 TxtStatus.Text = $"Successfully exported all {_tables.Count} tables to '{Path.GetFileName(sfd.FileName)}' ({periodDisplay})."
-                MessageBox.Show($"Successfully exported all {_tables.Count} tables for {periodDisplay} into ZIP archive:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}",
-                                "Export Completed", MessageBoxButton.OK, MessageBoxImage.Information)
+                AlertUtil.ShowSuccess($"Successfully exported all {_tables.Count} tables for {periodDisplay} into ZIP archive:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}", "Export Completed", ViewHelpers.Owner(Me))
 
             Catch ex As Exception
                 TxtStatus.Text = $"Export failed: {ex.Message}"
-                MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
+                AlertUtil.ShowError($"Export failed: {ex.Message}", "Export Error", ViewHelpers.Owner(Me))
             End Try
         End Sub
 
@@ -480,12 +512,11 @@ Namespace Presentation.Views.Admin
                 Next
 
                 TxtStatus.Text = $"Successfully exported all {_tables.Count} tables to '{targetFolder}' ({periodDisplay})."
-                MessageBox.Show($"Successfully exported all {_tables.Count} tables for {periodDisplay} to folder:{Environment.NewLine}{Environment.NewLine}{targetFolder}",
-                                "Export Completed", MessageBoxButton.OK, MessageBoxImage.Information)
+                AlertUtil.ShowSuccess($"Successfully exported all {_tables.Count} tables for {periodDisplay} to folder:{Environment.NewLine}{Environment.NewLine}{targetFolder}", "Export Completed", ViewHelpers.Owner(Me))
 
             Catch ex As Exception
                 TxtStatus.Text = $"Export failed: {ex.Message}"
-                MessageBox.Show($"Export to folder failed: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
+                AlertUtil.ShowError($"Export to folder failed: {ex.Message}", "Export Error", ViewHelpers.Owner(Me))
             End Try
         End Sub
 
@@ -520,11 +551,10 @@ Namespace Presentation.Views.Admin
                 File.WriteAllText(sfd.FileName, csvContent, New UTF8Encoding(True))
 
                 TxtStatus.Text = $"Exported table '{tableKey}' to '{Path.GetFileName(sfd.FileName)}'."
-                MessageBox.Show($"Successfully exported table '{If(tableModel IsNot Nothing, tableModel.TableName, tableKey)}' ({periodDisplay}) to CSV:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}",
-                                "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information)
+                AlertUtil.ShowSuccess($"Successfully exported table '{If(tableModel IsNot Nothing, tableModel.TableName, tableKey)}' ({periodDisplay}) to CSV:{Environment.NewLine}{Environment.NewLine}{sfd.FileName}", "Export Successful", ViewHelpers.Owner(Me))
 
             Catch ex As Exception
-                MessageBox.Show($"Failed to export table: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
+                AlertUtil.ShowError($"Failed to export table: {ex.Message}", "Export Error", ViewHelpers.Owner(Me))
             End Try
         End Sub
     End Class

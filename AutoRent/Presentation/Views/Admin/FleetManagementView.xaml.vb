@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Collections.Generic
 Imports System.Data
 Imports System.IO
@@ -168,12 +168,7 @@ Namespace Presentation.Views.Admin
                 ApplyFilters()
 
             Catch ex As Exception
-                MessageBox.Show(
-                    "Could not load vehicle records: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
+                AlertUtil.ShowError("Could not load vehicle records: " & ex.Message, "Fleet Inventory", ViewHelpers.Owner(Me))
             End Try
 
         End Sub
@@ -274,12 +269,7 @@ Namespace Presentation.Views.Admin
 
             Catch ex As Exception
 
-                MessageBox.Show(
-                    "Filter error: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning
-                )
+                AlertUtil.ShowWarning("Filter error: " & ex.Message, "Fleet Inventory", ViewHelpers.Owner(Me))
 
             End Try
 
@@ -493,104 +483,10 @@ Namespace Presentation.Views.Admin
                 End If
 
             Catch ex As Exception
-                MessageBox.Show(
-                    "Could not open vehicle window: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
+                AlertUtil.ShowError("Could not open vehicle window: " & ex.Message, "Fleet Inventory", ViewHelpers.Owner(Me))
             End Try
 
         End Sub
-
-        ' ========================================
-        ' EXPORT CSV
-        ' ========================================
-
-        Private Sub Export_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
-            If _filtered Is Nothing Then Return
-
-            Dim picker As New SaveFileDialog With {
-                .Title = "Export fleet records",
-                .FileName = "AutoRent_Fleet.csv",
-                .Filter = "CSV files (*.csv)|*.csv"
-            }
-
-            If picker.ShowDialog() <> True Then Return
-
-            Try
-                Dim lines As New List(Of String) From {
-                    "Vehicle ID,Plate,Make,Model,Year,Category,Mileage (km),Daily Rate,Status"
-                }
-
-                Dim names = New String() {
-                    "display_id",
-                    "plate",
-                    "make",
-                    "model",
-                    "model_year",
-                    "category",
-                    "mileage",
-                    "daily_rate",
-                    "status"
-                }
-
-                For Each vehicleRow As DataRowView In _filtered
-
-                    Dim values =
-                        names.Select(
-                            Function(columnName)
-                                Return CsvCell(
-                                    ViewHelpers.Str(
-                                        vehicleRow,
-                                        columnName
-                                    )
-                                )
-                            End Function
-                        )
-
-                    lines.Add(String.Join(",", values))
-
-                Next
-
-                File.WriteAllLines(
-                    picker.FileName,
-                    lines,
-                    New UTF8Encoding(True)
-                )
-
-                MessageBox.Show(
-                    $"Exported {_filtered.Count} vehicles.",
-                    "Export complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                )
-
-            Catch ex As Exception
-                MessageBox.Show(
-                    "Export failed: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
-            End Try
-
-        End Sub
-
-        Private Shared Function CsvCell(
-            value As String
-        ) As String
-
-            Return """" &
-                If(value, "").Replace("""", """""") &
-                """"
-
-        End Function
-
     End Class
 
     ' ============================================
@@ -1107,13 +1003,7 @@ Namespace Presentation.Views.Admin
                 If selectedFile.Length >
                    5L * 1024L * 1024L Then
 
-                    MessageBox.Show(
-                        Me,
-                        "Pictures must be 5 MB or smaller.",
-                        "Vehicle photo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    )
+                    AlertUtil.ShowWarning("Pictures must be 5 MB or smaller.", "Vehicle photo", Me)
 
                     Return
 
@@ -1123,13 +1013,7 @@ Namespace Presentation.Views.Admin
 
                 If _photo.Source Is Nothing Then
 
-                    MessageBox.Show(
-                        Me,
-                        "The selected picture could not be opened.",
-                        "Vehicle photo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    )
+                    AlertUtil.ShowWarning("The selected picture could not be opened.", "Vehicle photo", Me)
 
                     Return
 
@@ -1140,13 +1024,7 @@ Namespace Presentation.Views.Admin
 
             Catch ex As Exception
 
-                MessageBox.Show(
-                    Me,
-                    "Could not load photo: " & ex.Message,
-                    "Vehicle photo",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
+                AlertUtil.ShowError("Could not load photo: " & ex.Message, "Vehicle photo", Me)
 
             End Try
 
@@ -1268,17 +1146,14 @@ Namespace Presentation.Views.Admin
                 If Not String.Equals(statusValue, ViewHelpers.Str(_vehicle, "status"), StringComparison.OrdinalIgnoreCase) Then changes.Add("Current status")
                 If _removePhoto OrElse Not String.IsNullOrWhiteSpace(_selectedPhoto) Then changes.Add("Photo")
                 If changes.Count = 0 Then
-                    MessageBox.Show(Me, "No changes were made.", "Edit Vehicle", MessageBoxButton.OK, MessageBoxImage.Information)
+                    AlertUtil.ShowInformation("No changes were made.", "Edit Vehicle", Me)
                     Return
                 End If
                 Dim warning As String = "Apply the following updates to vehicle " & _plate.Text.Trim().ToUpperInvariant() & "?" &
                     Environment.NewLine & Environment.NewLine &
                     String.Join(", ", changes) & Environment.NewLine & Environment.NewLine &
                     "This will update the saved fleet record."
-                If MessageBox.Show(Me, warning, "Confirm Vehicle Changes", MessageBoxButton.YesNo,
-                                   MessageBoxImage.Question, MessageBoxResult.No) <> MessageBoxResult.Yes Then
-                    Return
-                End If
+                If Not AlertUtil.Confirm(warning, "Confirm Vehicle Changes", Me) Then Return
             End If
 
             Dim imageSaved As String = Nothing
@@ -1339,13 +1214,7 @@ Namespace Presentation.Views.Admin
                         FieldProblem(_plate, problem)
                     End If
 
-                    MessageBox.Show(
-                        Me,
-                        problem,
-                        "Cannot save vehicle",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    )
+                    AlertUtil.ShowWarning(problem, "Cannot save vehicle", Me)
 
                     Return
 
@@ -1369,13 +1238,7 @@ Namespace Presentation.Views.Admin
 
             Catch ex As Exception
 
-                MessageBox.Show(
-                    Me,
-                    "Unable to save vehicle: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
+                AlertUtil.ShowError("Unable to save vehicle: " & ex.Message, "Fleet Inventory", Me)
 
             Finally
 
@@ -1403,17 +1266,7 @@ Namespace Presentation.Views.Admin
 
             If _vehicle Is Nothing Then Return
 
-            Dim confirmed = MessageBox.Show(
-                Me,
-                "Delete this vehicle? This cannot be undone." &
-                Environment.NewLine &
-                "Vehicles used in rentals or maintenance cannot be deleted.",
-                "Delete vehicle",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning
-            )
-
-            If confirmed <> MessageBoxResult.Yes Then Return
+            If Not AlertUtil.Confirm("Delete this vehicle? This cannot be undone." & Environment.NewLine & "Vehicles used in rentals or maintenance cannot be deleted.", "Delete vehicle", Me) Then Return
 
             Try
                 Dim problem = VehicleRepository.Delete(
@@ -1425,13 +1278,7 @@ Namespace Presentation.Views.Admin
 
                 If problem IsNot Nothing Then
 
-                    MessageBox.Show(
-                        Me,
-                        problem,
-                        "Cannot delete vehicle",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    )
+                    AlertUtil.ShowWarning(problem, "Cannot delete vehicle", Me)
 
                     Return
 
@@ -1445,13 +1292,7 @@ Namespace Presentation.Views.Admin
 
             Catch ex As Exception
 
-                MessageBox.Show(
-                    Me,
-                    "Could not delete vehicle: " & ex.Message,
-                    "Fleet Inventory",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
+                AlertUtil.ShowError("Could not delete vehicle: " & ex.Message, "Fleet Inventory", Me)
 
             End Try
 

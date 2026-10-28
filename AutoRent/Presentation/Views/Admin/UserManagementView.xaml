@@ -246,7 +246,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding user_code}" FontWeight="Bold" FontSize="12.5"
-                                                   Foreground="{StaticResource UserIdRed}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                   Foreground="{StaticResource UserIdRed}" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -255,7 +255,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding full_name}" FontWeight="SemiBold" FontSize="12.5"
-                                                   Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                   Foreground="#2B2927" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -264,7 +264,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Username}" FontSize="12.5"
-                                                   Foreground="#5F6368" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                   Foreground="#5F6368" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -273,7 +273,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding display_role}" FontSize="12.5"
-                                                   Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                   Foreground="#2B2927" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -282,7 +282,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border x:Name="StatusBadgeBorder" CornerRadius="12" Padding="8,2.5"
-                                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                HorizontalAlignment="Left" VerticalAlignment="Center">
                                             <TextBlock x:Name="StatusBadgeText" Text="{Binding status_badge}"
                                                        FontSize="11" FontWeight="SemiBold"/>
                                         </Border>
@@ -308,7 +308,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding last_login_formatted}" FontSize="12"
-                                                   Foreground="#3C4043" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                   Foreground="#3C4043" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -335,7 +335,7 @@
                 <Border Grid.Column="0" Background="White" BorderBrush="#E8E5E1" BorderThickness="1"
                         CornerRadius="10" Padding="18,16">
                     <StackPanel>
-                        <TextBlock x:Name="TxtSelTitle" Text="Selected account · Allan Poe"
+                        <TextBlock x:Name="TxtSelTitle" Text="Selected account · System Administrator"
                                    FontSize="15" FontWeight="Bold" Foreground="#2B2927"/>
                         <TextBlock x:Name="TxtSelSubtitle"
                                    Text="Account status and security verification"
@@ -397,7 +397,7 @@
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Top" Margin="0,4,0,0">
                     <TextBlock Text="Account lifecycle" FontWeight="SemiBold" Foreground="#5F6368" FontSize="12.5"/>
-                    <TextBlock FontSize="11.5" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="18"
+                    <TextBlock x:Name="TxtLifecycleNotice" FontSize="11.5" Foreground="#7A746D" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="18"
                                Text="Archiving revokes sign-in access while preserving historical records. Account details, credentials, and roles (System Administrator, Manager, or Rental Staff) can be updated securely by administrators."/>
                 </StackPanel>
             </Grid>

@@ -7,7 +7,7 @@ $dbs = @(
 
 foreach ($db in $dbs) {
     if (-not (Test-Path $db)) { continue }
-    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db")
+    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db;Jet OLEDB:Database Password=Miguelle@0718;Persist Security Info=False")
     $conn.Open()
 
     $chk = $conn.CreateCommand()

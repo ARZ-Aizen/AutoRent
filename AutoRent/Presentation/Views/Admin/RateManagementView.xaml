@@ -181,7 +181,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Category}" FontWeight="Bold" FontSize="12.5"
-                                                               Foreground="{StaticResource BrandMaroon}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                               Foreground="{StaticResource BrandMaroon}" VerticalAlignment="Center"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -190,7 +190,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding DisplayDaily}" FontSize="12.5" FontWeight="SemiBold"
-                                                               Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                               Foreground="#2B2927" VerticalAlignment="Center"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -199,7 +199,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding DisplayWeekly}" FontSize="12.5"
-                                                               Foreground="#5F6368" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                               Foreground="#5F6368" VerticalAlignment="Center"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -208,7 +208,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding DisplayMonthly}" FontSize="12.5"
-                                                               Foreground="#5F6368" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                               Foreground="#5F6368" VerticalAlignment="Center"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -217,7 +217,7 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding VehicleOverride}" FontSize="12"
-                                                               Foreground="#3C4043" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                               Foreground="#3C4043" VerticalAlignment="Center"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -304,7 +304,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding DisplayTitle}" FontWeight="Bold" FontSize="12.5"
-                                                           Foreground="{StaticResource BrandMaroon}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="{StaticResource BrandMaroon}" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -313,7 +313,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding Category}" FontSize="12.5"
-                                                           Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="#2B2927" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -322,7 +322,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding EffectiveDates}" FontSize="12"
-                                                           Foreground="#5F6368" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="#5F6368" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -331,7 +331,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding CalculationMethod}" FontSize="12.5"
-                                                           Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="#2B2927" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -340,7 +340,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding RateMultiplier}" FontSize="12.5" FontWeight="SemiBold"
-                                                           Foreground="#2B2927" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="#2B2927" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -349,7 +349,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="12" Padding="8,2.5" HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center" Margin="12,0,0,0">
+                                                        VerticalAlignment="Center">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#F1F3F4"/>
@@ -384,7 +384,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding LastModified}" FontSize="12"
-                                                           Foreground="#3C4043" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                           Foreground="#3C4043" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>

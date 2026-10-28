@@ -15,11 +15,11 @@ function Hash-Password([string]$password) {
 foreach ($db in $dbs) {
     if (-not (Test-Path $db)) { continue }
     Write-Host "Synchronizing: $db"
-    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db")
+    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db;Jet OLEDB:Database Password=Miguelle@0718;Persist Security Info=False")
     $conn.Open()
 
     $cmd = $conn.CreateCommand()
-    $cmd.CommandText = "DELETE FROM [Dispatches]"
+        $cmd.CommandText = "DELETE FROM [Dispatches]"
     $cmd.ExecuteNonQuery() | Out-Null
 
     $cmd.CommandText = "DELETE FROM [Reservations]"
@@ -28,8 +28,23 @@ foreach ($db in $dbs) {
     $cmd.CommandText = "DELETE FROM [Customers]"
     $cmd.ExecuteNonQuery() | Out-Null
 
-    $cmd.CommandText = "DELETE FROM [Inspections]"
-    $cmd.ExecuteNonQuery() | Out-Null
+    try {
+        $cmd.CommandText = "DELETE FROM [Inspections]"
+        $cmd.ExecuteNonQuery() | Out-Null
+    } catch {
+        $createTbl = $conn.CreateCommand()
+        $createTbl.CommandText = "CREATE TABLE [Inspections] ([inspection_id] COUNTER PRIMARY KEY, [vehicle_id] LONG NOT NULL, [checklist_type] VARCHAR(30), [inspected_at] DATETIME, [inspector] VARCHAR(100), [odometer] LONG, [fuel] VARCHAR(20), [exterior_ok] YESNO, [tires_ok] YESNO, [lights_ok] YESNO, [interior_ok] YESNO, [fluids_ok] YESNO, [brakes_ok] YESNO, [findings] MEMO, [inspection_result] VARCHAR(20), [created_at] DATETIME)"
+        $createTbl.ExecuteNonQuery() | Out-Null
+    }
+
+    $cols = @("checklist_type VARCHAR(30)", "odometer LONG", "exterior_ok YESNO", "tires_ok YESNO", "lights_ok YESNO", "interior_ok YESNO", "fluids_ok YESNO", "brakes_ok YESNO", "created_at DATETIME")
+    foreach ($col in $cols) {
+        try {
+            $alt = $conn.CreateCommand()
+            $alt.CommandText = "ALTER TABLE [Inspections] ADD COLUMN $col"
+            $alt.ExecuteNonQuery() | Out-Null
+        } catch {}
+    }
 
     $cmd.CommandText = "DELETE FROM [Maintenance]"
     $cmd.ExecuteNonQuery() | Out-Null
@@ -200,34 +215,43 @@ foreach ($db in $dbs) {
         $u.ExecuteNonQuery() | Out-Null
     }
 
-    $inspections = @(
-        @{ VehId = 65; Date = "2026-10-22 16:45:00"; Inspector = "Jerome Lumbao"; Fuel = "Full"; Findings = "Post-rental inspection: exterior pristine, tire tread depth 6mm, transmission smooth. Ready for next dispatch."; Result = "Passed" },
-        @{ VehId = 11; Date = "2026-10-25 08:30:00"; Inspector = "Jerome Lumbao"; Fuel = "Full"; Findings = "Pre-dispatch check passed. Exterior spotless, tire pressure at 32 PSI, cabin sanitized."; Result = "Passed" },
-        @{ VehId = 14; Date = "2026-10-24 08:45:00"; Inspector = "Princess Santander"; Fuel = "Full"; Findings = "All safety checks passed. Clean interior, fluid levels normal, spare tire & tools verified."; Result = "Passed" },
-        @{ VehId = 46; Date = "2026-10-26 08:20:00"; Inspector = "Andrei Balboa"; Fuel = "Full"; Findings = "Pre-release inspection passed. All 6 safety items verified, AC cooling properly."; Result = "Passed" },
-        @{ VehId = 56; Date = "2026-10-25 08:15:00"; Inspector = "Jonathan Balboa"; Fuel = "Full"; Findings = "Bed liner clean, cargo tie-downs inspected, all exterior lights functioning."; Result = "Passed" },
-        @{ VehId = 30; Date = "2026-10-26 08:40:00"; Inspector = "Liam Serrano"; Fuel = "Full"; Findings = "All checks passed. City hatchback prepped, tires inspected, wipers functional."; Result = "Passed" },
-        @{ VehId = 34; Date = "2026-10-27 08:10:00"; Inspector = "Zake Yurtas"; Fuel = "Full"; Findings = "14-seater cabin vacuumed, emergency exit clear, fire extinguisher verified."; Result = "Passed" },
-        @{ VehId = 69; Date = "2026-10-26 09:30:00"; Inspector = "Adrielle Bino"; Fuel = "Full"; Findings = "High-performance vehicle inspection: tire pressures optimal, brakes tested, vehicle spotless."; Result = "Passed" },
-        @{ VehId = 13; Date = "2026-10-11 16:20:00"; Inspector = "Princess Santander"; Fuel = "Full"; Findings = "Return inspection complete. Minor dirt on floor mats cleaned, roadworthy."; Result = "Passed" },
-        @{ VehId = 6;  Date = "2026-10-14 16:50:00"; Inspector = "Allan Oiga"; Fuel = "Full"; Findings = "Post-trip inspection: clean cabin, brake response sharp, fluids checked."; Result = "Passed" },
-        @{ VehId = 76; Date = "2026-10-18 15:30:00"; Inspector = "Liam Serrano"; Fuel = "Full"; Findings = "Executive handover check: luxury package intact, no dents, diagnostics normal."; Result = "Passed" },
-        @{ VehId = 51; Date = "2026-10-20 17:40:00"; Inspector = "Andrei Balboa"; Fuel = "Full"; Findings = "Family MPV return inspection: child seat anchors intact, all lights working."; Result = "Passed" },
-        @{ VehId = 100; Date = "2026-10-22 16:35:00"; Inspector = "Jonathan Balboa"; Fuel = "Full"; Findings = "EV battery at 92%, charging cable intact, tires inspected, glass roof clean."; Result = "Passed" },
-        @{ VehId = 62; Date = "2026-10-26 14:00:00"; Inspector = "Jerome Lumbao"; Fuel = "1/2"; Findings = "Defects: Brakes, Fluids | Front brake pad sensor warning, low brake reservoir fluid."; Result = "Needs Attention" },
-        @{ VehId = 21; Date = "2026-10-27 10:30:00"; Inspector = "Princess Santander"; Fuel = "3/4"; Findings = "Defects: Tires | Slow leak on rear right tire, nail embedded in outer tread block."; Result = "Needs Attention" },
-        @{ VehId = 54; Date = "2026-10-27 11:15:00"; Inspector = "Adrielle Bino"; Fuel = "1/2"; Findings = "Defects: Lights | Left projector headlamp assembly cracked, condensation noted."; Result = "Needs Attention" }
+        $inspections = @(
+        @{ VehId = 65; Type = "Post-Rental"; Date = "2026-10-22 16:45:00"; Inspector = "Jerome Lumbao"; Odo = 12450; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Post-rental inspection: exterior pristine, tire tread depth 6mm, transmission smooth. Ready for next dispatch."; Result = "Passed" },
+        @{ VehId = 11; Type = "Pre-Rental";  Date = "2026-10-25 08:30:00"; Inspector = "Jerome Lumbao"; Odo = 28100; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Pre-dispatch check passed. Exterior spotless, tire pressure at 32 PSI, cabin sanitized."; Result = "Passed" },
+        @{ VehId = 14; Type = "Pre-Rental";  Date = "2026-10-24 08:45:00"; Inspector = "Princess Santander"; Odo = 19500; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "All safety checks passed. Clean interior, fluid levels normal, spare tire & tools verified."; Result = "Passed" },
+        @{ VehId = 46; Type = "Pre-Rental";  Date = "2026-10-26 08:20:00"; Inspector = "Andrei Balboa"; Odo = 15200; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Pre-release inspection passed. All 6 safety items verified, AC cooling properly."; Result = "Passed" },
+        @{ VehId = 56; Type = "Pre-Rental";  Date = "2026-10-25 08:15:00"; Inspector = "Jonathan Balboa"; Odo = 34800; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Bed liner clean, cargo tie-downs inspected, all exterior lights functioning."; Result = "Passed" },
+        @{ VehId = 30; Type = "Pre-Rental";  Date = "2026-10-26 08:40:00"; Inspector = "Liam Serrano"; Odo = 22100; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "All checks passed. City hatchback prepped, tires inspected, wipers functional."; Result = "Passed" },
+        @{ VehId = 34; Type = "Pre-Rental";  Date = "2026-10-27 08:10:00"; Inspector = "Zake Yurtas"; Odo = 41200; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "14-seater cabin vacuumed, emergency exit clear, fire extinguisher verified."; Result = "Passed" },
+        @{ VehId = 69; Type = "Pre-Rental";  Date = "2026-10-26 09:30:00"; Inspector = "Adrielle Bino"; Odo = 11300; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "High-performance vehicle inspection: tire pressures optimal, brakes tested, vehicle spotless."; Result = "Passed" },
+        @{ VehId = 13; Type = "Post-Rental"; Date = "2026-10-11 16:20:00"; Inspector = "Princess Santander"; Odo = 26400; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Return inspection complete. Minor dirt on floor mats cleaned, roadworthy."; Result = "Passed" },
+        @{ VehId = 6;  Type = "Post-Rental"; Date = "2026-10-14 16:50:00"; Inspector = "Allan Oiga"; Odo = 31500; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Post-trip inspection: clean cabin, brake response sharp, fluids checked."; Result = "Passed" },
+        @{ VehId = 76; Type = "Post-Rental"; Date = "2026-10-18 15:30:00"; Inspector = "Liam Serrano"; Odo = 18200; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Executive handover check: luxury package intact, no dents, diagnostics normal."; Result = "Passed" },
+        @{ VehId = 51; Type = "Post-Rental"; Date = "2026-10-20 17:40:00"; Inspector = "Andrei Balboa"; Odo = 37900; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Family MPV return inspection: child seat anchors intact, all lights working."; Result = "Passed" },
+        @{ VehId = 100; Type = "Post-Rental"; Date = "2026-10-22 16:35:00"; Inspector = "Jonathan Balboa"; Odo = 9800; Fuel = "Full"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "EV battery at 92%, charging cable intact, tires inspected, glass roof clean."; Result = "Passed" },
+        @{ VehId = 62; Type = "Routine Maintenance"; Date = "2026-10-26 14:00:00"; Inspector = "Jerome Lumbao"; Odo = 16800; Fuel = "1/2"; Ext = $true; Tir = $true; Lig = $true; Int = $true; Flu = $false; Brk = $false; Findings = "Defects: Brakes, Fluids | Front brake pad sensor warning, low brake reservoir fluid."; Result = "Needs Attention" },
+        @{ VehId = 21; Type = "Routine Maintenance"; Date = "2026-10-27 10:30:00"; Inspector = "Princess Santander"; Odo = 48200; Fuel = "3/4"; Ext = $true; Tir = $false; Lig = $true; Int = $true; Flu = $true; Brk = $true; Findings = "Defects: Tires | Slow leak on rear right tire, nail embedded in outer tread block."; Result = "Needs Attention" },
+        @{ VehId = 54; Type = "Routine Maintenance"; Date = "2026-10-27 11:15:00"; Inspector = "Adrielle Bino"; Odo = 29600; Fuel = "1/2"; Ext = $true; Tir = $true; Lig = $false; Int = $true; Flu = $true; Brk = $true; Findings = "Defects: Lights | Left projector headlamp assembly cracked, condensation noted."; Result = "Needs Attention" }
     )
 
     foreach ($insp in $inspections) {
         $ins = $conn.CreateCommand()
-        $ins.CommandText = "INSERT INTO [Inspections] ([vehicle_id], [inspected_at], [inspector], [fuel], [findings], [inspection_result]) VALUES (?, ?, ?, ?, ?, ?)"
+        $ins.CommandText = "INSERT INTO [Inspections] ([vehicle_id], [checklist_type], [inspected_at], [inspector], [odometer], [fuel], [exterior_ok], [tires_ok], [lights_ok], [interior_ok], [fluids_ok], [brakes_ok], [findings], [inspection_result], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         $ins.Parameters.Add("vid", [System.Data.OleDb.OleDbType]::Integer).Value = [int]$insp.VehId
+        $ins.Parameters.Add("ct", [System.Data.OleDb.OleDbType]::VarWChar, 30).Value = $insp.Type
         $ins.Parameters.Add("ia", [System.Data.OleDb.OleDbType]::Date).Value = [DateTime]::Parse($insp.Date)
         $ins.Parameters.Add("insp", [System.Data.OleDb.OleDbType]::VarWChar, 100).Value = $insp.Inspector
+        $ins.Parameters.Add("odo", [System.Data.OleDb.OleDbType]::Integer).Value = [int]$insp.Odo
         $ins.Parameters.Add("fl", [System.Data.OleDb.OleDbType]::VarWChar, 20).Value = $insp.Fuel
+        $ins.Parameters.Add("e_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Ext
+        $ins.Parameters.Add("t_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Tir
+        $ins.Parameters.Add("l_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Lig
+        $ins.Parameters.Add("i_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Int
+        $ins.Parameters.Add("f_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Flu
+        $ins.Parameters.Add("b_ok", [System.Data.OleDb.OleDbType]::Boolean).Value = [bool]$insp.Brk
         $ins.Parameters.Add("find", [System.Data.OleDb.OleDbType]::LongVarWChar).Value = $insp.Findings
         $ins.Parameters.Add("res", [System.Data.OleDb.OleDbType]::VarWChar, 20).Value = $insp.Result
+        $ins.Parameters.Add("ca", [System.Data.OleDb.OleDbType]::Date).Value = [DateTime]::Parse($insp.Date)
         $ins.ExecuteNonQuery() | Out-Null
     }
 

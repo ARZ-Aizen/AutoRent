@@ -1,4 +1,4 @@
-﻿Imports System.Data.OleDb
+Imports System.Data.OleDb
 Imports System.IO
 
 Namespace Data.Context
@@ -32,10 +32,15 @@ Namespace Data.Context
                 projectSourcePath)
         End Function
 
-        Public Shared Function CreateConnection() As OleDbConnection
+        Public Const DatabasePassword As String = "Miguelle@0718"
+
+        Public Shared Function GetConnectionString() As String
             Dim databasePath = GetDatabasePath()
-            Dim connectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Persist Security Info=False;"
-            Return New OleDbConnection(connectionString)
+            Return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Database Password={DatabasePassword};Persist Security Info=False;"
+        End Function
+
+        Public Shared Function CreateConnection() As OleDbConnection
+            Return New OleDbConnection(GetConnectionString())
         End Function
     End Class
 End Namespace
