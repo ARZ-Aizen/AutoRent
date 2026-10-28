@@ -193,6 +193,8 @@
         <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="SelectionBrush" Value="#E0A3AB"/>
+        <Setter Property="SelectionTextBrush" Value="{StaticResource InkBrush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource InkBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -201,7 +203,8 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="7">
                         <Grid>
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          Foreground="{TemplateBinding Foreground}"/>
                             <Border Padding="{TemplateBinding Padding}" IsHitTestVisible="False">
                                 <TextBlock x:Name="Hint" Text="{TemplateBinding Tag}" Margin="2,0,0,0"
                                            Foreground="#A59F98" Visibility="Collapsed" TextTrimming="CharacterEllipsis"
@@ -245,7 +248,8 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="7">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          Foreground="{TemplateBinding Foreground}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -453,20 +457,48 @@
     <Style x:Key="StatusText" TargetType="TextBlock">
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Style.Triggers>
-            <Trigger Property="Text" Value="Available"><Setter Property="Foreground" Value="#2E7D32"/></Trigger>
-            <Trigger Property="Text" Value="Completed"><Setter Property="Foreground" Value="#2E7D32"/></Trigger>
-            <Trigger Property="Text" Value="Active"><Setter Property="Foreground" Value="#2E7D32"/></Trigger>
-            <Trigger Property="Text" Value="Confirmed"><Setter Property="Foreground" Value="#2E7D32"/></Trigger>
-            <Trigger Property="Text" Value="Rented"><Setter Property="Foreground" Value="#1565C0"/></Trigger>
-            <Trigger Property="Text" Value="In Progress"><Setter Property="Foreground" Value="#1565C0"/></Trigger>
-            <Trigger Property="Text" Value="Reserved"><Setter Property="Foreground" Value="#6A1B9A"/></Trigger>
-            <Trigger Property="Text" Value="Scheduled"><Setter Property="Foreground" Value="#E65100"/></Trigger>
-            <Trigger Property="Text" Value="Maintenance"><Setter Property="Foreground" Value="#E65100"/></Trigger>
-            <Trigger Property="Text" Value="Overdue"><Setter Property="Foreground" Value="#C62828"/></Trigger>
-            <Trigger Property="Text" Value="Inactive"><Setter Property="Foreground" Value="#C62828"/></Trigger>
-            <Trigger Property="Text" Value="Cancelled"><Setter Property="Foreground" Value="#C62828"/></Trigger>
-            <Trigger Property="Text" Value="Admin"><Setter Property="Foreground" Value="#70000F"/></Trigger>
-            <Trigger Property="Text" Value="Retired"><Setter Property="Foreground" Value="#7A746D"/></Trigger>
+            <Trigger Property="Text" Value="Available">
+                <Setter Property="Foreground" Value="#2E7D32"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Completed">
+                <Setter Property="Foreground" Value="#2E7D32"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Active">
+                <Setter Property="Foreground" Value="#2E7D32"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Confirmed">
+                <Setter Property="Foreground" Value="#2E7D32"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Rented">
+                <Setter Property="Foreground" Value="#1565C0"/>
+            </Trigger>
+            <Trigger Property="Text" Value="In Progress">
+                <Setter Property="Foreground" Value="#1565C0"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Reserved">
+                <Setter Property="Foreground" Value="#6A1B9A"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Scheduled">
+                <Setter Property="Foreground" Value="#E65100"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Maintenance">
+                <Setter Property="Foreground" Value="#E65100"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Overdue">
+                <Setter Property="Foreground" Value="#C62828"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Inactive">
+                <Setter Property="Foreground" Value="#C62828"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Cancelled">
+                <Setter Property="Foreground" Value="#C62828"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Admin">
+                <Setter Property="Foreground" Value="#70000F"/>
+            </Trigger>
+            <Trigger Property="Text" Value="Retired">
+                <Setter Property="Foreground" Value="#7A746D"/>
+            </Trigger>
         </Style.Triggers>
     </Style>
 
