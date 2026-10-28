@@ -177,12 +177,24 @@ Namespace Data.Context
                     End Using
                 End If
 
+                ' Normalize legacy inspector names in existing records to match official staff roster
+                Try
+                    Run(connection, "UPDATE [Inspections] SET [inspector] = 'Adrielle Bino' WHERE [inspector] IN ('Adrielle Liwag', 'Liwag')")
+                    Run(connection, "UPDATE [Inspections] SET [inspector] = 'Zake Yurtas' WHERE [inspector] IN ('Zake Magdaluyo', 'Magdaluyo')")
+                    Run(connection, "UPDATE [Inspections] SET [inspector] = 'Jonathan Balboa' WHERE [inspector] IN ('Jonathan Benitez', 'Benitez')")
+                    Run(connection, "UPDATE [Inspections] SET [inspector] = 'Andrei Balboa' WHERE [inspector] IN ('Andrei Belando', 'Belando', 'Justine Balboa', 'Justine')")
+                Catch
+                End Try
+
                 Try
                     If Not ColumnExists(connection, "Users", "full_name") Then
                         Run(connection, "ALTER TABLE [Users] ADD COLUMN [full_name] VARCHAR(100)")
                     End If
                     If Not ColumnExists(connection, "Users", "branch") Then
                         Run(connection, "ALTER TABLE [Users] ADD COLUMN [branch] VARCHAR(50)")
+                    End If
+                    If Not ColumnExists(connection, "Users", "user_code") Then
+                        Run(connection, "ALTER TABLE [Users] ADD COLUMN [user_code] VARCHAR(20)")
                     End If
                 Catch
                 End Try

@@ -14,17 +14,17 @@ Namespace Data.Models
         Public Property LastLogin As DateTime?
         Public Property CreatedAt As DateTime
 
-        Public ReadOnly Property UserCode As String
+        Private _userCode As String = String.Empty
+
+        Public Property UserCode As String
             Get
-                If UserId <= 0 Then Return "USR-00000"
-                Dim rawBytes = System.Text.Encoding.UTF8.GetBytes($"AutoRent_Secure_Salt_{UserId}")
-                Using sha = SHA256.Create()
-                    Dim hash = sha.ComputeHash(rawBytes)
-                    Dim val = BitConverter.ToUInt32(hash, 0)
-                    Dim codeNum = 10000L + (CLng(val) Mod 90000L)
-                    Return $"USR-{codeNum}"
-                End Using
+                If Not String.IsNullOrWhiteSpace(_userCode) Then Return _userCode
+                If UserId > 0 Then Return $"USR-{UserId:D5}"
+                Return "USR-00000"
             End Get
+            Set(value As String)
+                _userCode = value
+            End Set
         End Property
 
         Public ReadOnly Property DisplayName As String

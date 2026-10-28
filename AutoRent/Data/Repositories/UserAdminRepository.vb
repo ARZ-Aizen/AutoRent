@@ -16,10 +16,11 @@ Namespace Data.Repositories
         Public Shared Function GetAll() As List(Of User)
             Dim users As New List(Of User)()
 
-            Dim table = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = False ORDER BY [user_id]")
+            Dim table = Db.Query("SELECT [user_id], [user_code], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = False ORDER BY [user_id]")
 
             For Each row As DataRow In table.Rows
                 Dim userId = Convert.ToInt32(row("user_id"))
+                Dim userCode = If(table.Columns.Contains("user_code") AndAlso Not IsDBNull(row("user_code")), Convert.ToString(row("user_code")), $"USR-{userId:D5}")
                 Dim username = Convert.ToString(row("username"))
                 Dim fullName = If(table.Columns.Contains("full_name") AndAlso Not IsDBNull(row("full_name")), Convert.ToString(row("full_name")), username)
                 Dim branch = If(table.Columns.Contains("branch") AndAlso Not IsDBNull(row("branch")), Convert.ToString(row("branch")), "HQ")
@@ -39,6 +40,7 @@ Namespace Data.Repositories
 
                 users.Add(New Global.AutoRent.Data.Models.User With {
                     .UserId = userId,
+                    .UserCode = userCode,
                     .Username = username,
                     .FullName = fullName,
                     .Branch = branch,
@@ -73,6 +75,23 @@ Namespace Data.Repositories
             Return Db.Count("SELECT COUNT(*) FROM [Users] WHERE ([role] = 'Admin' OR [role] = 'System Administrator') AND [is_deleted] = False") > 0
         End Function
 
+        Public Shared Function GenerateUniqueUserId() As Integer
+            Dim existingIds As New HashSet(Of Integer)()
+            Dim dt = Db.Query("SELECT [user_id] FROM [Users]")
+            For Each row As DataRow In dt.Rows
+                If Not IsDBNull(row("user_id")) Then
+                    existingIds.Add(Convert.ToInt32(row("user_id")))
+                End If
+            Next
+
+            Dim rng As New Random()
+            Dim candidateId As Integer
+            Do
+                candidateId = rng.Next(10000, 100000)
+            Loop While existingIds.Contains(candidateId)
+
+            Return candidateId
+        End Function
         Public Shared Function Create(username As String, password As String, role As String, fullName As String, branch As String, isActive As Boolean) As String
             username = If(username, "").Trim()
             fullName = If(fullName, "").Trim()
@@ -99,7 +118,11 @@ Namespace Data.Repositories
                 Return $"The username '{username}' is already taken."
             End If
 
-            Db.Execute("INSERT INTO [Users] ([username], [full_name], [branch], [password_hash], [role], [is_active], [is_deleted], [last_login], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            Dim newUserId = GenerateUniqueUserId()
+            Dim newUserCode = $"USR-{newUserId:D5}"
+
+            Db.Execute("INSERT INTO [Users] ([user_id], [user_code], [username], [full_name], [branch], [password_hash], [role], [is_active], [is_deleted], [last_login], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       Db.Int(newUserId), Db.Text(newUserCode, 20),
                        Db.Text(username, 100), Db.Text(If(String.IsNullOrEmpty(fullName), username, fullName), 100),
                        Db.Text(branch, 50), Db.Text(PasswordHasher.HashPassword(password), 255), Db.Text(role, 50),
                        Db.Bool(isActive), Db.Bool(False), Db.DtOrNull(Nothing), Db.Dt(DateTime.Now))
@@ -152,10 +175,11 @@ Namespace Data.Repositories
 
         Public Shared Function GetArchived() As List(Of User)
             Dim users As New List(Of User)()
-            Dim table = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = True ORDER BY [user_id]")
+            Dim table = Db.Query("SELECT [user_id], [user_code], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] WHERE [is_deleted] = True ORDER BY [user_id]")
 
             For Each row As DataRow In table.Rows
                 Dim userId = Convert.ToInt32(row("user_id"))
+                Dim userCode = If(table.Columns.Contains("user_code") AndAlso Not IsDBNull(row("user_code")), Convert.ToString(row("user_code")), $"USR-{userId:D5}")
                 Dim username = Convert.ToString(row("username"))
                 Dim fullName = If(table.Columns.Contains("full_name") AndAlso Not IsDBNull(row("full_name")), Convert.ToString(row("full_name")), username)
                 Dim branch = If(table.Columns.Contains("branch") AndAlso Not IsDBNull(row("branch")), Convert.ToString(row("branch")), "HQ")
@@ -175,6 +199,7 @@ Namespace Data.Repositories
 
                 users.Add(New Global.AutoRent.Data.Models.User With {
                     .UserId = userId,
+                    .UserCode = userCode,
                     .Username = username,
                     .FullName = fullName,
                     .Branch = branch,

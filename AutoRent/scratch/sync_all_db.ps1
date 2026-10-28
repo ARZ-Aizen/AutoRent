@@ -1,4 +1,4 @@
-﻿Add-Type -AssemblyName System.Data
+Add-Type -AssemblyName System.Data
 
 $dbs = @(
     "c:\Users\allan\source\repos\AutoRent\AutoRent\Resources\Data\AutoRent.accdb.accdb",
@@ -15,7 +15,7 @@ function Hash-Password([string]$password) {
 foreach ($db in $dbs) {
     if (-not (Test-Path $db)) { continue }
     Write-Host "Synchronizing: $db"
-    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db")
+    $conn = New-Object System.Data.OleDb.OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=$db;Jet OLEDB:Database Password=Miguelle@0718;Persist Security Info=False")
     $conn.Open()
 
     $cmd = $conn.CreateCommand()

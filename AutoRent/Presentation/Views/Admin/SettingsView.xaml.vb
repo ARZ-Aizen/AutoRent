@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.Collections.Generic
 Imports System.Data
 Imports System.Data.OleDb
@@ -330,8 +330,8 @@ Namespace Presentation.Views.Admin
                     Return DataTableToCsv(dt, New String() {"Rate ID", "Vehicle Category", "Daily Rate (PHP)", "Weekly Rate (PHP)", "Monthly Rate (PHP)", "Deposit (PHP)", "Late Fee Per Day (PHP)", "Last Updated"})
 
                 Case "Users"
-                    Dim dt = Db.Query("SELECT [user_id], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] ORDER BY [user_id]")
-                    Return DataTableToCsv(dt, New String() {"User ID", "Username", "Full Name", "Branch", "Role", "Is Active", "Is Deleted", "Last Login", "Created At"})
+                    Dim dt = Db.Query("SELECT [user_id], [user_code], [username], [full_name], [branch], [role], [is_active], [is_deleted], [last_login], [created_at] FROM [Users] ORDER BY [user_id]")
+                    Return DataTableToCsv(dt, New String() {"User ID", "User Code", "Username", "Full Name", "Branch", "Role", "Is Active", "Is Deleted", "Last Login", "Created At"})
                 Case "Inspections"
                     Dim dt As DataTable
                     If startDate.HasValue AndAlso endDate.HasValue Then
