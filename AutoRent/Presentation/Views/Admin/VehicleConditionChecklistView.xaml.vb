@@ -1,4 +1,4 @@
-Imports System.Text.RegularExpressions
+﻿Imports System.Text.RegularExpressions
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Input
@@ -219,8 +219,14 @@ Namespace Presentation.Views.Admin
             TxtModalTitle.Text = "Record Digital Vehicle Condition Checklist"
             TxtModalSubtitle.Text = "Perform 6-point multi-point safety & roadworthiness audit"
 
-            ' Reset fields
-            CmbModalVehicle.SelectedIndex = If(_vehicleOptions.Count > 0, 0, -1)
+            ' New checklists may select any vehicle; hide edit-only locked display.
+            TxtModalVehicleLabel.Text = "Vehicle to Inspect *"
+            BorderLockedVehicle.Visibility = Visibility.Collapsed
+            TxtLockedVehicleNote.Visibility = Visibility.Collapsed
+            CmbModalVehicle.Visibility = Visibility.Visible
+            CmbModalVehicle.IsEnabled = True
+            CmbModalVehicle.SelectedIndex = -1
+            TxtModalOdometer.Text = ""
             CmbModalType.SelectedIndex = 0
             CmbModalFuel.SelectedIndex = 0
 
@@ -266,9 +272,19 @@ Namespace Presentation.Views.Admin
 
             ' Find vehicle
             Dim vehOpt = _vehicleOptions.FirstOrDefault(Function(v) v.VehicleId = item.VehicleId)
-            If vehOpt IsNot Nothing Then
-                CmbModalVehicle.SelectedItem = vehOpt
+            If vehOpt Is Nothing Then
+                AlertUtil.ShowWarning("The vehicle linked to this checklist could not be found.", "Missing Vehicle", ViewHelpers.Owner(Me))
+                Return
             End If
+            CmbModalVehicle.SelectedItem = vehOpt
+            ' Preserve the inspection's vehicle and show a read-only label instead of
+            ' a disabled ComboBox that looks broken or encourages changing history.
+            TxtModalVehicleLabel.Text = "Inspected Vehicle"
+            TxtLockedVehicleLabel.Text = vehOpt.DisplayText
+            CmbModalVehicle.Visibility = Visibility.Collapsed
+            CmbModalVehicle.IsEnabled = False
+            BorderLockedVehicle.Visibility = Visibility.Visible
+            TxtLockedVehicleNote.Visibility = Visibility.Visible
 
             CmbModalType.SelectedItem = item.ChecklistType
             CmbModalFuel.SelectedItem = item.Fuel
@@ -409,7 +425,12 @@ Namespace Presentation.Views.Admin
             End If
 
             Dim actionText = If(_editingId = 0, "recorded", "updated")
-            Dim statusNotice = If(allPassed, "Vehicle is certified Roadworthy and Available.", "Vehicle has been flagged as Under Maintenance for repairs.")
+            Dim actualStatus = VehicleStatusAuditRepository.CurrentStatus(selectedVeh.VehicleId)
+            Dim statusNotice = If(allPassed,
+                                  If(String.Equals(actualStatus, "Available", StringComparison.OrdinalIgnoreCase),
+                                     "Safety checks passed. Vehicle is Available.",
+                                     "Safety checks passed. Fleet status is still " & actualStatus & " because other conditions may apply."),
+                                  "Unchecked safety items require attention. Current fleet status: " & actualStatus & ".")
 
             AlertUtil.ShowSuccess($"Successfully {actionText} digital condition checklist for [{selectedVeh.Plate}].{Environment.NewLine}{Environment.NewLine}{statusNotice}", "Checklist Certified", ViewHelpers.Owner(Me))
 

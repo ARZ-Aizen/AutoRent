@@ -86,6 +86,8 @@ Namespace Data.Repositories
         End Function
 
         Private Shared Sub SyncVehicleStatus(vehicleId As Integer)
+            Dim oldStatus = VehicleStatusAuditRepository.CurrentStatus(vehicleId)
+            If String.IsNullOrWhiteSpace(oldStatus) Then Return
             Dim openJobs = Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [vehicle_id] = ? AND [status] = 'In Progress'", Db.Int(vehicleId))
 
             If openJobs > 0 Then
@@ -94,9 +96,19 @@ Namespace Data.Repositories
                 Dim hasActive = Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] = 'Active'", Db.Int(vehicleId)) > 0
                 Dim hasConfirmed = Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] = 'Confirmed'", Db.Int(vehicleId)) > 0
                 Dim restoredStatus = If(hasActive, "Rented", If(hasConfirmed, "Reserved", "Available"))
-                Db.Execute("UPDATE [Vehicles] SET [status] = ? WHERE [vehicle_id] = ? AND [status] = 'Maintenance'",
-                           Db.Text(restoredStatus, 20), Db.Int(vehicleId))
+                ' A failed safety checklist still blocks release even if service jobs have closed.
+                Dim lastCheck = Db.Scalar("SELECT TOP 1 [inspection_result] FROM [Inspections] WHERE [vehicle_id] = ? ORDER BY [inspected_at] DESC, [inspection_id] DESC", Db.Int(vehicleId))
+                Dim hasFailedChecklist = (lastCheck IsNot Nothing AndAlso Not IsDBNull(lastCheck) AndAlso
+                                          String.Equals(Convert.ToString(lastCheck), "Needs Attention", StringComparison.OrdinalIgnoreCase))
+                If hasFailedChecklist Then
+                    Db.Execute("UPDATE [Vehicles] SET [status] = 'Maintenance' WHERE [vehicle_id] = ? AND [status] NOT IN ('Retired', 'Maintenance')", Db.Int(vehicleId))
+                Else
+                    Db.Execute("UPDATE [Vehicles] SET [status] = ? WHERE [vehicle_id] = ? AND [status] = 'Maintenance'",
+                               Db.Text(restoredStatus, 20), Db.Int(vehicleId))
+                End If
             End If
+            VehicleStatusAuditRepository.RecordIfChanged(vehicleId, oldStatus,
+                "Maintenance service status synchronized", "Active maintenance jobs: " & openJobs.ToString())
         End Sub
     End Class
 End Namespace

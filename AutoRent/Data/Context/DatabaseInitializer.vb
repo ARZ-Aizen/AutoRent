@@ -1,4 +1,4 @@
-Imports System.Data.OleDb
+﻿Imports System.Data.OleDb
 Imports System.IO
 
 Namespace Data.Context
@@ -117,6 +117,21 @@ Namespace Data.Context
                         "[branch] VARCHAR(50), " &
                         "[status] VARCHAR(20))")
                 End If
+                ' Additive migration: keep all existing vehicle, maintenance and reservation data.
+                ' New rows are written only when a vehicle status ACTUALLY changes.
+                If Not TableExists(connection, "VehicleStatusEvents") Then
+                    Run(connection, "CREATE TABLE [VehicleStatusEvents] (" &
+                        "[event_id] COUNTER PRIMARY KEY, " &
+                        "[vehicle_id] LONG NOT NULL, " &
+                        "[changed_at] DATETIME NOT NULL, " &
+                        "[old_status] VARCHAR(30), " &
+                        "[new_status] VARCHAR(30), " &
+                        "[staff_name] VARCHAR(100), " &
+                        "[reason] MEMO, " &
+                        "[checks] MEMO)")
+                    Run(connection, "CREATE INDEX [IX_VehicleStatusEvents_Vehicle] ON [VehicleStatusEvents] ([vehicle_id])")
+                End If
+
                 If Not TableExists(connection, "Inspections") Then
                     Run(connection, "CREATE TABLE [Inspections] (" &
                         "[inspection_id] COUNTER PRIMARY KEY, " &

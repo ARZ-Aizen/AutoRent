@@ -1,10 +1,11 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Input
 Imports System.Windows.Media
 Imports AutoRent.Data.Context
+Imports AutoRent.Data.Repositories
 
 Namespace Presentation.Views.User
     Partial Public Class FleetAvailabilityView
@@ -396,69 +397,100 @@ Namespace Presentation.Views.User
             IcVehHistory.ItemsSource = historyList
         End Sub
 
+        ' True transitions from VehicleStatusEvents are exact, while older records are
+        ' labeled as service/checklist events. We never invent staff or transition times.
         Private Sub LoadVehicleStatusHistory(vehicleId As Integer, currentStatus As String, plate As String, createdAt As DateTime)
             Dim auditList As New List(Of DossierAuditItem)()
-            Try
-                Dim dtDisp = Db.Query(
-                    "SELECT TOP 5 d.[scheduled_at], d.[dispatch_type], d.[status], d.[branch], r.[customer_name], r.[reservation_id] " &
-                    "FROM [Dispatches] AS d INNER JOIN [Reservations] AS r ON d.[reservation_id] = r.[reservation_id] " &
-                    "WHERE r.[vehicle_id] = ? ORDER BY d.[scheduled_at] DESC",
-                    Db.Int(vehicleId))
+            Dim registrationLogged As Boolean = False
 
-                For Each dr As DataRow In dtDisp.Rows
-                    Dim sDate = If(IsDBNull(dr("scheduled_at")), DateTime.Today, Convert.ToDateTime(dr("scheduled_at")))
-                    Dim dType = If(IsDBNull(dr("dispatch_type")), "Pickup", dr("dispatch_type").ToString().Trim())
-                    Dim dStat = If(IsDBNull(dr("status")), "Completed", dr("status").ToString().Trim())
-                    Dim cName = If(IsDBNull(dr("customer_name")), "Client", dr("customer_name").ToString().Trim())
-                    Dim rId = Convert.ToInt32(dr("reservation_id"))
+            Dim dtEvents = VehicleStatusAuditRepository.GetHistory(vehicleId)
+            For Each row As DataRow In dtEvents.Rows
+                Dim eventTime = Convert.ToDateTime(row("changed_at"))
+                Dim previousStatus = AuditText(row, "old_status", "Not recorded")
+                Dim nextStatus = AuditText(row, "new_status", "Not recorded")
+                If String.Equals(previousStatus, "Fleet Entry", StringComparison.OrdinalIgnoreCase) Then registrationLogged = True
+                auditList.Add(New DossierAuditItem With {
+                    .RecordedAt = eventTime,
+                    .Timestamp = eventTime.ToString("dd MMM yyyy · HH:mm"),
+                    .Transition = previousStatus & " → " & nextStatus,
+                    .Staff = AuditText(row, "staff_name", "Not recorded"),
+                    .Reason = AuditText(row, "reason", "Status changed"),
+                    .Checks = AuditText(row, "checks", "Verified status update")
+                })
+            Next
 
-                    Dim trans = If(dType = "Pickup", "Available → Rented", "Rented → Available")
-                    Dim reason = If(dType = "Pickup", $"Contract BK-{rId:0000} released to {cName}", $"Contract BK-{rId:0000} returned by {cName}")
-                    Dim checks = If(dType = "Pickup", "Pickup dispatch recorded", "Return dispatch recorded")
+            ' Older maintenance entries have a recorded service status, not a reliable
+            ' before/after vehicle status. Display them accurately without pretending.
+            Dim dtMaint = Db.Query(
+                "SELECT TOP 10 [maintenance_id], [service_type], [status], [notes], [created_at], [completed_at], [scheduled_date] " &
+                "FROM [Maintenance] WHERE [vehicle_id] = ? ORDER BY [maintenance_id] DESC", Db.Int(vehicleId))
+            For Each mr As DataRow In dtMaint.Rows
+                Dim serviceStatus = AuditText(mr, "status", "Unknown")
+                Dim serviceName = AuditText(mr, "service_type", "Maintenance service")
+                Dim note = AuditText(mr, "notes", "No service notes recorded")
+                Dim whenRecorded As DateTime
+                Dim timeSource As String
+                If String.Equals(serviceStatus, "Completed", StringComparison.OrdinalIgnoreCase) AndAlso Not IsDBNull(mr("completed_at")) Then
+                    whenRecorded = Convert.ToDateTime(mr("completed_at"))
+                    timeSource = "Completion recorded"
+                ElseIf Not IsDBNull(mr("created_at")) Then
+                    whenRecorded = Convert.ToDateTime(mr("created_at"))
+                    timeSource = "Service record created"
+                ElseIf Not IsDBNull(mr("scheduled_date")) Then
+                    whenRecorded = Convert.ToDateTime(mr("scheduled_date"))
+                    timeSource = "Scheduled time, not event time"
+                Else
+                    Continue For
+                End If
+                auditList.Add(New DossierAuditItem With {
+                    .RecordedAt = whenRecorded,
+                    .Timestamp = whenRecorded.ToString("dd MMM yyyy · HH:mm"),
+                    .Transition = "Service: " & serviceStatus,
+                    .Staff = "Not recorded",
+                    .Reason = serviceName & " · " & note,
+                    .Checks = timeSource & " · MT-" & Convert.ToInt32(mr("maintenance_id")).ToString("0000")
+                })
+            Next
 
-                    Dim staffList = {"Andrei Balboa", "Zake Yurtas", "Princess Santander", "Jerome Lumbao", "Jonathan Balboa"}
-                    Dim staffName = staffList(Math.Abs(rId) Mod staffList.Length)
+            Dim dtInspections = Db.Query(
+                "SELECT TOP 10 [inspection_id], [checklist_type], [inspected_at], [inspector], [inspection_result], [findings] " &
+                "FROM [Inspections] WHERE [vehicle_id] = ? ORDER BY [inspected_at] DESC, [inspection_id] DESC", Db.Int(vehicleId))
+            For Each ir As DataRow In dtInspections.Rows
+                If IsDBNull(ir("inspected_at")) Then Continue For
+                Dim inspected = Convert.ToDateTime(ir("inspected_at"))
+                Dim outcome = AuditText(ir, "inspection_result", "Unknown")
+                auditList.Add(New DossierAuditItem With {
+                    .RecordedAt = inspected,
+                    .Timestamp = inspected.ToString("dd MMM yyyy · HH:mm"),
+                    .Transition = "Checklist: " & outcome,
+                    .Staff = AuditText(ir, "inspector", "Not recorded"),
+                    .Reason = AuditText(ir, "checklist_type", "Vehicle inspection") & " · " & AuditText(ir, "findings", "No notes"),
+                    .Checks = "Inspection CK-" & Convert.ToInt32(ir("inspection_id")).ToString("0000") & " · Recorded result"
+                })
+            Next
 
-                    auditList.Add(New DossierAuditItem With {
-                        .Timestamp = sDate.ToString("dd MMM · HH:mm"),
-                        .Transition = trans,
-                        .Staff = staffName,
-                        .Reason = reason,
-                        .Checks = checks
-                    })
-                Next
+            If Not registrationLogged Then
+                ' Records created before status auditing do not have a verifiable
+                ' initial status, staff member or exact series of prior transitions.
+                auditList.Add(New DossierAuditItem With {
+                    .RecordedAt = createdAt,
+                    .Timestamp = createdAt.ToString("dd MMM yyyy · HH:mm"),
+                    .Transition = "Fleet entry",
+                    .Staff = "Not recorded (legacy)",
+                    .Reason = "Vehicle record created · Plate " & plate,
+                    .Checks = "Initial status not audited"
+                })
+            End If
 
-                Dim dtMaint = Db.Query(
-                    "SELECT TOP 3 [service_type], [scheduled_date], [status], [notes] " &
-                    "FROM [Maintenance] WHERE [vehicle_id] = ? ORDER BY [scheduled_date] DESC",
-                    Db.Int(vehicleId))
-
-                For Each mr As DataRow In dtMaint.Rows
-                    Dim mDate = If(IsDBNull(mr("scheduled_date")), DateTime.Today, Convert.ToDateTime(mr("scheduled_date")))
-                    Dim sType = If(IsDBNull(mr("service_type")), "Maintenance", mr("service_type").ToString().Trim())
-                    Dim mStat = If(IsDBNull(mr("status")), "Completed", mr("status").ToString().Trim())
-
-                    auditList.Add(New DossierAuditItem With {
-                        .Timestamp = mDate.ToString("dd MMM · HH:mm"),
-                        .Transition = If(mStat = "Completed", "Maintenance → Available", "Available → Maintenance"),
-                        .Staff = "Jonathan Balboa",
-                        .Reason = sType,
-                        .Checks = $"Status: {mStat}"
-                    })
-                Next
-            Catch
-            End Try
-
-            auditList.Add(New DossierAuditItem With {
-                .Timestamp = createdAt.ToString("dd MMM yyyy"),
-                .Transition = "Fleet Entry → Available",
-                .Staff = "System Administrator",
-                .Reason = $"Vehicle registered · Plate {plate}",
-                .Checks = "Initial registration & clearance complete"
-            })
-
-            IcVehAudit.ItemsSource = auditList
+            IcVehAudit.ItemsSource = auditList.OrderByDescending(Function(x) x.RecordedAt).ToList()
         End Sub
+
+        Private Shared Function AuditText(row As DataRow, columnName As String, fallback As String) As String
+            If IsDBNull(row(columnName)) Then Return fallback
+            Dim value = Convert.ToString(row(columnName)).Trim()
+            Return If(String.IsNullOrWhiteSpace(value), fallback, value)
+        End Function
+
     End Class
 
     Public Class DossierHistoryItem
@@ -472,6 +504,7 @@ Namespace Presentation.Views.User
     End Class
 
     Public Class DossierAuditItem
+        Public Property RecordedAt As DateTime
         Public Property Timestamp As String
         Public Property Transition As String
         Public Property Staff As String

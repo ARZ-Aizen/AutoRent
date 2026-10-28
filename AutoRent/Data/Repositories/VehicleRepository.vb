@@ -359,6 +359,10 @@ Namespace Data.Repositories
                 Db.Dt(DateTime.Now)
             )
 
+            Dim newIdValue = Db.Scalar("SELECT [vehicle_id] FROM [Vehicles] WHERE [plate] = ?", Db.Text(plate, 20))
+            If newIdValue IsNot Nothing AndAlso Not IsDBNull(newIdValue) Then
+                VehicleStatusAuditRepository.RecordRegistration(Convert.ToInt32(newIdValue), plate)
+            End If
             Return Nothing
 
         End Function
@@ -390,6 +394,9 @@ Namespace Data.Repositories
                 Return $"Another vehicle already uses plate {plate}."
             End If
 
+            Dim oldStatus = VehicleStatusAuditRepository.CurrentStatus(vehicleId)
+            If String.IsNullOrWhiteSpace(oldStatus) Then Return "Vehicle no longer exists."
+
             Db.Execute(
                 "UPDATE [Vehicles] SET " &
                 "[plate] = ?, " &
@@ -412,6 +419,8 @@ Namespace Data.Repositories
                 Db.Int(vehicleId)
             )
 
+            VehicleStatusAuditRepository.RecordIfChanged(vehicleId, oldStatus,
+                "Vehicle status changed while editing fleet details · Plate " & plate, "Updated through Fleet Management")
             Return Nothing
 
         End Function
