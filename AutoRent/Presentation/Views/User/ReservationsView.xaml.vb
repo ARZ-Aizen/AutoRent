@@ -725,7 +725,7 @@ Namespace Presentation.Views.User
         Private Sub AddColumn(heading As String, field As String, width As Double, Optional fmt As String = Nothing)
             Dim binding As New System.Windows.Data.Binding(field)
             If Not String.IsNullOrWhiteSpace(fmt) Then binding.StringFormat = fmt
-            _grid.Columns.Add(New DataGridTextColumn With {.Header = heading, .Binding = binding, .Width = New DataGridLength(width)})
+            _grid.Columns.Add(New DataGridTextColumn With {.Header = heading, .binding = binding, .width = New DataGridLength(width)})
         End Sub
 
         Private Sub SearchChanged(sender As Object, e As TextChangedEventArgs)
