@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Data.OleDb
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
@@ -168,6 +168,12 @@ Namespace Data.Repositories
                 Return $"[{Plate}] {Make} {Model} ({Category}) · {Mileage:N0} km"
             End Get
         End Property
+
+        ' Some custom ComboBox templates render an object using ToString instead of
+        ' DisplayMemberPath. Always return a readable vehicle label in both places.
+        Public Overrides Function ToString() As String
+            Return DisplayText
+        End Function
     End Class
 
     Public NotInheritable Class InspectionRepository
@@ -329,23 +335,31 @@ Namespace Data.Repositories
             If record Is Nothing Then Return "Invalid inspection record."
             If record.InspectionId <= 0 Then Return "Invalid inspection ID."
             If String.IsNullOrWhiteSpace(record.Inspector) Then Return "Inspector name is required."
+            If record.Odometer < 0 OrElse record.Odometer > Integer.MaxValue Then Return "Please enter a valid odometer reading."
+            Dim existing = Db.Query("SELECT [vehicle_id] FROM [Inspections] WHERE [inspection_id] = ?", Db.Int(record.InspectionId))
+            If existing.Rows.Count = 0 Then Return "Checklist record no longer exists."
+            If Convert.ToInt32(existing.Rows(0)("vehicle_id")) <> record.VehicleId Then
+                Return "The inspected vehicle cannot be changed on an existing checklist."
+            End If
 
             Dim allPointsPassed = record.ExteriorOk AndAlso record.TiresOk AndAlso record.LightsOk AndAlso
                                   record.InteriorOk AndAlso record.FluidsOk AndAlso record.BrakesOk
 
             record.InspectionResult = If(allPointsPassed, "Passed", "Needs Attention")
+            If Not allPointsPassed AndAlso String.IsNullOrWhiteSpace(record.Findings) Then
+                Return "Please enter specific defect notes/findings for the unchecked safety items."
+            End If
 
             Try
                 Dim sql =
                     "UPDATE [Inspections] SET " &
-                    "[checklist_type] = ?, [inspected_at] = ?, [inspector] = ?, [odometer] = ?, [fuel] = ?, " &
+                    "[checklist_type] = ?, [inspector] = ?, [odometer] = ?, [fuel] = ?, " &
                     "[exterior_ok] = ?, [tires_ok] = ?, [lights_ok] = ?, [interior_ok] = ?, [fluids_ok] = ?, [brakes_ok] = ?, " &
                     "[findings] = ?, [inspection_result] = ? " &
                     "WHERE [inspection_id] = ?"
 
                 Db.Execute(sql,
                            Db.Text(record.ChecklistType, 30),
-                           Db.Dt(record.InspectedAt),
                            Db.Text(record.Inspector, 100),
                            Db.Int(CInt(record.Odometer)),
                            Db.Text(record.Fuel, 20),
@@ -359,7 +373,11 @@ Namespace Data.Repositories
                            Db.Text(record.InspectionResult, 20),
                            Db.Int(record.InspectionId))
 
-                SyncFleetAfterInspection(record.VehicleId, record.InspectionResult, record.Odometer)
+                ' Editing an older checklist must not override the latest vehicle safety assessment.
+                Dim latestId = Db.Scalar("SELECT TOP 1 [inspection_id] FROM [Inspections] WHERE [vehicle_id] = ? ORDER BY [inspected_at] DESC, [inspection_id] DESC", Db.Int(record.VehicleId))
+                If latestId IsNot Nothing AndAlso Not IsDBNull(latestId) AndAlso Convert.ToInt32(latestId) = record.InspectionId Then
+                    SyncFleetAfterInspection(record.VehicleId, record.InspectionResult, record.Odometer)
+                End If
                 Return Nothing
             Catch ex As Exception
                 Return "Database error updating checklist: " & ex.Message
@@ -376,14 +394,17 @@ Namespace Data.Repositories
         End Function
 
         Private Shared Sub SyncFleetAfterInspection(vehicleId As Integer, result As String, newOdometer As Long)
-            Try
-                ' If failed / needs attention, set vehicle status to Maintenance
-                If String.Equals(result, "Needs Attention", StringComparison.OrdinalIgnoreCase) Then
+            Dim oldStatus = VehicleStatusAuditRepository.CurrentStatus(vehicleId)
+            If String.IsNullOrWhiteSpace(oldStatus) Then Throw New InvalidOperationException("Vehicle not found for checklist status synchronization.")
+            ' If failed / needs attention, set vehicle status to Maintenance
+            If String.Equals(result, "Needs Attention", StringComparison.OrdinalIgnoreCase) Then
                     Db.Execute("UPDATE [Vehicles] SET [status] = 'Maintenance' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
                 ElseIf String.Equals(result, "Passed", StringComparison.OrdinalIgnoreCase) Then
                     ' If vehicle is currently in maintenance, but passed checklist, restore to Available
                     Dim curStatus = Db.Scalar("SELECT [status] FROM [Vehicles] WHERE [vehicle_id] = ?", Db.Int(vehicleId))
-                    If curStatus IsNot Nothing AndAlso String.Equals(curStatus.ToString(), "Maintenance", StringComparison.OrdinalIgnoreCase) Then
+                    If curStatus IsNot Nothing AndAlso String.Equals(curStatus.ToString(), "Maintenance", StringComparison.OrdinalIgnoreCase) AndAlso
+                       Db.Count("SELECT COUNT(*) FROM [Maintenance] WHERE [vehicle_id] = ? AND [status] = 'In Progress'", Db.Int(vehicleId)) = 0 AndAlso
+                       Db.Count("SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] IN ('Active', 'Confirmed')", Db.Int(vehicleId)) = 0 Then
                         Db.Execute("UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
                     End If
                 End If
@@ -393,9 +414,8 @@ Namespace Data.Repositories
                     Db.Execute("UPDATE [Vehicles] SET [mileage] = ? WHERE [vehicle_id] = ? AND ([mileage] IS NULL OR [mileage] < ?)",
                                Db.Int(CInt(newOdometer)), Db.Int(vehicleId), Db.Int(CInt(newOdometer)))
                 End If
-            Catch ex As Exception
-                System.Diagnostics.Debug.WriteLine("Error syncing vehicle status: " & ex.Message)
-            End Try
+            VehicleStatusAuditRepository.RecordIfChanged(vehicleId, oldStatus,
+                "Vehicle condition checklist: " & result, "Safety inspection · Odometer " & newOdometer.ToString("N0") & " km")
         End Sub
 
         Public Shared Function GetSummaryStats() As InspectionStats

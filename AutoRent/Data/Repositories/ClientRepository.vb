@@ -1,4 +1,4 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Data.OleDb
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
@@ -149,7 +149,10 @@ Namespace Data.Repositories
                     Run(connection, tx, insertDispatch, Db.Int(reservationId), Db.Text("Pickup", 10), Db.Dt(pickup.Date.AddHours(9)), Db.Text("Main Branch", 50), Db.Text("Scheduled", 20))
                     Run(connection, tx, insertDispatch, Db.Int(reservationId), Db.Text("Return", 10), Db.Dt(dropoff.Date.AddHours(17)), Db.Text("Main Branch", 50), Db.Text("Scheduled", 20))
 
+                    Dim previousStatus = VehicleStatusAuditRepository.CurrentStatus(connection, tx, vehicleId)
                     Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Reserved' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
+                    VehicleStatusAuditRepository.RecordIfChanged(connection, tx, vehicleId, previousStatus,
+                        $"Reservation BK-{reservationId:0000} confirmed for {customerName}", "Booking created")
                     tx.Commit()
                 End Using
             End Using
@@ -188,8 +191,14 @@ Namespace Data.Repositories
                             tx.Rollback()
                             Return "That vehicle is no longer available."
                         End If
+                        Dim oldStatus = VehicleStatusAuditRepository.CurrentStatus(connection, tx, oldVehicleId)
+                        Dim newVehicleOldStatus = VehicleStatusAuditRepository.CurrentStatus(connection, tx, vehicleId)
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ?", Db.Int(oldVehicleId))
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Reserved' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
+                        VehicleStatusAuditRepository.RecordIfChanged(connection, tx, oldVehicleId, oldStatus,
+                            $"Reservation BK-{reservationId:0000} moved to a different vehicle", "Previous vehicle released")
+                        VehicleStatusAuditRepository.RecordIfChanged(connection, tx, vehicleId, newVehicleOldStatus,
+                            $"Reservation BK-{reservationId:0000} reassigned to this vehicle", "Updated reservation")
                     End If
 
                     Run(connection, tx, "UPDATE [Reservations] SET [customer_name] = ?, [vehicle_id] = ?, [pickup_date] = ?, [return_date] = ?, [total] = ? WHERE [reservation_id] = ?",
@@ -221,7 +230,10 @@ Namespace Data.Repositories
                             "WHERE [reservation_id] = ? AND [completed_at] IS NULL",
                             Db.Dt(DateTime.Now), Db.Int(reservationId))
                     End If
+                    Dim previousStatus = VehicleStatusAuditRepository.CurrentStatus(connection, tx, vehicleId)
                     Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ? AND ([status] = 'Reserved' OR [status] = 'Rented')", Db.Int(vehicleId))
+                    VehicleStatusAuditRepository.RecordIfChanged(connection, tx, vehicleId, previousStatus,
+                        $"Reservation BK-{reservationId:0000} {newStatus.ToLowerInvariant()}", "Rental reservation closed")
                     Run(connection, tx, "UPDATE [Dispatches] SET [status] = ? WHERE [reservation_id] = ? AND [status] = 'Scheduled'", Db.Text(dispatchStatus, 20), Db.Int(reservationId))
                     tx.Commit()
                 End Using
@@ -246,6 +258,7 @@ Namespace Data.Repositories
                 Using tx = connection.BeginTransaction()
                     Run(connection, tx, "UPDATE [Dispatches] SET [status] = 'Completed' WHERE [dispatch_id] = ?", Db.Int(dispatchId))
 
+                    Dim previousStatus = VehicleStatusAuditRepository.CurrentStatus(connection, tx, vehicleId)
                     If dispatchType = "Pickup" Then
                         Run(connection, tx, "UPDATE [Reservations] SET [status] = 'Active' WHERE [reservation_id] = ?", Db.Int(reservationId))
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Rented' WHERE [vehicle_id] = ?", Db.Int(vehicleId))
@@ -257,6 +270,8 @@ Namespace Data.Repositories
                             Db.Dt(DateTime.Now), Db.Int(reservationId))
                         Run(connection, tx, "UPDATE [Vehicles] SET [status] = 'Available' WHERE [vehicle_id] = ? AND [status] <> 'Maintenance'", Db.Int(vehicleId))
                     End If
+                    VehicleStatusAuditRepository.RecordIfChanged(connection, tx, vehicleId, previousStatus,
+                        $"{dispatchType} dispatch completed · BK-{reservationId:0000}", "Dispatch operation verified")
                     tx.Commit()
                 End Using
             End Using
