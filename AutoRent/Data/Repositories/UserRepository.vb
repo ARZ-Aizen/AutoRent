@@ -24,33 +24,49 @@ Namespace Data.Repositories
             If String.IsNullOrWhiteSpace(username) OrElse String.IsNullOrEmpty(password) Then Return Nothing
 
             Dim userId As Integer
-            Dim storedUsername As String
-            Dim passwordHash As String
-            Dim roleName As String
+            Dim storedUsername As String = Nothing
+            Dim storedFullName As String = Nothing
+            Dim storedBranch As String = Nothing
+            Dim passwordHash As String = Nothing
+            Dim roleName As String = Nothing
             Dim isActive As Boolean
             Dim isDeleted As Boolean
             Dim createdAt As DateTime
+            Dim userFound As Boolean = False
 
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
 
                 Using command = connection.CreateCommand()
-                    command.CommandText = "SELECT [user_id], [username], [password_hash], [role], [is_active], [is_deleted], [created_at] FROM [Users] WHERE [username] = ?"
+                    command.CommandText = "SELECT [user_id], [username], [full_name], [branch], [password_hash], [role], [is_active], [is_deleted], [created_at] FROM [Users] WHERE [username] = ?"
                     command.Parameters.Add("username", OleDbType.VarWChar, 100).Value = username.Trim()
 
                     Using reader = command.ExecuteReader()
-                        If Not reader.Read() Then Return Nothing
-
-                        userId = Convert.ToInt32(reader("user_id"))
-                        storedUsername = Convert.ToString(reader("username"))
-                        passwordHash = Convert.ToString(reader("password_hash"))
-                        roleName = Convert.ToString(reader("role"))
-                        isActive = Convert.ToBoolean(reader("is_active"))
-                        isDeleted = Convert.ToBoolean(reader("is_deleted"))
-                        createdAt = Convert.ToDateTime(reader("created_at"))
+                        While reader.Read()
+                            Dim candidateUsername = Convert.ToString(reader("username"))
+                            ' Strict case-sensitive username validation:
+                            ' MS Access OleDb queries are case-insensitive by default (e.g. 'admin' matches 'Admin' or 'ADMIN').
+                            ' An exact ordinal match (StringComparison.Ordinal) is strictly required so that capital
+                            ' letters in a username reject small caps, and lowercase usernames reject uppercase variants.
+                            If String.Equals(username.Trim(), candidateUsername, StringComparison.Ordinal) Then
+                                userId = Convert.ToInt32(reader("user_id"))
+                                storedUsername = candidateUsername
+                                storedFullName = If(reader("full_name") Is DBNull.Value OrElse String.IsNullOrWhiteSpace(Convert.ToString(reader("full_name"))), storedUsername, Convert.ToString(reader("full_name")).Trim())
+                                storedBranch = If(reader("branch") Is DBNull.Value OrElse String.IsNullOrWhiteSpace(Convert.ToString(reader("branch"))), "HQ", Convert.ToString(reader("branch")).Trim())
+                                passwordHash = Convert.ToString(reader("password_hash"))
+                                roleName = Convert.ToString(reader("role"))
+                                isActive = Convert.ToBoolean(reader("is_active"))
+                                isDeleted = Convert.ToBoolean(reader("is_deleted"))
+                                createdAt = Convert.ToDateTime(reader("created_at"))
+                                userFound = True
+                                Exit While
+                            End If
+                        End While
                     End Using
                 End Using
             End Using
+
+            If Not userFound Then Return Nothing
 
             If Not PasswordHasher.VerifyPassword(password, passwordHash) OrElse isDeleted Then Return Nothing
 
@@ -64,13 +80,23 @@ Namespace Data.Repositories
             End If
 
             Dim loginTime = DateTime.Now
+            Dim needsRehash = Not PasswordHasher.IsOpaqueHash(passwordHash)
+            Dim upgradedHash = If(needsRehash, PasswordHasher.HashPassword(password), passwordHash)
+
             Using connection = AccessDatabaseConnection.CreateConnection()
                 connection.Open()
 
                 Using command = connection.CreateCommand()
-                    command.CommandText = "UPDATE [Users] SET [last_login] = ?, [is_active] = True WHERE [user_id] = ? AND [is_deleted] = False"
-                    command.Parameters.Add("last_login", OleDbType.Date).Value = loginTime
-                    command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
+                    If needsRehash Then
+                        command.CommandText = "UPDATE [Users] SET [last_login] = ?, [is_active] = True, [password_hash] = ? WHERE [user_id] = ? AND [is_deleted] = False"
+                        command.Parameters.Add("last_login", OleDbType.Date).Value = loginTime
+                        command.Parameters.Add("password_hash", OleDbType.VarWChar, 255).Value = upgradedHash
+                        command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
+                    Else
+                        command.CommandText = "UPDATE [Users] SET [last_login] = ?, [is_active] = True WHERE [user_id] = ? AND [is_deleted] = False"
+                        command.Parameters.Add("last_login", OleDbType.Date).Value = loginTime
+                        command.Parameters.Add("user_id", OleDbType.Integer).Value = userId
+                    End If
                     If command.ExecuteNonQuery() <> 1 Then Return Nothing
                 End Using
             End Using
@@ -78,7 +104,9 @@ Namespace Data.Repositories
             Return New User With {
                 .UserId = userId,
                 .Username = storedUsername,
-                .PasswordHash = passwordHash,
+                .FullName = storedFullName,
+                .Branch = storedBranch,
+                .PasswordHash = upgradedHash,
                 .Role = userRole,
                 .RoleName = roleName,
                 .IsActive = True,

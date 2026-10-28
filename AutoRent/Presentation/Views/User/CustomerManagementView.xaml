@@ -60,12 +60,21 @@
             </Style>
 
             <!-- Custom Cell Style -->
-            <Style x:Key="ModernTableCell" TargetType="{x:Type DataGridCell}">
-                <Setter Property="Padding" Value="16,10"/>
+                        <Style x:Key="ModernTableCell" TargetType="{x:Type DataGridCell}">
+                <Setter Property="Padding" Value="16,0"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="BorderBrush" Value="#F0EEEB"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridCell}">
+                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="Background" Value="#FBF4F5"/>

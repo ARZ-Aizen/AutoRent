@@ -27,8 +27,8 @@ Namespace Presentation.Views.User
             InitializeComponent()
             InputBehavior.Attach(TxtModalName, "name", 100)
             InputBehavior.Attach(TxtModalPhone, "digits", 11)
+            InputBehavior.Attach(TxtModalLicense, "license", 50)
             TxtModalEmail.MaxLength = 100
-            TxtModalLicense.MaxLength = 50
             _initialized = True
         End Sub
 
@@ -403,17 +403,12 @@ Namespace Presentation.Views.User
             Dim selected = TryCast(CType(sender, FrameworkElement).Tag, CustomerItem)
             If selected Is Nothing Then Return
 
-            Dim confirm = MessageBox.Show($"Are you sure you want to delete customer '{selected.Name}' ({selected.CustomerIdDisplay})?" & vbCrLf & vbCrLf &
-                                          "This action will permanently remove their profile.",
-                                          "Delete Customer",
-                                          MessageBoxButton.YesNo,
-                                          MessageBoxImage.Question)
-            If confirm <> MessageBoxResult.Yes Then Return
+            If Not AlertUtil.Confirm($"Are you sure you want to delete customer '{selected.Name}' ({selected.CustomerIdDisplay})?" & vbCrLf & vbCrLf & "This action will permanently remove their profile.", "Delete Customer", ViewHelpers.Owner(Me)) Then Return
 
             Try
                 Dim problem = ClientRepository.DeleteCustomer(selected.DbId, selected.Name)
                 If problem IsNot Nothing Then
-                    MessageBox.Show(problem, "Cannot Delete Customer", MessageBoxButton.OK, MessageBoxImage.Warning)
+                    AlertUtil.ShowWarning(problem, "Cannot Delete Customer", ViewHelpers.Owner(Me))
                     Return
                 End If
             Catch ex As Exception
@@ -423,52 +418,5 @@ Namespace Presentation.Views.User
 
             ReloadCustomers()
         End Sub
-
-        ' =========================
-        ' CSV EXPORT
-        ' =========================
-
-        Private Sub BtnExportCsv_Click(sender As Object, e As RoutedEventArgs)
-            If _filtered Is Nothing OrElse _filtered.Count = 0 Then
-                MessageBox.Show("There are no customer records to export.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information)
-                Return
-            End If
-
-            Dim dialog As New SaveFileDialog() With {
-                .FileName = $"AutoRent_Customers_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
-                .DefaultExt = ".csv",
-                .Filter = "CSV documents (.csv)|*.csv"
-            }
-
-            If dialog.ShowDialog() = True Then
-                Try
-                    Dim sb As New StringBuilder()
-                    sb.AppendLine("Customer ID,Full Name,Phone,Email,Driver License,Rental Status")
-
-                    For Each c In _filtered
-                        Dim id = EscapeCsv(c.CustomerIdDisplay)
-                        Dim name = EscapeCsv(c.Name)
-                        Dim phone = EscapeCsv(c.Phone)
-                        Dim email = EscapeCsv(c.Email)
-                        Dim license = EscapeCsv(c.License)
-                        Dim status = EscapeCsv(c.StatusBadgeText)
-                        sb.AppendLine($"{id},{name},{phone},{email},{license},{status}")
-                    Next
-
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)
-                    MessageBox.Show($"Successfully exported {_filtered.Count} customer records to CSV.", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information)
-                Catch ex As Exception
-                    MessageBox.Show($"Could not export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
-                End Try
-            End If
-        End Sub
-
-        Private Function EscapeCsv(val As String) As String
-            If String.IsNullOrEmpty(val) Then Return """" & """"
-            If val.Contains(",") OrElse val.Contains("""") OrElse val.Contains(vbCr) OrElse val.Contains(vbLf) Then
-                Return """" & val.Replace("""", """""") & """"
-            End If
-            Return """" & val & """"
-        End Function
     End Class
 End Namespace

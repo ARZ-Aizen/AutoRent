@@ -1,4 +1,4 @@
-﻿Imports System.Collections.Generic
+Imports System.Collections.Generic
 Imports System.Linq
 Imports System.Security.Cryptography
 Imports System.Windows
@@ -21,25 +21,81 @@ Namespace Presentation.Views.Admin
             InitializeComponent()
             InputBehavior.Attach(TxtNewFullName, "name", 100)
             InputBehavior.Attach(TxtEditFullName, "name", 100)
-            TxtNewUsername.MaxLength = 32
-            TxtEditUsername.MaxLength = 32
+            InputBehavior.Attach(TxtNewUsername, "username", 32)
+            InputBehavior.Attach(TxtEditUsername, "username", 32)
         End Sub
 
-        Private Function CurrentUserId() As Integer
+        Private Function GetCurrentUser() As Global.AutoRent.Data.Models.User
             Dim app = TryCast(System.Windows.Application.Current, Global.AutoRent.Application)
-            Return If(app?.CurrentUser IsNot Nothing, app.CurrentUser.UserId, 0)
+            Return app?.CurrentUser
+        End Function
+
+        Private Function CurrentUserId() As Integer
+            Dim u = GetCurrentUser()
+            Return If(u IsNot Nothing, u.UserId, 0)
+        End Function
+
+        Private Function IsCurrentUserManager() As Boolean
+            Dim u = GetCurrentUser()
+            Return u IsNot Nothing AndAlso u.IsManager AndAlso Not u.IsAdmin
         End Function
 
         Private Sub UserManagementView_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
             If _ready Then Return
 
-            CmbRoleFilter.ItemsSource = New String() {
-                "All roles",
-                "System Administrator",
-                "Manager",
-                "Rental Staff"
-            }
-            CmbRoleFilter.SelectedIndex = 0
+            Dim isManager = IsCurrentUserManager()
+
+            If isManager Then
+                CmbRoleFilter.ItemsSource = New String() {
+                    "Rental Staff"
+                }
+                CmbRoleFilter.SelectedIndex = 0
+
+                CmbNewRole.ItemsSource = New String() {
+                    "Rental Staff"
+                }
+                CmbNewRole.SelectedIndex = 0
+                CmbNewRole.IsEnabled = False
+
+                CmbEditRole.ItemsSource = New String() {
+                    "Rental Staff"
+                }
+                CmbEditRole.SelectedIndex = 0
+                CmbEditRole.IsEnabled = False
+
+                TxtLifecycleNotice.Text = "Archiving revokes sign-in access while preserving historical records. Cashier accounts and credentials can be managed securely by branch managers."
+            Else
+                CmbRoleFilter.ItemsSource = New String() {
+                    "All roles",
+                    "System Administrator",
+                    "Manager",
+                    "Rental Staff"
+                }
+                CmbRoleFilter.SelectedIndex = 0
+
+                If UserAdminRepository.AdminExists() Then
+                    CmbNewRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "Manager"
+                    }
+                Else
+                    CmbNewRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "System Administrator",
+                        "Manager"
+                    }
+                End If
+                CmbNewRole.SelectedIndex = 0
+                CmbNewRole.IsEnabled = True
+
+                CmbEditRole.ItemsSource = New String() {
+                    "Rental Staff",
+                    "System Administrator",
+                    "Manager"
+                }
+                CmbEditRole.SelectedIndex = 0
+                CmbEditRole.IsEnabled = True
+            End If
 
             CmbStatusFilter.ItemsSource = New String() {
                 "All statuses",
@@ -47,27 +103,6 @@ Namespace Presentation.Views.Admin
                 "Inactive"
             }
             CmbStatusFilter.SelectedIndex = 0
-
-            If UserAdminRepository.AdminExists() Then
-                CmbNewRole.ItemsSource = New String() {
-                    "Rental Staff",
-                    "Manager"
-                }
-            Else
-                CmbNewRole.ItemsSource = New String() {
-                    "Rental Staff",
-                    "System Administrator",
-                    "Manager"
-                }
-            End If
-            CmbNewRole.SelectedIndex = 0
-
-            CmbEditRole.ItemsSource = New String() {
-                "Rental Staff",
-                "System Administrator",
-                "Manager"
-            }
-            CmbEditRole.SelectedIndex = 0
 
             _ready = True
             LoadUsers()
@@ -77,6 +112,10 @@ Namespace Presentation.Views.Admin
         Private Sub LoadUsers(Optional selectUserId As Integer = 0)
             Try
                 _allUsers = UserAdminRepository.GetAll()
+                If IsCurrentUserManager() Then
+                    ' Managers can only see cashiers (Rental Staff). Admins and co-managers are hidden.
+                    _allUsers = _allUsers.Where(Function(u) u.IsRentalStaff).ToList()
+                End If
                 ApplyFilter(selectUserId)
                 UpdateArchivedBadge()
             Catch ex As Exception
@@ -89,8 +128,13 @@ Namespace Presentation.Views.Admin
             Dim activeCount = _allUsers.Where(Function(u) u.StatusBadge = "Active").Count()
             Dim inactiveCount = _allUsers.Where(Function(u) u.StatusBadge = "Inactive").Count()
 
-            TxtHeaderStats.Text = $"{total} staff accounts · {activeCount} active · {inactiveCount} inactive · passwords are never displayed"
-            TxtShowingCount.Text = $"Showing {filteredCount} of {total} accounts · access restricted to authorized administrators"
+            If IsCurrentUserManager() Then
+                TxtHeaderStats.Text = $"{total} cashier accounts · {activeCount} active · {inactiveCount} inactive · passwords are never displayed"
+                TxtShowingCount.Text = $"Showing {filteredCount} of {total} cashier accounts · access restricted to authorized manager"
+            Else
+                TxtHeaderStats.Text = $"{total} staff accounts · {activeCount} active · {inactiveCount} inactive · passwords are never displayed"
+                TxtShowingCount.Text = $"Showing {filteredCount} of {total} accounts · access restricted to authorized administrators"
+            End If
         End Sub
 
         Private Sub FilterInputs_Changed(sender As Object, e As EventArgs)
@@ -136,7 +180,7 @@ Namespace Presentation.Views.Admin
                     targetUser = filtered.FirstOrDefault(Function(u) u.UserId = preserveUserId)
                 End If
 
-                If targetUser Is Nothing Then
+                If targetUser Is Nothing AndAlso Not IsCurrentUserManager() Then
                     targetUser = filtered.FirstOrDefault(Function(u) u.Username.ToLowerInvariant() = "m.chen")
                 End If
 
@@ -148,15 +192,36 @@ Namespace Presentation.Views.Admin
             Else
                 _selectedUser = Nothing
                 _selectedId = 0
+                TxtSelTitle.Text = "No accounts found"
+                TxtSelSubtitle.Text = "No accounts match current criteria"
+                TxtSelRole.Text = "—"
+                TxtSelCreated.Text = "—"
+                TxtSelActivity.Text = "—"
+                BtnEditAccount.IsEnabled = False
+                BtnArchiveAccount.IsEnabled = False
             End If
         End Sub
 
         Private Sub DgStaff_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
             Dim user = TryCast(DgStaff.SelectedItem, Global.AutoRent.Data.Models.User)
-            If user Is Nothing Then Return
+            If user Is Nothing Then
+                _selectedUser = Nothing
+                _selectedId = 0
+                BtnEditAccount.IsEnabled = False
+                BtnArchiveAccount.IsEnabled = False
+                Return
+            End If
 
             _selectedUser = user
             _selectedId = user.UserId
+
+            If IsCurrentUserManager() AndAlso (user.IsAdmin OrElse user.IsManager) Then
+                BtnEditAccount.IsEnabled = False
+                BtnArchiveAccount.IsEnabled = False
+            Else
+                BtnEditAccount.IsEnabled = True
+                BtnArchiveAccount.IsEnabled = True
+            End If
 
             TxtSelTitle.Text = $"Selected account · {user.DisplayName}"
             TxtSelSubtitle.Text = user.StatusSubtitle
@@ -168,44 +233,56 @@ Namespace Presentation.Views.Admin
         Private Sub BtnEditAccount_Click(sender As Object, e As RoutedEventArgs)
             If _selectedUser Is Nothing Then Return
 
+            If IsCurrentUserManager() Then
+                If _selectedUser.IsAdmin OrElse _selectedUser.IsManager Then
+                    AlertUtil.ShowWarning("Managers do not have permission to modify Administrator or Manager accounts.", "Edit Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+
+                ' Manager cannot elevate or change role: locked to Rental Staff
+                CmbEditRole.ItemsSource = New String() { "Rental Staff" }
+                CmbEditRole.SelectedIndex = 0
+                CmbEditRole.IsEnabled = False
+            Else
+                Dim isTargetAdmin = _selectedUser.IsAdmin OrElse UserAdminRepository.IsAdminRole(_selectedUser.RoleName) OrElse UserAdminRepository.IsAdminRole(_selectedUser.DisplayRole)
+                If isTargetAdmin Then
+                    ' Sole administrator cannot have their role changed
+                    CmbEditRole.ItemsSource = New String() { "System Administrator" }
+                    CmbEditRole.SelectedIndex = 0
+                    CmbEditRole.IsEnabled = False
+                Else
+                    If UserAdminRepository.AdminExists() Then
+                        CmbEditRole.ItemsSource = New String() {
+                            "Rental Staff",
+                            "Manager"
+                        }
+                    Else
+                        CmbEditRole.ItemsSource = New String() {
+                            "Rental Staff",
+                            "System Administrator",
+                            "Manager"
+                        }
+                    End If
+                    CmbEditRole.IsEnabled = True
+
+                    Dim currentRole = _selectedUser.RoleName
+                    Dim roleIndex = CmbEditRole.Items.IndexOf(currentRole)
+                    If roleIndex >= 0 Then
+                        CmbEditRole.SelectedIndex = roleIndex
+                    Else
+                        Dim displayRoleIndex = CmbEditRole.Items.IndexOf(_selectedUser.DisplayRole)
+                        If displayRoleIndex >= 0 Then
+                            CmbEditRole.SelectedIndex = displayRoleIndex
+                        Else
+                            CmbEditRole.SelectedIndex = 0
+                        End If
+                    End If
+                End If
+            End If
+
             TxtEditSubtitle.Text = $"Updating {_selectedUser.UserCode} · {_selectedUser.DisplayName}"
             TxtEditFullName.Text = _selectedUser.FullName
             TxtEditUsername.Text = _selectedUser.Username
-
-            Dim isCurrentAdmin = UserAdminRepository.IsAdminRole(_selectedUser.RoleName) OrElse UserAdminRepository.IsAdminRole(_selectedUser.DisplayRole)
-            If isCurrentAdmin Then
-                CmbEditRole.ItemsSource = New String() {
-                    "System Administrator",
-                    "Manager",
-                    "Rental Staff"
-                }
-            Else
-                If UserAdminRepository.AdminExists() Then
-                    CmbEditRole.ItemsSource = New String() {
-                        "Rental Staff",
-                        "Manager"
-                    }
-                Else
-                    CmbEditRole.ItemsSource = New String() {
-                        "Rental Staff",
-                        "System Administrator",
-                        "Manager"
-                    }
-                End If
-            End If
-
-            Dim currentRole = _selectedUser.RoleName
-            Dim roleIndex = CmbEditRole.Items.IndexOf(currentRole)
-            If roleIndex >= 0 Then
-                CmbEditRole.SelectedIndex = roleIndex
-            Else
-                Dim displayRoleIndex = CmbEditRole.Items.IndexOf(_selectedUser.DisplayRole)
-                If displayRoleIndex >= 0 Then
-                    CmbEditRole.SelectedIndex = displayRoleIndex
-                Else
-                    CmbEditRole.SelectedIndex = 0
-                End If
-            End If
 
             ClearPasswordField(TxtEditPassword, TxtEditPasswordReveal, EyeIconEditPass)
             ClearPasswordField(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal, EyeIconEditConfirm)
@@ -224,11 +301,30 @@ Namespace Presentation.Views.Admin
         Private Sub BtnSaveEditUser_Click(sender As Object, e As RoutedEventArgs)
             If _selectedUser Is Nothing Then Return
 
+            If IsCurrentUserManager() Then
+                If _selectedUser.IsAdmin OrElse _selectedUser.IsManager Then
+                    AlertUtil.ShowWarning("Managers do not have permission to modify Administrator or Manager accounts.", "Edit Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+            End If
+
             Dim fullName = TxtEditFullName.Text.Trim()
             Dim username = TxtEditUsername.Text.Trim()
             Dim role = TryCast(CmbEditRole.SelectedItem, String)
             Dim newPassword = GetPasswordValue(TxtEditPassword, TxtEditPasswordReveal)
             Dim confirmPassword = GetPasswordValue(TxtEditConfirmPassword, TxtEditConfirmPasswordReveal)
+
+            If IsCurrentUserManager() Then
+                ' Managers cannot elevate or change roles
+                If Not String.IsNullOrEmpty(role) AndAlso Not String.Equals(role, "Rental Staff", StringComparison.OrdinalIgnoreCase) Then
+                    AlertUtil.ShowWarning("Managers cannot elevate or change user roles.", "Edit Account", ViewHelpers.Owner(Me))
+                    Return
+                End If
+                role = "Rental Staff"
+            ElseIf _selectedUser.IsAdmin Then
+                ' System Administrator role cannot be changed
+                role = "System Administrator"
+            End If
 
             If String.IsNullOrWhiteSpace(fullName) Then
                 AlertUtil.ShowWarning("Full name cannot be blank.", "Edit Account", ViewHelpers.Owner(Me))
@@ -275,6 +371,16 @@ Namespace Presentation.Views.Admin
         Private Sub BtnArchiveAccount_Click(sender As Object, e As RoutedEventArgs)
             If _selectedUser Is Nothing Then Return
 
+            If IsCurrentUserManager() AndAlso (_selectedUser.IsAdmin OrElse _selectedUser.IsManager) Then
+                AlertUtil.ShowWarning("Managers do not have permission to archive Administrator or Manager accounts.", "Archive Account", ViewHelpers.Owner(Me))
+                Return
+            End If
+
+            If _selectedUser.IsAdmin Then
+                AlertUtil.ShowWarning("The System Administrator account cannot be archived.", "Archive Account", ViewHelpers.Owner(Me))
+                Return
+            End If
+
             If Not AlertUtil.Confirm($"Are you sure you want to archive the account for '{_selectedUser.DisplayName}' ({_selectedUser.UserCode})? Archived accounts will be suspended from signing in and removed from the active directory.", "Archive Account", ViewHelpers.Owner(Me)) Then
                 Return
             End If
@@ -299,19 +405,26 @@ Namespace Presentation.Views.Admin
             ClearPasswordField(TxtNewPassword, TxtNewPasswordReveal, EyeIconNewPass)
             ClearPasswordField(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal, EyeIconNewConfirm)
 
-            If UserAdminRepository.AdminExists() Then
-                CmbNewRole.ItemsSource = New String() {
-                    "Rental Staff",
-                    "Manager"
-                }
+            If IsCurrentUserManager() Then
+                CmbNewRole.ItemsSource = New String() { "Rental Staff" }
+                CmbNewRole.SelectedIndex = 0
+                CmbNewRole.IsEnabled = False
             Else
-                CmbNewRole.ItemsSource = New String() {
-                    "Rental Staff",
-                    "System Administrator",
-                    "Manager"
-                }
+                If UserAdminRepository.AdminExists() Then
+                    CmbNewRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "Manager"
+                    }
+                Else
+                    CmbNewRole.ItemsSource = New String() {
+                        "Rental Staff",
+                        "System Administrator",
+                        "Manager"
+                    }
+                End If
+                CmbNewRole.SelectedIndex = 0
+                CmbNewRole.IsEnabled = True
             End If
-            CmbNewRole.SelectedIndex = 0
 
             CreateUserModal.Visibility = Visibility.Visible
             TxtNewFullName.Focus()
@@ -331,6 +444,14 @@ Namespace Presentation.Views.Admin
             Dim password = GetPasswordValue(TxtNewPassword, TxtNewPasswordReveal)
             Dim confirmPassword = GetPasswordValue(TxtNewConfirmPassword, TxtNewConfirmPasswordReveal)
             Dim role = TryCast(CmbNewRole.SelectedItem, String)
+
+            If IsCurrentUserManager() Then
+                If Not String.IsNullOrEmpty(role) AndAlso Not String.Equals(role, "Rental Staff", StringComparison.OrdinalIgnoreCase) Then
+                    AlertUtil.ShowWarning("Managers are only authorized to create Rental Staff accounts.", "Create User", ViewHelpers.Owner(Me))
+                    Return
+                End If
+                role = "Rental Staff"
+            End If
 
             If String.IsNullOrWhiteSpace(fullName) Then
                 AlertUtil.ShowWarning("Please specify a full name.", "Create User", ViewHelpers.Owner(Me))
@@ -451,6 +572,9 @@ Namespace Presentation.Views.Admin
         Private Sub UpdateArchivedBadge()
             Try
                 Dim archived = UserAdminRepository.GetArchived()
+                If IsCurrentUserManager() Then
+                    archived = archived.Where(Function(u) u.IsRentalStaff).ToList()
+                End If
                 TxtArchivedButtonLabel.Text = If(archived.Count > 0, $"Archived ({archived.Count})", "Archived")
             Catch ex As Exception
             End Try
@@ -472,6 +596,9 @@ Namespace Presentation.Views.Admin
         Private Sub LoadArchivedUsers()
             Try
                 Dim archived = UserAdminRepository.GetArchived()
+                If IsCurrentUserManager() Then
+                    archived = archived.Where(Function(u) u.IsRentalStaff).ToList()
+                End If
                 DgArchivedStaff.ItemsSource = archived
                 TxtArchivedCount.Text = $"{archived.Count} archived account" & If(archived.Count = 1, "", "s")
                 TxtArchivedButtonLabel.Text = If(archived.Count > 0, $"Archived ({archived.Count})", "Archived")
@@ -497,6 +624,11 @@ Namespace Presentation.Views.Admin
 
             Dim archivedList = TryCast(DgArchivedStaff.ItemsSource, List(Of Global.AutoRent.Data.Models.User))
             Dim user = If(archivedList IsNot Nothing, archivedList.FirstOrDefault(Function(u) u.UserId = userId), Nothing)
+            If user IsNot Nothing AndAlso IsCurrentUserManager() AndAlso (user.IsAdmin OrElse user.IsManager) Then
+                AlertUtil.ShowWarning("Managers do not have permission to restore Administrator or Manager accounts.", "Restore Account", ViewHelpers.Owner(Me))
+                Return
+            End If
+
             Dim targetName = If(user IsNot Nothing, $"{user.DisplayName} ({user.UserCode})", "this account")
 
             If Not AlertUtil.Confirm($"Are you sure you want to restore {targetName} to the staff directory?", "Restore Account", ViewHelpers.Owner(Me)) Then
@@ -527,6 +659,11 @@ Namespace Presentation.Views.Admin
 
             Dim archivedList = TryCast(DgArchivedStaff.ItemsSource, List(Of Global.AutoRent.Data.Models.User))
             Dim user = If(archivedList IsNot Nothing, archivedList.FirstOrDefault(Function(u) u.UserId = userId), Nothing)
+            If user IsNot Nothing AndAlso IsCurrentUserManager() AndAlso (user.IsAdmin OrElse user.IsManager) Then
+                AlertUtil.ShowWarning("Managers do not have permission to delete Administrator or Manager accounts.", "Delete Account", ViewHelpers.Owner(Me))
+                Return
+            End If
+
             Dim targetName = If(user IsNot Nothing, $"{user.DisplayName} ({user.UserCode})", "this account")
 
             If Not AlertUtil.Confirm($"Are you sure you want to PERMANENTLY delete {targetName}? This action cannot be undone and will erase the account from the database.", "Delete Account Permanently", ViewHelpers.Owner(Me)) Then

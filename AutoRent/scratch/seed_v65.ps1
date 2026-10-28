@@ -1,4 +1,4 @@
-Add-Type -AssemblyName System.Data
+﻿Add-Type -AssemblyName System.Data
 
 $dbs = @(
     "c:\Users\allan\source\repos\AutoRent\AutoRent\Resources\Data\AutoRent.accdb.accdb",

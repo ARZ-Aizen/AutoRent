@@ -9,9 +9,13 @@
              FontFamily="Segoe UI"
              Background="#F7F6F5">
 
-    <UserControl.Resources>
+        <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AutoRent;component/Presentation/UI/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <SolidColorBrush x:Key="Burgundy" Color="#76091F"/>
+            <SolidColorBrush x:Key="Burgundy" Color="#76091F"/>
 
         <Style x:Key="Panel" TargetType="Border">
             <Setter Property="Background" Value="White"/>
@@ -92,14 +96,14 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#383235"/>
 
-            <Setter Property="ColumnHeaderStyle">
+                        <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="#F5F3F2"/>
                         <Setter Property="Foreground" Value="#777072"/>
                         <Setter Property="FontWeight" Value="SemiBold"/>
                         <Setter Property="FontSize" Value="11"/>
-                        <Setter Property="Padding" Value="9,0"/>
+                        <Setter Property="Padding" Value="12,0"/>
                         <Setter Property="BorderThickness" Value="0"/>
                         <Setter Property="HorizontalContentAlignment" Value="Left"/>
                     </Style>
@@ -109,16 +113,25 @@
             <Setter Property="CellStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridCell">
-                        <Setter Property="Padding" Value="9,5"/>
                         <Setter Property="BorderThickness" Value="0,0,0,1"/>
                         <Setter Property="BorderBrush" Value="#F1EEEE"/>
                         <Setter Property="VerticalContentAlignment" Value="Center"/>
                         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}" Padding="12,5">
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
                     </Style>
                 </Setter.Value>
             </Setter>
         </Style>
 
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -196,7 +209,6 @@
                               Height="35"
                               FontSize="12"
                               VerticalContentAlignment="Center"
-                              BorderBrush="#E0DCDD"
                               SelectionChanged="Selection_Changed"/>
                 </StackPanel>
 
@@ -208,7 +220,6 @@
                               Height="35"
                               FontSize="12"
                               VerticalContentAlignment="Center"
-                              BorderBrush="#E0DCDD"
                               SelectionChanged="Selection_Changed"/>
                 </StackPanel>
 
@@ -220,7 +231,6 @@
                               Height="35"
                               FontSize="12"
                               VerticalContentAlignment="Center"
-                              BorderBrush="#E0DCDD"
                               SelectionChanged="Selection_Changed">
 
                         <ComboBoxItem Content="Make A–Z"
@@ -306,7 +316,7 @@
 
                         <DataGridTextColumn Header="Vehicle ID"
                                             Binding="{Binding display_id}"
-                                            Width="90"
+                                            Width="1*"
                                             MinWidth="85"/>
 
                         <!-- VEHICLE PHOTO / NAME -->
@@ -357,13 +367,13 @@
 
                         <DataGridTextColumn Header="Plate number"
                                             Binding="{Binding plate}"
-                                            Width="110"
-                                            MinWidth="103"/>
+                                            Width="1.2*"
+                                            MinWidth="100"/>
 
                         <DataGridTextColumn Header="Year"
                                             Binding="{Binding model_year}"
-                                            Width="65"
-                                            MinWidth="60"/>
+                                            Width="0.8*"
+                                             MinWidth="60"/>
 
                         <DataGridTextColumn Header="Category"
                                             Binding="{Binding category}"
@@ -372,18 +382,18 @@
 
                         <DataGridTextColumn Header="Mileage (km)"
                                             Binding="{Binding mileage, StringFormat=N0}"
-                                            Width="110"
-                                            MinWidth="104"/>
+                                            Width="1.2*"
+                                            MinWidth="100"/>
 
                         <DataGridTextColumn Header="Daily rate"
                                             Binding="{Binding daily_rate, StringFormat='₱{0:N2}'}"
-                                            Width="95"
-                                            MinWidth="94"/>
+                                            Width="1.1*"
+                                             MinWidth="90"/>
 
                         <!-- STATUS BADGE -->
                         <DataGridTemplateColumn Header="Status"
-                                                Width="110"
-                                                MinWidth="105">
+                                                Width="1.1*"
+                                                MinWidth="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border x:Name="StatusPill"
@@ -445,8 +455,8 @@
 
                         <!-- ROW ACTIONS -->
                         <DataGridTemplateColumn Header="Actions"
-                                                Width="135"
-                                                MinWidth="130">
+                                                Width="1.3*"
+                                                MinWidth="120">
 
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>

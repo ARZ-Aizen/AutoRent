@@ -40,9 +40,9 @@ Class MainWindow
         Dim currentUser = app.CurrentUser
 
         If currentUser IsNot Nothing Then
-            UsernameDisplay.Text = currentUser.Username
+            UsernameDisplay.Text = currentUser.DisplayName
             UserRoleDisplay.Text = currentUser.DisplayRole.ToUpperInvariant()
-            Me.Title = $"AutoRent - {currentUser.Username} ({currentUser.DisplayRole})"
+            Me.Title = $"AutoRent - {currentUser.DisplayName} ({currentUser.DisplayRole})"
 
             ' Role access rules:
             ' 1. Admin: Admin side ONLY
@@ -144,8 +144,9 @@ Class MainWindow
         Dim navItems As New List(Of NavItem) From {
             New NavItem(ChrW(&HE80F), "Home Dashboard", "Home"),
             New NavItem(ChrW(&HE804), "Fleet Management", "Fleet"),
-            New NavItem(ChrW(&HE81D), "Dispatch Reports", "DispatchReports"),
             New NavItem(ChrW(&HE90F), "Maintenance Schedules", "Maintenance"),
+            New NavItem(ChrW(&HE9D5), "Vehicle Inspection", "VehicleInspection"),
+            New NavItem(ChrW(&HE81D), "Dispatch Reports", "DispatchReports"),
             New NavItem(ChrW(&HE8EC), "Rate Management", "Rates"),
             New NavItem(ChrW(&HE9D9), "Financial Reports", "Reports"),
             New NavItem(ChrW(&HE716), "User Management", "Users")
@@ -216,13 +217,14 @@ Class MainWindow
         If Not _currentViewIsAdmin Then Return
 
         Select Case item.Key
-            Case "Home"            : MainContentHost.Content = New HomeDashboardView()
-            Case "Fleet"           : MainContentHost.Content = New FleetManagementView()
-            Case "DispatchReports" : MainContentHost.Content = New DispatchReportsView()
-            Case "Maintenance"     : MainContentHost.Content = New MaintenanceSchedulesView()
-            Case "Rates"           : MainContentHost.Content = New RateManagementView()
-            Case "Reports"         : MainContentHost.Content = New FinancialReportsView()
-            Case "Users"           : MainContentHost.Content = New UserManagementView()
+            Case "Home"                                : MainContentHost.Content = New HomeDashboardView()
+            Case "Fleet"                               : MainContentHost.Content = New FleetManagementView()
+            Case "Maintenance"                         : MainContentHost.Content = New MaintenanceSchedulesView()
+            Case "VehicleInspection", "ConditionChecklist" : MainContentHost.Content = New Presentation.Views.Admin.VehicleConditionChecklistView()
+            Case "DispatchReports"                     : MainContentHost.Content = New DispatchReportsView()
+            Case "Rates"                               : MainContentHost.Content = New RateManagementView()
+            Case "Reports"                             : MainContentHost.Content = New FinancialReportsView()
+            Case "Users"                               : MainContentHost.Content = New UserManagementView()
             Case "Settings"
                 Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
                 If app.CurrentUser IsNot Nothing AndAlso app.CurrentUser.IsAdmin Then
@@ -251,8 +253,12 @@ Class MainWindow
         End If
     End Sub
 
+    Private _isSigningOut As Boolean = False
+    Private _isPromptingExit As Boolean = False
+
     Private Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs) Handles LogoutButton.Click
         If AlertUtil.Confirm("Are you sure you want to log out of your session?", "Sign Out", Me) Then
+            _isSigningOut = True
             Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
             If app IsNot Nothing AndAlso app.CurrentUser IsNot Nothing Then
                 UserRepository.RecordLogout(app.CurrentUser.UserId)
@@ -266,10 +272,27 @@ Class MainWindow
     End Sub
 
     Private Sub MainWindow_Closing(sender As Object, e As ComponentModel.CancelEventArgs) Handles Me.Closing
-        Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
-        If app IsNot Nothing AndAlso app.CurrentUser IsNot Nothing Then
-            UserRepository.RecordLogout(app.CurrentUser.UserId)
-        End If
+        If _isSigningOut Then Return
+        If _isPromptingExit Then Return
+
+        _isPromptingExit = True
+        Try
+            Dim app = CType(System.Windows.Application.Current, Global.AutoRent.Application)
+            Dim currentUser = If(app IsNot Nothing, app.CurrentUser, Nothing)
+            Dim userName = If(currentUser IsNot Nothing, currentUser.DisplayName, "your session")
+
+            If Not AlertUtil.Confirm($"Are you sure you want to exit AutoRent? Your session ({userName}) will be signed out and set to inactive.", "Exit Application", Me) Then
+                e.Cancel = True
+                Return
+            End If
+
+            If currentUser IsNot Nothing Then
+                UserRepository.RecordLogout(currentUser.UserId)
+                If app IsNot Nothing Then app.CurrentUser = Nothing
+            End If
+        Finally
+            _isPromptingExit = False
+        End Try
     End Sub
 
     Private Sub MainWindow_StateChanged(sender As Object, e As EventArgs) Handles Me.StateChanged
@@ -279,6 +302,13 @@ Class MainWindow
     End Sub
 
     Private Sub MainWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
+        ' Intercept Alt+F4 to prompt confirmation and ensure active status is set to inactive before exit
+        If Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) AndAlso e.SystemKey = Key.F4 Then
+            e.Handled = True
+            Me.Close()
+            Return
+        End If
+
         If e.Key = Key.Escape OrElse e.Key = Key.F11 OrElse (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) AndAlso e.SystemKey = Key.Enter) Then
             e.Handled = True
         End If

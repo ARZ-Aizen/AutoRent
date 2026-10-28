@@ -42,8 +42,7 @@ Namespace Presentation.Views.User
         End Function
 
         Friend Sub ShowDbError(action As String, ex As Exception)
-            MessageBox.Show($"Could not {action}: {ex.Message}", "AutoRent",
-                            MessageBoxButton.OK, MessageBoxImage.Error)
+            AlertUtil.ShowError($"Could not {action}: {ex.Message}", "AutoRent", Application.Current?.MainWindow)
         End Sub
 
         Friend Function LoadFleet() As List(Of FleetItem)

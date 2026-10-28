@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.Collections.Generic
 Imports System.Windows
 Imports System.Globalization
@@ -129,6 +129,12 @@ Namespace Common.Utilities
                     Return Regex.IsMatch(textValue, "^[0-9]*(?:[.,][0-9]{0,2})?$")
                 Case "plate"
                     Return Regex.IsMatch(textValue, "^[A-Za-z0-9 -]*$")
+                Case "username"
+                    Return Regex.IsMatch(textValue, "^[A-Za-z0-9._-]*$")
+                Case "license"
+                    Return Regex.IsMatch(textValue, "^[A-Za-z0-9-]*$")
+                Case "multiplier"
+                    Return Regex.IsMatch(textValue, "^[0-9.,×xX]*$")
                 Case Else
                     Return True
             End Select

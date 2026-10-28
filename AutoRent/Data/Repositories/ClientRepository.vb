@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports System.Data.OleDb
 Imports AutoRent.Common.Utilities
 Imports AutoRent.Data.Context
@@ -128,9 +128,11 @@ Namespace Data.Repositories
                         End If
                     End Using
 
-                    If Scalar(connection, tx, "SELECT COUNT(*) FROM [Vehicles] WHERE [vehicle_id] = ? AND [status] = 'Available'", Db.Int(vehicleId)) = 0 Then
+                    ' Date-range collision check: ensure vehicle has no overlapping active or confirmed reservation
+                    Dim collisionCount = Scalar(connection, tx, "SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [status] IN ('Confirmed', 'Active') AND NOT ([return_date] <= ? OR [pickup_date] >= ?)", Db.Int(vehicleId), Db.Dt(pickup), Db.Dt(dropoff))
+                    If collisionCount > 0 Then
                         tx.Rollback()
-                        Return "That vehicle is no longer available."
+                        Return "Date collision: This vehicle is already booked for overlapping dates in another reservation."
                     End If
 
                     Run(connection, tx, "INSERT INTO [Reservations] ([customer_name], [vehicle_id], [pickup_date], [return_date], [total], [status], [created_at]) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -173,6 +175,13 @@ Namespace Data.Repositories
                             Return "Customer does not have a verified driver's license on file and cannot rent a vehicle."
                         End If
                     End Using
+
+                    ' Date-range collision check on update
+                    Dim collisionCount = Scalar(connection, tx, "SELECT COUNT(*) FROM [Reservations] WHERE [vehicle_id] = ? AND [reservation_id] <> ? AND [status] IN ('Confirmed', 'Active') AND NOT ([return_date] <= ? OR [pickup_date] >= ?)", Db.Int(vehicleId), Db.Int(reservationId), Db.Dt(pickup), Db.Dt(dropoff))
+                    If collisionCount > 0 Then
+                        tx.Rollback()
+                        Return "Date collision: This vehicle is already booked for overlapping dates in another reservation."
+                    End If
 
                     If vehicleId <> oldVehicleId Then
                         If Scalar(connection, tx, "SELECT COUNT(*) FROM [Vehicles] WHERE [vehicle_id] = ? AND [status] = 'Available'", Db.Int(vehicleId)) = 0 Then

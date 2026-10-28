@@ -28,6 +28,8 @@ Namespace Presentation.Views.Admin
         Private _displayedCalendarMonth As DateTime =
             New DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)
 
+        Private _selectedCalendarDate As DateTime? = DateTime.Today
+        Private _isSyncingRecordSelection As Boolean = False
         Private _calendarShowsTable As Boolean = False
 
         Private ReadOnly _burgundy As Brush =
@@ -84,6 +86,38 @@ Namespace Presentation.Views.Admin
             ' Load maintenance records.
             LoadRecords()
 
+        End Sub
+
+        Private Sub LoadServiceTypes()
+            Dim services As New List(Of String) From {
+                "Oil change",
+                "Tire service",
+                "Brake service",
+                "Battery check",
+                "Routine service",
+                "Engine check",
+                "Body repair",
+                "10,000 km PMS & Synthetic Oil Change",
+                "Battery Replacement (Motolite Gold 12V)",
+                "Brake System Bleeding & Sensor Replacement",
+                "Executive Sports Car PMS & Brake Inspection",
+                "Front & Rear Brake Pad Replacement",
+                "Headlight Assembly Replacement",
+                "Tire Patch & Valve Stem Overhaul",
+                "Tire Rotation & High-Speed Wheel Alignment",
+                "Other"
+            }
+
+            If _records IsNot Nothing Then
+                For Each r As DataRow In _records.Rows
+                    Dim st = SafeField(r, "service_type").Trim()
+                    If Not String.IsNullOrEmpty(st) AndAlso Not services.Contains(st, StringComparer.OrdinalIgnoreCase) Then
+                        services.Insert(services.Count - 1, st)
+                    End If
+                Next
+            End If
+
+            CmbService.ItemsSource = services
         End Sub
 
         ' ==========================================
@@ -356,6 +390,7 @@ Namespace Presentation.Views.Admin
 
                 Next
 
+                LoadServiceTypes()
                 LoadUpcomingRecords()
                 UpdateStatistics()
                 UpdateSummary()
@@ -543,54 +578,35 @@ Namespace Presentation.Views.Admin
         ' CALENDAR NAVIGATION
         ' ==========================================
 
-        Private Sub CalendarPrevious_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
-            _displayedCalendarMonth =
-                _displayedCalendarMonth.AddMonths(-1)
-
+        Private Sub CalendarPrevious_Click(sender As Object, e As RoutedEventArgs)
+            _displayedCalendarMonth = _displayedCalendarMonth.AddMonths(-1)
             RefreshCalendarMonth()
-
         End Sub
 
-        Private Sub CalendarNext_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
-            _displayedCalendarMonth =
-                _displayedCalendarMonth.AddMonths(1)
-
+        Private Sub CalendarNext_Click(sender As Object, e As RoutedEventArgs)
+            _displayedCalendarMonth = _displayedCalendarMonth.AddMonths(1)
             RefreshCalendarMonth()
+        End Sub
 
+        Private Sub CalendarToday_Click(sender As Object, e As RoutedEventArgs)
+            _displayedCalendarMonth = New DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)
+            _selectedCalendarDate = DateTime.Today
+            ClearForm(DateTime.Today)
+            RefreshCalendarMonth()
         End Sub
 
         ' ==========================================
         ' CALENDAR / TABLE MODES
         ' ==========================================
 
-        Private Sub CalendarMode_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
+        Private Sub CalendarMode_Click(sender As Object, e As RoutedEventArgs)
             _calendarShowsTable = False
-
             RefreshCalendarMonth()
-
         End Sub
 
-        Private Sub TableMode_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
+        Private Sub TableMode_Click(sender As Object, e As RoutedEventArgs)
             _calendarShowsTable = True
-
             RefreshCalendarMonth()
-
         End Sub
 
         ' ==========================================
@@ -598,331 +614,251 @@ Namespace Presentation.Views.Admin
         ' ==========================================
 
         Private Sub RefreshCalendarMonth()
-
             If CalendarDayCells Is Nothing Then Return
 
-            TxtCalendarMonth.Text =
-                _displayedCalendarMonth.ToString(
-                    "MMMM yyyy",
-                    CultureInfo.InvariantCulture
-                )
+            TxtCalendarMonth.Text = _displayedCalendarMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture)
 
-            CalendarGridPanel.Visibility =
-                If(
-                    _calendarShowsTable,
-                    Visibility.Collapsed,
-                    Visibility.Visible
-                )
+            CalendarGridPanel.Visibility = If(_calendarShowsTable, Visibility.Collapsed, Visibility.Visible)
+            DgMonthEvents.Visibility = If(_calendarShowsTable, Visibility.Visible, Visibility.Collapsed)
 
-            DgMonthEvents.Visibility =
-                If(
-                    _calendarShowsTable,
-                    Visibility.Visible,
-                    Visibility.Collapsed
-                )
+            BtnCalendarMode.Background = If(_calendarShowsTable, Brushes.White, _burgundy)
+            BtnCalendarMode.Foreground = If(_calendarShowsTable, Brushes.Black, Brushes.White)
 
-            BtnCalendarMode.Background =
-                If(
-                    _calendarShowsTable,
-                    Brushes.White,
-                    _burgundy
-                )
-
-            BtnCalendarMode.Foreground =
-                If(
-                    _calendarShowsTable,
-                    Brushes.Black,
-                    Brushes.White
-                )
-
-            BtnTableMode.Background =
-                If(
-                    _calendarShowsTable,
-                    _burgundy,
-                    Brushes.White
-                )
-
-            BtnTableMode.Foreground =
-                If(
-                    _calendarShowsTable,
-                    Brushes.White,
-                    Brushes.Black
-                )
+            BtnTableMode.Background = If(_calendarShowsTable, _burgundy, Brushes.White)
+            BtnTableMode.Foreground = If(_calendarShowsTable, Brushes.White, Brushes.Black)
 
             CalendarDayCells.Children.Clear()
 
-            Dim firstDay As DateTime =
-                _displayedCalendarMonth
+            Dim dayStyle As Style = TryCast(Me.FindResource("CalendarDayButtonStyle"), Style)
 
-            Dim daysInMonth As Integer =
-                DateTime.DaysInMonth(
-                    firstDay.Year,
-                    firstDay.Month
-                )
+            Dim firstDay As DateTime = _displayedCalendarMonth
+            Dim daysInMonth As Integer = DateTime.DaysInMonth(firstDay.Year, firstDay.Month)
+            Dim offset As Integer = (CInt(firstDay.DayOfWeek) + 6) Mod 7
 
-            Dim offset As Integer =
-                (CInt(firstDay.DayOfWeek) + 6) Mod 7
+            Dim totalSlots As Integer = CInt(Math.Ceiling((offset + daysInMonth) / 7.0)) * 7
 
-            Dim totalSlots As Integer =
-                CInt(
-                    Math.Ceiling(
-                        (offset + daysInMonth) / 7.0
-                    )
-                ) * 7
-
-            ' ======================================
-            ' CREATE EACH CALENDAR DATE
-            ' ======================================
+            Dim prevMonth = firstDay.AddMonths(-1)
+            Dim daysInPrev = DateTime.DaysInMonth(prevMonth.Year, prevMonth.Month)
+            Dim nextMonth = firstDay.AddMonths(1)
 
             For cellIndex As Integer = 0 To totalSlots - 1
+                If cellIndex < offset Then
+                    ' Trailing day from previous month
+                    Dim prevDayNum As Integer = daysInPrev - (offset - 1 - cellIndex)
+                    Dim prevDate As New DateTime(prevMonth.Year, prevMonth.Month, prevDayNum)
 
-                Dim dayNumber As Integer =
-                    cellIndex - offset + 1
-
-                If dayNumber < 1 OrElse
-                   dayNumber > daysInMonth Then
-
-                    Dim emptyCell As New Border With {
-                        .MinHeight = 78,
+                    Dim adjButton As New Button With {
+                        .Tag = prevDate,
+                        .Style = dayStyle,
+                        .MinHeight = 52,
+                        .Padding = New Thickness(4, 2, 4, 2),
                         .Margin = New Thickness(2),
-                        .Background = _lightBackground,
-                        .BorderBrush = Brushes.Gainsboro,
+                        .Background = New SolidColorBrush(Color.FromRgb(&HF9, &HF8, &HF7)),
+                        .BorderBrush = New SolidColorBrush(Color.FromRgb(&HE8, &HE5, &HE3)),
                         .BorderThickness = New Thickness(1),
-                        .CornerRadius = New CornerRadius(3)
+                        .ToolTip = $"View {prevDate:MMMM yyyy}"
                     }
 
-                    CalendarDayCells.Children.Add(
-                        emptyCell
-                    )
+                    Dim adjPanel As New StackPanel()
+                    Dim adjLabel As New TextBlock With {
+                        .Text = prevDayNum.ToString(),
+                        .FontSize = 10,
+                        .Foreground = New SolidColorBrush(Color.FromRgb(&HBF, &HB9, &HB7)),
+                        .Margin = New Thickness(0, 0, 0, 2)
+                    }
+                    adjPanel.Children.Add(adjLabel)
+                    adjButton.Content = adjPanel
 
+                    AddHandler adjButton.Click, AddressOf CalendarAdjacentDay_Click
+                    CalendarDayCells.Children.Add(adjButton)
                     Continue For
-
                 End If
 
-                Dim cellDate As New DateTime(
-                    firstDay.Year,
-                    firstDay.Month,
-                    dayNumber
-                )
+                Dim dayNumber As Integer = cellIndex - offset + 1
+                If dayNumber > daysInMonth Then
+                    ' Leading day from next month
+                    Dim nextDayNum As Integer = dayNumber - daysInMonth
+                    Dim nextDate As New DateTime(nextMonth.Year, nextMonth.Month, nextDayNum)
 
-                Dim isToday As Boolean =
-                    cellDate.Date = DateTime.Today
+                    Dim adjButton As New Button With {
+                        .Tag = nextDate,
+                        .Style = dayStyle,
+                        .MinHeight = 52,
+                        .Padding = New Thickness(4, 2, 4, 2),
+                        .Margin = New Thickness(2),
+                        .Background = New SolidColorBrush(Color.FromRgb(&HF9, &HF8, &HF7)),
+                        .BorderBrush = New SolidColorBrush(Color.FromRgb(&HE8, &HE5, &HE3)),
+                        .BorderThickness = New Thickness(1),
+                        .ToolTip = $"View {nextDate:MMMM yyyy}"
+                    }
 
-                ' Get maintenance appointments for this date.
-                Dim dailyRecords As New List(Of DataRow)
+                    Dim adjPanel As New StackPanel()
+                    Dim adjLabel As New TextBlock With {
+                        .Text = nextDayNum.ToString(),
+                        .FontSize = 10,
+                        .Foreground = New SolidColorBrush(Color.FromRgb(&HBF, &HB9, &HB7)),
+                        .Margin = New Thickness(0, 0, 0, 2)
+                    }
+                    adjPanel.Children.Add(adjLabel)
+                    adjButton.Content = adjPanel
 
+                    AddHandler adjButton.Click, AddressOf CalendarAdjacentDay_Click
+                    CalendarDayCells.Children.Add(adjButton)
+                    Continue For
+                End If
+
+                ' Day of current month
+                Dim cellDate As New DateTime(firstDay.Year, firstDay.Month, dayNumber)
+                Dim isToday As Boolean = (cellDate.Date = DateTime.Today)
+                Dim isSelected As Boolean = (_selectedCalendarDate.HasValue AndAlso cellDate.Date = _selectedCalendarDate.Value.Date)
+
+                Dim dailyRecords As New List(Of DataRow)()
                 If _records IsNot Nothing Then
-
                     For Each record As DataRow In _records.Rows
-
-                        If IsDBNull(record("scheduled_date")) Then
-                            Continue For
+                        If Not IsDBNull(record("scheduled_date")) Then
+                            If Convert.ToDateTime(record("scheduled_date")).Date = cellDate Then
+                                dailyRecords.Add(record)
+                            End If
                         End If
-
-                        Dim scheduledDate As DateTime =
-                            Convert.ToDateTime(
-                                record("scheduled_date")
-                            )
-
-                        If scheduledDate.Date = cellDate Then
-                            dailyRecords.Add(record)
-                        End If
-
                     Next
-
                 End If
-
-                ' ==================================
-                ' DATE CELL CONTENT
-                ' ==================================
 
                 Dim contentPanel As New StackPanel()
 
                 Dim dateLabel As New TextBlock With {
                     .Text = dayNumber.ToString(),
-                    .FontSize = 11,
-                    .FontWeight = If(
-                        isToday,
-                        FontWeights.Bold,
-                        FontWeights.Normal
-                    ),
-                    .Foreground = If(
-                        isToday,
-                        _burgundy,
-                        Brushes.DimGray
-                    ),
-                    .Margin = New Thickness(0, 0, 0, 4)
+                    .FontSize = 10.5,
+                    .FontWeight = If(isToday OrElse isSelected, FontWeights.Bold, FontWeights.SemiBold),
+                    .Foreground = If(isToday OrElse isSelected, _burgundy, New SolidColorBrush(Color.FromRgb(&H4A, &H44, &H46))),
+                    .Margin = New Thickness(0, 0, 0, 2)
                 }
-
                 contentPanel.Children.Add(dateLabel)
 
-                Dim tooltipLines As New List(Of String)
-
+                Dim tooltipLines As New List(Of String)()
                 Dim shown As Integer = 0
 
                 For Each record As DataRow In dailyRecords
+                    Dim recId As Integer = ViewHelpers.IntOf(record, "maintenance_id")
+                    Dim vehicleName As String = SafeField(record, "vehicle")
+                    Dim serviceName As String = SafeField(record, "service_type")
+                    Dim statusValue As String = SafeField(record, "status")
+                    Dim appointmentTime As String = Convert.ToDateTime(record("scheduled_date")).ToString("hh:mm tt")
+                    Dim fullDescription As String = vehicleName & " - " & serviceName
 
-                    Dim vehicleName As String =
-                        SafeField(record, "vehicle")
+                    tooltipLines.Add($"{appointmentTime} | {fullDescription} ({statusValue})")
 
-                    Dim serviceName As String =
-                        SafeField(record, "service_type")
-
-                    Dim statusValue As String =
-                        SafeField(record, "status")
-
-                    Dim appointmentTime As String =
-                        Convert.ToDateTime(
-                            record("scheduled_date")
-                        ).ToString("hh:mm tt")
-
-                    Dim fullDescription As String =
-                        vehicleName & " - " &
-                        serviceName
-
-                    tooltipLines.Add(
-                        appointmentTime & " | " &
-                        fullDescription &
-                        " (" & statusValue & ")"
-                    )
-
-                    If shown >= 2 Then
-                        Continue For
-                    End If
+                    If shown >= 2 Then Continue For
 
                     Dim eventColor As Brush = _burgundy
+                    Dim eventBg As Brush = New SolidColorBrush(Color.FromArgb(28, &H7A, &H8, &H1F))
 
                     Select Case statusValue
-
                         Case "Completed"
-                            eventColor = Brushes.ForestGreen
-
+                            eventColor = New SolidColorBrush(Color.FromRgb(&H13, &H73, &H33))
+                            eventBg = New SolidColorBrush(Color.FromArgb(28, &H13, &H73, &H33))
                         Case "Cancelled"
-                            eventColor = Brushes.Gray
-
+                            eventColor = New SolidColorBrush(Color.FromRgb(&H5F, &H63, &H68))
+                            eventBg = New SolidColorBrush(Color.FromArgb(24, &H5F, &H63, &H68))
                         Case "Scheduled"
-                            eventColor = Brushes.DarkOrange
-
+                            eventColor = New SolidColorBrush(Color.FromRgb(&HC2, &H64, &H00))
+                            eventBg = New SolidColorBrush(Color.FromArgb(28, &HC2, &H64, &H00))
                         Case "In Progress"
                             eventColor = _burgundy
-
+                            eventBg = New SolidColorBrush(Color.FromArgb(28, &H7A, &H8, &H1F))
                     End Select
+
+                    Dim eventPill As New Border With {
+                        .Background = eventBg,
+                        .BorderBrush = eventColor,
+                        .BorderThickness = New Thickness(1),
+                        .CornerRadius = New CornerRadius(3),
+                        .Padding = New Thickness(3, 1, 3, 1),
+                        .Margin = New Thickness(0, 1.5, 0, 0),
+                        .Cursor = Cursors.Hand,
+                        .ToolTip = fullDescription & Environment.NewLine & "Time: " & appointmentTime & Environment.NewLine & "Status: " & statusValue & Environment.NewLine & "(Click to view / edit)"
+                    }
 
                     Dim eventText As New TextBlock With {
                         .Text = fullDescription,
                         .FontSize = 9,
                         .FontWeight = FontWeights.SemiBold,
                         .Foreground = eventColor,
-                        .TextTrimming = TextTrimming.CharacterEllipsis,
-                        .Margin = New Thickness(0, 2, 0, 0),
-                        .ToolTip = fullDescription &
-                                   Environment.NewLine &
-                                   "Time: " & appointmentTime &
-                                   Environment.NewLine &
-                                   "Status: " & statusValue
+                        .TextTrimming = TextTrimming.CharacterEllipsis
                     }
+                    eventPill.Child = eventText
 
-                    contentPanel.Children.Add(eventText)
+                    AddHandler eventPill.MouseLeftButtonUp,
+                        Sub(s As Object, ev As MouseButtonEventArgs)
+                            ev.Handled = True
+                            Dim targetRecord = FindRecordById(recId)
+                            If targetRecord IsNot Nothing Then
+                                LoadRecordIntoForm(targetRecord)
+                            End If
+                        End Sub
 
+                    contentPanel.Children.Add(eventPill)
                     shown += 1
-
                 Next
 
                 If dailyRecords.Count > 2 Then
-
-                    contentPanel.Children.Add(
-                        New TextBlock With {
-                            .Text = "+" &
-                                    (dailyRecords.Count - 2).ToString() &
-                                    " more",
-                            .FontSize = 9,
-                            .Foreground = Brushes.Gray
-                        }
-                    )
-
+                    contentPanel.Children.Add(New TextBlock With {
+                        .Text = $"+{dailyRecords.Count - 2} more",
+                        .FontSize = 8.5,
+                        .Foreground = Brushes.Gray,
+                        .Margin = New Thickness(0, 1, 0, 0)
+                    })
                 End If
 
-                ' ==================================
-                ' DATE BUTTON
-                ' ==================================
+                Dim cellBg As Brush = Brushes.White
+                Dim cellBorder As Brush = New SolidColorBrush(Color.FromRgb(&HE0, &HDB, &HD8))
+                Dim borderThickness As New Thickness(1)
 
-                Dim cellBackground As Brush =
-                    _lightBackground
-
-                If dailyRecords.Count > 0 Then
-
-                    cellBackground =
-                        New SolidColorBrush(
-                            System.Windows.Media.Color.FromRgb(
-                                &HFC, &HF5, &HF6
-                            )
-                        )
-
+                If isSelected Then
+                    cellBg = New SolidColorBrush(Color.FromRgb(&HF7, &HE9, &HEB))
+                    cellBorder = _burgundy
+                    borderThickness = New Thickness(2)
+                ElseIf isToday Then
+                    cellBorder = _burgundy
+                    borderThickness = New Thickness(1.5)
+                    If dailyRecords.Count > 0 Then
+                        cellBg = New SolidColorBrush(Color.FromRgb(&HFC, &HF5, &HF6))
+                    End If
+                ElseIf dailyRecords.Count > 0 Then
+                    cellBg = New SolidColorBrush(Color.FromRgb(&HFA, &HF6, &HF7))
                 End If
 
                 Dim dayButton As New Button With {
                     .Tag = cellDate,
+                    .Style = dayStyle,
                     .Content = contentPanel,
-                    .MinHeight = 78,
-                    .Padding = New Thickness(5),
+                    .MinHeight = 52,
+                    .Padding = New Thickness(4, 2, 4, 2),
                     .Margin = New Thickness(2),
-                    .Background = cellBackground,
-                    .BorderBrush = If(
-                        isToday,
-                        _burgundy,
-                        Brushes.Gainsboro
-                    ),
-                    .BorderThickness = New Thickness(1),
-                    .HorizontalContentAlignment =
-                        HorizontalAlignment.Stretch,
-                    .VerticalContentAlignment =
-                        VerticalAlignment.Top,
-                    .Cursor = Cursors.Hand,
-                    .ToolTip = If(
-                        tooltipLines.Count > 0,
-                        String.Join(
-                            Environment.NewLine,
-                            tooltipLines
-                        ),
-                        "Click to schedule maintenance on this date"
-                    )
+                    .Background = cellBg,
+                    .BorderBrush = cellBorder,
+                    .BorderThickness = borderThickness,
+                    .ToolTip = If(tooltipLines.Count > 0,
+                                  String.Join(Environment.NewLine, tooltipLines),
+                                  $"Click to schedule maintenance on {cellDate:dd MMM yyyy}")
                 }
 
-                AddHandler dayButton.Click,
-                    AddressOf CalendarDay_Click
+                AddHandler dayButton.Click, AddressOf CalendarDay_Click
 
                 CalendarDayCells.Children.Add(dayButton)
-
             Next
 
-            ' Update monthly table as well.
             LoadMonthlyTable()
-
         End Sub
 
         ' ==========================================
         ' SAFE DATABASE FIELD
         ' ==========================================
 
-        Private Function SafeField(
-            record As DataRow,
-            fieldName As String
-        ) As String
-
-            If record Is Nothing Then
-                Return String.Empty
-            End If
-
-            If Not record.Table.Columns.Contains(fieldName) Then
-                Return String.Empty
-            End If
-
-            If IsDBNull(record(fieldName)) Then
-                Return String.Empty
-            End If
-
+        Private Function SafeField(record As DataRow, fieldName As String) As String
+            If record Is Nothing Then Return String.Empty
+            If Not record.Table.Columns.Contains(fieldName) Then Return String.Empty
+            If IsDBNull(record(fieldName)) Then Return String.Empty
             Return Convert.ToString(record(fieldName))
-
         End Function
 
         ' ==========================================
@@ -930,208 +866,211 @@ Namespace Presentation.Views.Admin
         ' ==========================================
 
         Private Sub LoadMonthlyTable()
-
             If _records Is Nothing Then
-
                 DgMonthEvents.ItemsSource = Nothing
                 Return
-
             End If
 
-            Dim monthTable As DataTable =
-                _records.Clone()
+            Dim monthTable As DataTable = _records.Clone()
 
             For Each record As DataRow In _records.Rows
-
-                If IsDBNull(record("scheduled_date")) Then
-                    Continue For
-                End If
-
-                Dim scheduledDate As DateTime =
-                    Convert.ToDateTime(
-                        record("scheduled_date")
-                    )
-
-                If scheduledDate.Year =
-                   _displayedCalendarMonth.Year AndAlso
-                   scheduledDate.Month =
-                   _displayedCalendarMonth.Month Then
-
+                If IsDBNull(record("scheduled_date")) Then Continue For
+                Dim scheduledDate As DateTime = Convert.ToDateTime(record("scheduled_date"))
+                If scheduledDate.Year = _displayedCalendarMonth.Year AndAlso scheduledDate.Month = _displayedCalendarMonth.Month Then
                     monthTable.ImportRow(record)
-
                 End If
-
             Next
 
             Dim monthView As New DataView(monthTable)
-
             monthView.Sort = "scheduled_date ASC"
-
             DgMonthEvents.ItemsSource = monthView
-
         End Sub
 
         ' ==========================================
         ' CLICK A CALENDAR DAY
         ' ==========================================
 
-        Private Sub CalendarDay_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
-            Dim selectedButton As Button =
-                TryCast(sender, Button)
-
+        Private Sub CalendarDay_Click(sender As Object, e As RoutedEventArgs)
+            Dim selectedButton As Button = TryCast(sender, Button)
             If selectedButton Is Nothing Then Return
+            If Not TypeOf selectedButton.Tag Is DateTime Then Return
 
-            If Not TypeOf selectedButton.Tag Is DateTime Then
-                Return
+            Dim selectedDate As DateTime = DirectCast(selectedButton.Tag, DateTime)
+            _selectedCalendarDate = selectedDate.Date
+
+            Dim dailyRecords As New List(Of DataRow)()
+            If _records IsNot Nothing Then
+                For Each record As DataRow In _records.Rows
+                    If Not IsDBNull(record("scheduled_date")) Then
+                        If Convert.ToDateTime(record("scheduled_date")).Date = selectedDate.Date Then
+                            dailyRecords.Add(record)
+                        End If
+                    End If
+                Next
             End If
 
-            Dim selectedDate As DateTime =
-                DirectCast(
-                    selectedButton.Tag,
-                    DateTime
-                )
-
-            DpDate.SelectedDate = selectedDate
-
-            CalMaintenance.DisplayDate = selectedDate
-            CalMaintenance.SelectedDate = selectedDate
-
+            If dailyRecords.Count > 0 Then
+                LoadRecordIntoForm(dailyRecords(0))
+            Else
+                ClearForm(selectedDate)
+                RefreshCalendarMonth()
+            End If
         End Sub
 
-        ' ==========================================
-        ' SELECT MAINTENANCE APPOINTMENT
-        ' ==========================================
+        Private Sub CalendarAdjacentDay_Click(sender As Object, e As RoutedEventArgs)
+            Dim btn = TryCast(sender, Button)
+            If btn Is Nothing OrElse Not TypeOf btn.Tag Is DateTime Then Return
+            Dim targetDate = DirectCast(btn.Tag, DateTime)
+            _displayedCalendarMonth = New DateTime(targetDate.Year, targetDate.Month, 1)
+            _selectedCalendarDate = targetDate.Date
 
-        Private Sub DgMaintenance_SelectionChanged(
-            sender As Object,
-            e As SelectionChangedEventArgs
-        )
-
-            Dim record As DataRowView =
-                TryCast(
-                    DgMaintenance.SelectedItem,
-                    DataRowView
-                )
-
-            If record Is Nothing Then Return
-
-            _selectedId =
-                ViewHelpers.IntOf(
-                    record,
-                    "maintenance_id"
-                )
-
-
-            SelectVehicleAndCategory(
-                ViewHelpers.IntOf(
-                    record,
-                    "vehicle_id"
-                )
-            )
-
-
-            CmbService.Text =
-                ViewHelpers.Str(
-                    record,
-                    "service_type"
-                )
-
-            If Not IsDBNull(record("scheduled_date")) Then
-
-                Dim scheduledDate As DateTime =
-                    Convert.ToDateTime(
-                        record("scheduled_date")
-                    )
-
-                DpDate.SelectedDate = scheduledDate
-
-                CalMaintenance.DisplayDate =
-                    scheduledDate
-
-                CalMaintenance.SelectedDate =
-                    scheduledDate
-
-                _displayedCalendarMonth =
-                    New DateTime(
-                        scheduledDate.Year,
-                        scheduledDate.Month,
-                        1
-                    )
-
-                RefreshCalendarMonth()
-
+            Dim dailyRecords As New List(Of DataRow)()
+            If _records IsNot Nothing Then
+                For Each record As DataRow In _records.Rows
+                    If Not IsDBNull(record("scheduled_date")) Then
+                        If Convert.ToDateTime(record("scheduled_date")).Date = targetDate.Date Then
+                            dailyRecords.Add(record)
+                        End If
+                    End If
+                Next
             End If
 
-            TxtCost.Text =
-                ViewHelpers.DecOf(
-                    record,
-                    "cost"
-                ).ToString("0.##")
+            If dailyRecords.Count > 0 Then
+                LoadRecordIntoForm(dailyRecords(0))
+            Else
+                ClearForm(targetDate)
+                RefreshCalendarMonth()
+            End If
+        End Sub
 
-            CmbStatus.SelectedItem =
-                ViewHelpers.Str(
-                    record,
-                    "status"
-                )
+        Private Function FindRecordById(recordId As Integer) As DataRow
+            If _records Is Nothing Then Return Nothing
+            For Each row As DataRow In _records.Rows
+                If ViewHelpers.IntOf(row, "maintenance_id") = recordId Then
+                    Return row
+                End If
+            Next
+            Return Nothing
+        End Function
 
-            TxtNotes.Text =
-                ViewHelpers.Str(
-                    record,
-                    "notes"
-                )
+        Private Sub SelectInUpcomingGrid(recordId As Integer)
+            If DgMaintenance Is Nothing OrElse DgMaintenance.ItemsSource Is Nothing Then Return
+            Dim target As DataRowView = Nothing
+            For Each item As DataRowView In DgMaintenance.ItemsSource
+                If ViewHelpers.IntOf(item, "maintenance_id") = recordId Then
+                    target = item
+                    Exit For
+                End If
+            Next
+            DgMaintenance.SelectedItem = target
+            If target IsNot Nothing Then
+                DgMaintenance.ScrollIntoView(target)
+            End If
+        End Sub
 
-            BtnAdd.IsEnabled = False
-            BtnSave.IsEnabled = True
-            BtnDelete.IsEnabled = True
+        Private Sub LoadRecordIntoForm(record As DataRow)
+            If record Is Nothing Then Return
 
+            _isSyncingRecordSelection = True
+            Try
+                _selectedId = ViewHelpers.IntOf(record, "maintenance_id")
+
+                SelectVehicleAndCategory(ViewHelpers.IntOf(record, "vehicle_id"))
+
+                Dim targetService = ViewHelpers.Str(record, "service_type").Trim()
+                Dim serviceList = TryCast(CmbService.ItemsSource, List(Of String))
+                If serviceList IsNot Nothing AndAlso Not String.IsNullOrEmpty(targetService) AndAlso Not serviceList.Contains(targetService, StringComparer.OrdinalIgnoreCase) Then
+                    serviceList.Insert(serviceList.Count - 1, targetService)
+                    CmbService.ItemsSource = Nothing
+                    CmbService.ItemsSource = serviceList
+                End If
+                CmbService.SelectedItem = targetService
+
+                If Not IsDBNull(record("scheduled_date")) Then
+                    Dim scheduledDate As DateTime = Convert.ToDateTime(record("scheduled_date"))
+                    DpDate.SelectedDate = scheduledDate
+                    _selectedCalendarDate = scheduledDate.Date
+                    If _displayedCalendarMonth.Year <> scheduledDate.Year OrElse _displayedCalendarMonth.Month <> scheduledDate.Month Then
+                        _displayedCalendarMonth = New DateTime(scheduledDate.Year, scheduledDate.Month, 1)
+                    End If
+                End If
+
+                TxtCost.Text = ViewHelpers.DecOf(record, "cost").ToString("0.##")
+                CmbStatus.SelectedItem = ViewHelpers.Str(record, "status")
+                TxtNotes.Text = ViewHelpers.Str(record, "notes")
+
+                BtnAdd.IsEnabled = False
+                BtnSave.IsEnabled = True
+                BtnDelete.IsEnabled = True
+
+                SelectInUpcomingGrid(_selectedId)
+            Finally
+                _isSyncingRecordSelection = False
+            End Try
+
+            RefreshCalendarMonth()
+        End Sub
+
+        Private Sub DgMaintenance_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            If _isSyncingRecordSelection Then Return
+            Dim record As DataRowView = TryCast(DgMaintenance.SelectedItem, DataRowView)
+            If record Is Nothing Then Return
+            LoadRecordIntoForm(record.Row)
+        End Sub
+
+        Private Sub DgMonthEvents_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+            If _isSyncingRecordSelection Then Return
+            Dim record As DataRowView = TryCast(DgMonthEvents.SelectedItem, DataRowView)
+            If record Is Nothing Then Return
+            LoadRecordIntoForm(record.Row)
+        End Sub
+
+        Private Sub DpDate_SelectedDateChanged(sender As Object, e As SelectionChangedEventArgs)
+            If _isSyncingRecordSelection Then Return
+            If DpDate.SelectedDate.HasValue Then
+                Dim newDate = DpDate.SelectedDate.Value.Date
+                _selectedCalendarDate = newDate
+                If _displayedCalendarMonth.Year <> newDate.Year OrElse _displayedCalendarMonth.Month <> newDate.Month Then
+                    _displayedCalendarMonth = New DateTime(newDate.Year, newDate.Month, 1)
+                End If
+                RefreshCalendarMonth()
+            End If
         End Sub
 
         ' ==========================================
         ' CLEAR FORM
         ' ==========================================
 
-        Private Sub ClearForm()
-
+        Private Sub ClearForm(Optional defaultDate As DateTime? = Nothing)
             _selectedId = 0
+            _isSyncingRecordSelection = True
+            Try
+                DgMaintenance.SelectedItem = Nothing
+                If DgMonthEvents IsNot Nothing AndAlso DgMonthEvents.ItemsSource IsNot Nothing Then
+                    DgMonthEvents.SelectedItem = Nothing
+                End If
 
-            DgMaintenance.SelectedItem = Nothing
+                CmbCategory.SelectedIndex = -1
+                CmbVehicle.ItemsSource = Nothing
+                CmbVehicle.SelectedIndex = -1
+                CmbVehicle.IsEnabled = False
+                TxtCategoryVehicleCount.Text = "Select a category to see vehicles."
 
+                CmbService.SelectedIndex = -1
+                Dim chosenDate = If(defaultDate.HasValue, defaultDate.Value, DateTime.Today)
+                DpDate.SelectedDate = chosenDate
+                _selectedCalendarDate = chosenDate.Date
 
-            ' Reset the category and vehicle.
-            CmbCategory.SelectedIndex = -1
+                CmbStatus.SelectedItem = "Scheduled"
+                TxtCost.Text = "0"
+                TxtNotes.Clear()
 
-            CmbVehicle.ItemsSource = Nothing
-            CmbVehicle.SelectedIndex = -1
-            CmbVehicle.IsEnabled = False
-
-            TxtCategoryVehicleCount.Text =
-             "Select a category to see vehicles."
-
-            CmbService.Text = ""
-
-            DpDate.SelectedDate =
-                DateTime.Today
-
-            CmbStatus.SelectedItem =
-                "Scheduled"
-
-            TxtCost.Text = "0"
-            TxtNotes.Clear()
-
-            CalMaintenance.DisplayDate =
-                DateTime.Today
-
-            CalMaintenance.SelectedDate =
-                DateTime.Today
-
-            BtnAdd.IsEnabled = True
-            BtnSave.IsEnabled = False
-            BtnDelete.IsEnabled = False
-
+                BtnAdd.IsEnabled = True
+                BtnSave.IsEnabled = False
+                BtnDelete.IsEnabled = False
+            Finally
+                _isSyncingRecordSelection = False
+            End Try
         End Sub
 
         ' ==========================================
@@ -1141,7 +1080,8 @@ Namespace Presentation.Views.Admin
         Private Function ReadForm(
             ByRef vehicleId As Integer,
             ByRef cost As Decimal,
-            ByRef statusValue As String
+            ByRef statusValue As String,
+            ByRef serviceType As String
         ) As String
 
 
@@ -1162,12 +1102,13 @@ Namespace Presentation.Views.Admin
                 )
 
             If String.IsNullOrWhiteSpace(
-                CmbService.Text
+                If(CmbService.SelectedItem IsNot Nothing, Convert.ToString(CmbService.SelectedItem), CmbService.Text)
             ) Then
 
-                Return "Please choose a maintenance type."
-
+                Return "Please choose a maintenance type from the dropdown."
             End If
+
+            serviceType = If(CmbService.SelectedItem IsNot Nothing, Convert.ToString(CmbService.SelectedItem), CmbService.Text).Trim()
 
             If Not DpDate.SelectedDate.HasValue Then
                 Return "Please select a scheduled date."
@@ -1208,12 +1149,14 @@ Namespace Presentation.Views.Admin
             Dim vehicleId As Integer
             Dim cost As Decimal
             Dim statusValue As String = Nothing
+            Dim serviceType As String = Nothing
 
             Dim problem As String =
                 ReadForm(
                     vehicleId,
                     cost,
-                    statusValue
+                    statusValue,
+                    serviceType
                 )
 
             If problem IsNot Nothing Then
@@ -1232,7 +1175,7 @@ Namespace Presentation.Views.Admin
 
                 problem = MaintenanceRepository.Add(
                     vehicleId,
-                    CmbService.Text.Trim(),
+                    serviceType,
                     DpDate.SelectedDate.Value,
                     cost,
                     statusValue,
@@ -1281,12 +1224,14 @@ Namespace Presentation.Views.Admin
             Dim vehicleId As Integer
             Dim cost As Decimal
             Dim statusValue As String = Nothing
+            Dim serviceType As String = Nothing
 
             Dim problem As String =
                 ReadForm(
                     vehicleId,
                     cost,
-                    statusValue
+                    statusValue,
+                    serviceType
                 )
 
             If problem IsNot Nothing Then
@@ -1306,7 +1251,7 @@ Namespace Presentation.Views.Admin
                 problem = MaintenanceRepository.Update(
                     _selectedId,
                     vehicleId,
-                    CmbService.Text.Trim(),
+                    serviceType,
                     DpDate.SelectedDate.Value,
                     cost,
                     statusValue,
@@ -1828,12 +1773,6 @@ Namespace Presentation.Views.Admin
                 }
             )
 
-            footer.ColumnDefinitions.Add(
-                New ColumnDefinition With {
-                    .Width = GridLength.Auto
-                }
-            )
-
             _countLabel.FontSize = 12
             _countLabel.Foreground = Brushes.Gray
             _countLabel.VerticalAlignment = VerticalAlignment.Center
@@ -1845,7 +1784,7 @@ Namespace Presentation.Views.Admin
                 .Content = "Close",
                 .Width = 95,
                 .Height = 36,
-                .Margin = New Thickness(0, 0, 8, 0),
+                .Margin = New Thickness(0),
                 .Background = Brushes.White,
                 .BorderBrush = _lineBrush,
                 .Cursor = Cursors.Hand
@@ -1858,22 +1797,6 @@ Namespace Presentation.Views.Admin
 
             Grid.SetColumn(closeButton, 1)
             footer.Children.Add(closeButton)
-
-            Dim exportButton As New Button With {
-                .Content = "Export CSV",
-                .Width = 110,
-                .Height = 36,
-                .Background = _accent,
-                .Foreground = Brushes.White,
-                .BorderBrush = _accent,
-                .Cursor = Cursors.Hand
-            }
-
-            AddHandler exportButton.Click,
-                AddressOf ExportHistory_Click
-
-            Grid.SetColumn(exportButton, 2)
-            footer.Children.Add(exportButton)
 
             Grid.SetRow(footer, 3)
             root.Children.Add(footer)
@@ -2062,180 +1985,6 @@ Namespace Presentation.Views.Admin
             ApplyHistoryFilters()
 
         End Sub
-
-        ' ==========================================
-        ' CSV ESCAPING
-        ' ==========================================
-
-        Private Function EscapeCsv(
-            value As String
-        ) As String
-
-            Dim textValue As String =
-                If(value, String.Empty)
-
-            Dim firstText As String =
-                textValue.TrimStart()
-
-            If firstText.Length > 0 Then
-
-                Dim firstChar As Char = firstText(0)
-
-                If firstChar = "="c OrElse
-                   firstChar = "+"c OrElse
-                   firstChar = "-"c OrElse
-                   firstChar = "@"c Then
-
-                    textValue = "'" & textValue
-
-                End If
-
-            End If
-
-            Return """" &
-                textValue.Replace("""", """""") &
-                """"
-
-        End Function
-
-        ' ==========================================
-        ' EXPORT MAINTENANCE HISTORY
-        ' ==========================================
-
-        Private Sub ExportHistory_Click(
-            sender As Object,
-            e As RoutedEventArgs
-        )
-
-            If _visibleRows.Count = 0 Then
-
-                MessageBox.Show(
-                    Me,
-                    "There are no records to export.",
-                    "Maintenance History",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                )
-
-                Return
-
-            End If
-
-            Dim picker As New SaveFileDialog With {
-                .Title = "Export maintenance history",
-                .FileName = "AutoRent_Maintenance_History.csv",
-                .Filter = "CSV files (*.csv)|*.csv",
-                .DefaultExt = ".csv",
-                .AddExtension = True
-            }
-
-            If picker.ShowDialog() <> True Then Return
-
-            Try
-
-                Dim lines As New List(Of String)
-
-                lines.Add(
-                    "Maintenance ID,Vehicle,Service,Scheduled Date," &
-                    "Cost,Status,Completed At,Notes"
-                )
-
-                For Each record As DataRowView In _visibleRows
-
-                    Dim scheduledText As String = ""
-                    Dim completedText As String = ""
-
-                    If Not IsDBNull(record("scheduled_date")) Then
-
-                        scheduledText =
-                            Convert.ToDateTime(
-                                record("scheduled_date")
-                            ).ToString(
-                                "yyyy-MM-dd HH:mm",
-                                CultureInfo.InvariantCulture
-                            )
-
-                    End If
-
-                    If Not IsDBNull(record("completed_at")) Then
-
-                        completedText =
-                            Convert.ToDateTime(
-                                record("completed_at")
-                            ).ToString(
-                                "yyyy-MM-dd HH:mm",
-                                CultureInfo.InvariantCulture
-                            )
-
-                    End If
-
-                    Dim costText As String = ""
-
-                    If Not IsDBNull(record("cost")) Then
-
-                        costText =
-                            Convert.ToDecimal(
-                                record("cost")
-                            ).ToString(
-                                "0.00",
-                                CultureInfo.InvariantCulture
-                            )
-
-                    End If
-
-                    Dim values As String() = {
-                        GetHistoryText(record, "maintenance_id"),
-                        GetHistoryText(record, "vehicle"),
-                        GetHistoryText(record, "service_type"),
-                        scheduledText,
-                        costText,
-                        GetHistoryText(record, "status"),
-                        completedText,
-                        GetHistoryText(record, "notes")
-                    }
-
-                    Dim escaped As New List(Of String)
-
-                    For Each fieldValue As String In values
-                        escaped.Add(
-                            EscapeCsv(fieldValue)
-                        )
-                    Next
-
-                    lines.Add(
-                        String.Join(",", escaped)
-                    )
-
-                Next
-
-                File.WriteAllLines(
-                    picker.FileName,
-                    lines,
-                    New UTF8Encoding(True)
-                )
-
-                MessageBox.Show(
-                    Me,
-                    $"{_visibleRows.Count} maintenance records exported successfully.",
-                    "Export Complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                )
-
-            Catch ex As Exception
-
-                MessageBox.Show(
-                    Me,
-                    "Export failed: " & ex.Message,
-                    "Maintenance History",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                )
-
-            End Try
-
-        End Sub
-
     End Class
 
 End Namespace

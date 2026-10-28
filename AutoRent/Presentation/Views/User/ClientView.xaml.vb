@@ -1,4 +1,4 @@
-﻿Imports System.Linq
+Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -71,7 +71,7 @@ Namespace Presentation.Views.User
                     ContentHost.Content = New CustomerManagementView()
                 Case "Reservations"
                     ContentHost.Content = New ReservationsView()
-                Case "Daily Dispatch"
+                                Case "Daily Dispatch"
                     ContentHost.Content = New DailyDispatchView()
             End Select
         End Sub

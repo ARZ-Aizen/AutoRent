@@ -12,6 +12,8 @@ Namespace AutoRent
         Public Sub New()
             InitializeComponent()
 
+            InputBehavior.Attach(UsernameTextBox, "username", 32)
+
             AddHandler UsernameTextBox.TextChanged, AddressOf UsernameTextBox_TextChanged
             AddHandler UsernameTextBox.PreviewKeyDown, AddressOf UsernameTextBox_PreviewKeyDown
             AddHandler PasswordBox.PasswordChanged, AddressOf PasswordBox_PasswordChanged
@@ -95,8 +97,9 @@ Namespace AutoRent
                 Return False
             End If
 
-            If username.Length > 100 Then
-                AlertUtil.ShowWarning("Username cannot exceed 100 characters.", "Login validation", Me)
+            Dim userFormatError = InputValidation.Username(username)
+            If userFormatError IsNot Nothing Then
+                AlertUtil.ShowWarning(userFormatError, "Login validation", Me)
                 UsernameTextBox.Focus()
                 Return False
             End If
@@ -140,12 +143,39 @@ Namespace AutoRent
                 Dim mainWindow As New Global.AutoRent.MainWindow()
                 mainWindow.Title = $"AutoRent - {authenticatedUser.Username}"
                 application.MainWindow = mainWindow
+                _isLoggingIn = True
                 mainWindow.Show()
                 Close()
             Catch ex As Exception
                 AlertUtil.ShowError($"Sign-in failed because the user database could not be accessed: {ex.Message}", "Login Error", Me)
             Finally
                 LoginButton.IsEnabled = True
+            End Try
+        End Sub
+
+        Private _isLoggingIn As Boolean = False
+        Private _isPromptingExit As Boolean = False
+
+        Private Sub LoginWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
+            If Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) AndAlso e.SystemKey = Key.F4 Then
+                e.Handled = True
+                Me.Close()
+                Return
+            End If
+        End Sub
+
+        Private Sub LoginWindow_Closing(sender As Object, e As ComponentModel.CancelEventArgs) Handles Me.Closing
+            If _isLoggingIn Then Return
+            If _isPromptingExit Then Return
+
+            _isPromptingExit = True
+            Try
+                If Not AlertUtil.Confirm("Are you sure you want to exit AutoRent?", "Exit Application", Me) Then
+                    e.Cancel = True
+                    Return
+                End If
+            Finally
+                _isPromptingExit = False
             End Try
         End Sub
 

@@ -71,25 +71,62 @@
             <Setter Property="Foreground" Value="#252123"/>
         </Style>
 
-        <!-- TABLE STYLE -->
-        <Style x:Key="ReportTable" TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="CanUserResizeRows" Value="False"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="GridLinesVisibility" Value="None"/>
-            <Setter Property="RowHeight" Value="40"/>
-            <Setter Property="ColumnHeaderHeight" Value="42"/>
-            <Setter Property="BorderThickness" Value="0"/>
+        <!-- MODERN TABLE HEADER STYLES -->
+        <Style x:Key="FinancialTableHeader" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Background" Value="#F8F7F5"/>
+            <Setter Property="Foreground" Value="#5C5750"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="16,11"/>
+            <Setter Property="BorderBrush" Value="#E8E5E1"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+
+        <Style x:Key="FinancialTableHeaderRight" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource FinancialTableHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+        </Style>
+
+        <Style x:Key="FinancialTableHeaderCenter" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource FinancialTableHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- CUSTOM TABLE CELL STYLE -->
+        <Style x:Key="FinancialTableCell" TargetType="{x:Type DataGridCell}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#F0EEEB"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Background="{TemplateBinding Background}" Padding="16,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- CUSTOM TABLE ROW STYLE -->
+        <Style x:Key="FinancialTableRow" TargetType="{x:Type DataGridRow}">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="MinHeight" Value="42"/>
             <Setter Property="Background" Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#FAF8F8"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="MinColumnWidth" Value="75"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="SelectionUnit" Value="FullRow"/>
+            <Setter Property="Foreground" Value="#2B2927"/>
+            <Setter Property="BorderBrush" Value="#F0EEEB"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#FAFAFA"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F7F4F1"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
@@ -139,14 +176,7 @@
                             x:Name="BtnPrint"
                             Content="Print Report"
                             Style="{StaticResource ActionButton}"
-                            Click="BtnPrint_Click"
-                            Margin="0,0,9,0"/>
-
-                        <Button
-                            x:Name="BtnExport"
-                            Content="Export CSV"
-                            Style="{StaticResource ActionButton}"
-                            Click="BtnExport_Click"/>
+                            Click="BtnPrint_Click"/>
 
                     </StackPanel>
 
@@ -377,7 +407,7 @@
 
                 </Border>
 
-                <!-- REVENUE BY CATEGORY -->
+                <!-- REVENUE BY CATEGORY (Improved UI Table without ugly scrollbar) -->
                 <Border
                     Style="{StaticResource ReportCard}"
                     Margin="0,0,0,18">
@@ -394,41 +424,72 @@
                             Foreground="#817B7E"
                             Margin="0,5,0,14"/>
 
-                        <DataGrid
-                            x:Name="DgCategory"
-                            Style="{StaticResource ReportTable}"
-                            Height="205"
-                            HorizontalAlignment="Stretch">
+                        <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                            <DataGrid
+                                x:Name="DgCategory"
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                CanUserResizeRows="False"
+                                HeadersVisibility="Column"
+                                GridLinesVisibility="Horizontal"
+                                HorizontalGridLinesBrush="#F0EEEB"
+                                BorderThickness="0"
+                                Background="White"
+                                AlternationCount="2"
+                                ColumnHeaderStyle="{StaticResource FinancialTableHeader}"
+                                CellStyle="{StaticResource FinancialTableCell}"
+                                RowStyle="{StaticResource FinancialTableRow}"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                MinHeight="90"
+                                MaxHeight="280"
+                                HorizontalAlignment="Stretch"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled">
 
-                            <DataGrid.Columns>
+                                <DataGrid.Columns>
 
-                                <DataGridTextColumn
-                                    Header="Category"
-                                    Binding="{Binding category}"
-                                    Width="2*"
-                                    MinWidth="150"/>
+                                    <DataGridTemplateColumn Header="Vehicle Category" Width="2*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE804;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#70000F" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding category}" FontWeight="SemiBold" FontSize="12.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Rentals"
-                                    Binding="{Binding rentals}"
-                                    Width="1*"
-                                    MinWidth="90"/>
+                                    <DataGridTemplateColumn Header="Completed Rentals" HeaderStyle="{StaticResource FinancialTableHeaderCenter}" Width="1.2*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#F4F3F1" CornerRadius="6" Padding="12,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding rentals}" FontWeight="Bold" FontSize="11.5" Foreground="#2B2927"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Revenue"
-                                    Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
-                                    Width="1.5*"
-                                    MinWidth="135"/>
+                                    <DataGridTemplateColumn Header="Total Revenue" HeaderStyle="{StaticResource FinancialTableHeaderRight}" Width="1.5*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding revenue, StringFormat='₱{0:N2}'}" FontWeight="Bold" FontSize="13" Foreground="#70000F" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                            </DataGrid.Columns>
+                                </DataGrid.Columns>
 
-                        </DataGrid>
+                            </DataGrid>
+                        </Border>
 
                     </StackPanel>
 
                 </Border>
 
-                <!-- MONTHLY SUMMARY -->
+                <!-- MONTHLY SUMMARY (Improved UI Table without empty void) -->
                 <Border Style="{StaticResource ReportCard}">
 
                     <StackPanel>
@@ -443,47 +504,82 @@
                             Foreground="#817B7E"
                             Margin="0,5,0,14"/>
 
-                        <DataGrid
-                            x:Name="DgMonth"
-                            Style="{StaticResource ReportTable}"
-                            Height="225"
-                            HorizontalAlignment="Stretch">
+                        <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                            <DataGrid
+                                x:Name="DgMonth"
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                CanUserResizeRows="False"
+                                HeadersVisibility="Column"
+                                GridLinesVisibility="Horizontal"
+                                HorizontalGridLinesBrush="#F0EEEB"
+                                BorderThickness="0"
+                                Background="White"
+                                AlternationCount="2"
+                                ColumnHeaderStyle="{StaticResource FinancialTableHeader}"
+                                CellStyle="{StaticResource FinancialTableCell}"
+                                RowStyle="{StaticResource FinancialTableRow}"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                MinHeight="85"
+                                MaxHeight="280"
+                                HorizontalAlignment="Stretch"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled">
 
-                            <DataGrid.Columns>
+                                <DataGrid.Columns>
 
-                                <DataGridTextColumn
-                                    Header="Month"
-                                    Binding="{Binding month}"
-                                    Width="1.3*"
-                                    MinWidth="115"/>
+                                    <DataGridTemplateColumn Header="Billing Month" Width="1.3*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="12.5" Foreground="#5C5750" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding month}" FontWeight="SemiBold" FontSize="12.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Rentals"
-                                    Binding="{Binding rentals}"
-                                    Width="0.8*"
-                                    MinWidth="85"/>
+                                    <DataGridTemplateColumn Header="Rentals" HeaderStyle="{StaticResource FinancialTableHeaderCenter}" Width="0.9*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#F4F3F1" CornerRadius="6" Padding="12,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding rentals}" FontWeight="Bold" FontSize="11.5" Foreground="#2B2927"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Revenue"
-                                    Binding="{Binding revenue, StringFormat='₱{0:N2}'}"
-                                    Width="1.4*"
-                                    MinWidth="125"/>
+                                    <DataGridTemplateColumn Header="Gross Revenue" HeaderStyle="{StaticResource FinancialTableHeaderRight}" Width="1.4*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding revenue, StringFormat='₱{0:N2}'}" FontWeight="Bold" FontSize="12.5" Foreground="#70000F" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Maintenance"
-                                    Binding="{Binding expenses, StringFormat='₱{0:N2}'}"
-                                    Width="1.4*"
-                                    MinWidth="135"/>
+                                    <DataGridTemplateColumn Header="Maintenance Cost" HeaderStyle="{StaticResource FinancialTableHeaderRight}" Width="1.4*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding expenses, StringFormat='₱{0:N2}'}" FontWeight="SemiBold" FontSize="12.5" Foreground="#D97706" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Net Income"
-                                    Binding="{Binding net, StringFormat='₱{0:N2}'}"
-                                    Width="1.4*"
-                                    MinWidth="125"/>
+                                    <DataGridTemplateColumn Header="Net Income" HeaderStyle="{StaticResource FinancialTableHeaderRight}" Width="1.5*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding net, StringFormat='₱{0:N2}'}" FontWeight="Bold" FontSize="13" Foreground="#137333" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                            </DataGrid.Columns>
+                                </DataGrid.Columns>
 
-                        </DataGrid>
+                            </DataGrid>
+                        </Border>
 
                     </StackPanel>
 

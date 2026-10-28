@@ -313,7 +313,7 @@
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,14">
                         <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="Database Tables Register (7 Tables)" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
+                            <TextBlock Text="Database Tables Register (8 Tables)" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
                             <TextBlock Text="Review record counts and filter rules for each table for the selected period, or export an individual table."
                                        FontSize="12.5" Foreground="#7A7570" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -334,14 +334,30 @@
                                 <Setter Property="BorderBrush" Value="#E5E0D8"/>
                                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                             </Style>
-                        </DataGrid.ColumnHeaderStyle>
+                                                </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderBrush" Value="#EFECE6"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Background="{TemplateBinding Background}" Padding="12,0">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.CellStyle>
 
                         <DataGrid.Columns>
                             <!-- Table Name -->
                             <DataGridTemplateColumn Header="TABLE NAME" Width="200">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                                        Foreground="#70000F" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding TableName}" FontWeight="Bold" FontSize="13" Foreground="#2B2927" VerticalAlignment="Center"/>
@@ -354,7 +370,7 @@
                             <DataGridTemplateColumn Header="TYPE" Width="140">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Background="{Binding TypeBadgeBg}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0">
+                                        <Border Background="{Binding TypeBadgeBg}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding TableType}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding TypeBadgeFg}"/>
                                         </Border>
                                     </DataTemplate>
@@ -378,7 +394,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding RecordCountDisplay}" FontWeight="Bold" FontSize="13" Foreground="#1F2937"
-                                                   VerticalAlignment="Center" Margin="12,0"/>
+                                                   VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>

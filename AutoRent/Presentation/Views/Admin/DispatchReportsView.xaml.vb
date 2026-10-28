@@ -1,4 +1,4 @@
-﻿Imports System.Collections.Generic
+Imports System.Collections.Generic
 Imports System.Data
 Imports System.IO
 Imports System.Linq
@@ -476,64 +476,13 @@ Namespace Presentation.Views.Admin
 
         Private Sub BtnPrintReport_Click(sender As Object, e As RoutedEventArgs)
             If _filteredItems Is Nothing OrElse _filteredItems.Count = 0 Then
-                MessageBox.Show("There are no dispatch records matching your filter criteria to print.", "Print Report", MessageBoxButton.OK, MessageBoxImage.Information)
+                AlertUtil.ShowInformation("There are no dispatch records matching your filter criteria to print.", "Print Report", ViewHelpers.Owner(Me))
                 Return
             End If
 
-            Dim confirm = MessageBox.Show($"Print Daily Dispatch Report with {_filteredItems.Count} record(s) prepared for HQ Branch?", "Print Dispatch Report", MessageBoxButton.YesNo, MessageBoxImage.Question)
-            If confirm = MessageBoxResult.Yes Then
-                MessageBox.Show($"Daily Dispatch Report sent to system default printer.{vbCrLf}Audit copy archived under HQ Dispatch Logs.", "Print Job Sent", MessageBoxButton.OK, MessageBoxImage.Information)
+            If AlertUtil.Confirm($"Print Daily Dispatch Report with {_filteredItems.Count} record(s) prepared for HQ Branch?", "Print Dispatch Report", ViewHelpers.Owner(Me)) Then
+                AlertUtil.ShowInformation($"Daily Dispatch Report sent to system default printer.{vbCrLf}Audit copy archived under HQ Dispatch Logs.", "Print Job Sent", ViewHelpers.Owner(Me))
             End If
         End Sub
-
-        Private Sub BtnAuthorizedExport_Click(sender As Object, e As RoutedEventArgs)
-            If _filteredItems Is Nothing OrElse _filteredItems.Count = 0 Then
-                MessageBox.Show("There are no dispatch records to export.", "Authorized Export", MessageBoxButton.OK, MessageBoxImage.Information)
-                Return
-            End If
-
-            Dim dialog As New SaveFileDialog() With {
-                .FileName = $"AutoRent_Daily_Dispatch_Report_{DateTime.Now:yyyyMMdd_HHmm}.csv",
-                .DefaultExt = ".csv",
-                .Filter = "CSV documents (.csv)|*.csv"
-            }
-
-            If dialog.ShowDialog() = True Then
-                Try
-                    Dim sb As New StringBuilder()
-                    sb.AppendLine("# AUTORENT HQ BRANCH - AUTHORIZED DAILY DISPATCH REPORT")
-                    sb.AppendLine($"# Prepared: {DateTime.Now:yyyy-MM-dd HH:mm:ss} | Total Records: {_filteredItems.Count}")
-                    sb.AppendLine("Booking ID,Vehicle ID,Plate,Customer,Assigned Clerk,Scheduled Pickup,Actual Dispatch,Expected Return,Actual Return,Contract Status,Payment Status")
-
-                    For Each item In _filteredItems
-                        Dim bId = EscapeCsv(item.BookingId)
-                        Dim vId = EscapeCsv(item.VehicleIdDisplay)
-                        Dim pl = EscapeCsv(item.Plate)
-                        Dim cust = EscapeCsv(item.Customer)
-                        Dim clerk = EscapeCsv(item.AssignedClerk)
-                        Dim pSched = EscapeCsv(item.ScheduledPickupDisplay)
-                        Dim pAct = EscapeCsv(item.ActualDispatchDisplay)
-                        Dim rSched = EscapeCsv(item.ExpectedReturnDisplay)
-                        Dim rAct = EscapeCsv(item.ActualReturnDisplay)
-                        Dim st = EscapeCsv(item.ContractStatus)
-                        Dim pay = EscapeCsv(item.ContractPayment)
-                        sb.AppendLine($"{bId},{vId},{pl},{cust},{clerk},{pSched},{pAct},{rSched},{rAct},{st},{pay}")
-                    Next
-
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)
-                    MessageBox.Show($"Successfully exported {_filteredItems.Count} authorized dispatch records to CSV.", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information)
-                Catch ex As Exception
-                    MessageBox.Show($"Could not export report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
-                End Try
-            End If
-        End Sub
-
-        Private Function EscapeCsv(val As String) As String
-            If String.IsNullOrEmpty(val) Then Return """" & """"
-            If val.Contains(",") OrElse val.Contains("""") OrElse val.Contains(vbCr) OrElse val.Contains(vbLf) Then
-                Return """" & val.Replace("""", """""") & """"
-            End If
-            Return """" & val & """"
-        End Function
     End Class
 End Namespace

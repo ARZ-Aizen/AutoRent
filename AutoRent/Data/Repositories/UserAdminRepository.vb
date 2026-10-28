@@ -1,4 +1,4 @@
-﻿Imports System.Collections.Generic
+Imports System.Collections.Generic
 Imports System.Data
 Imports System.Linq
 Imports System.Security.Cryptography
@@ -227,6 +227,10 @@ Namespace Data.Repositories
 
             If IsAdminRole(role) AndAlso OtherActiveAdmins(userId) > 0 Then
                 Return "Only one System Administrator is allowed. Another account already holds this role."
+            End If
+
+            If OtherActiveAdmins(userId) = 0 AndAlso IsActiveAdmin(userId) AndAlso Not IsAdminRole(role) Then
+                Return "At least one active System Administrator must remain."
             End If
 
             If Db.Count("SELECT COUNT(*) FROM [Users] WHERE [username] = ? AND [user_id] <> ? AND [is_deleted] = False", Db.Text(username, 100), Db.Int(userId)) > 0 Then

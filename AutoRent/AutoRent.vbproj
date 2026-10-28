@@ -22,35 +22,7 @@
     <Import Include="System.Windows.Media.Imaging" />
     <Import Include="System.Windows.Navigation" />
     <Import Include="System.Windows.Shapes" />
-  </ItemGroup>
-
-  <!-- Folder Structure -->
-  <ItemGroup>
-    <!-- Presentation Layer -->
-    <Folder Include="Presentation\ViewModels\" />
-
-    <!-- Business Logic Layer -->
-    <Folder Include="Business\Services\" />
-    <Folder Include="Business\Interfaces\" />
-
-    <!-- Data Access Layer -->
-
-    <!-- Common/Shared -->
-    <Folder Include="Common\Constants\" />
-    <Folder Include="Common\Exceptions\" />
-
-    <!-- API Layer -->
-    <Folder Include="API\Controllers\" />
-    <Folder Include="API\DTOs\" />
-    <Folder Include="Presentation\Views\Admin\" />
-    <Folder Include="Resources\Config\" />
-
-    <!-- Tests -->
-    <Folder Include="Tests\UnitTests\" />
-    <Folder Include="Tests\IntegrationTests\" />
-
-    <!-- Resources -->
-    <Folder Include="Resources\Images\" />
+    <Import Include="AutoRent.Common.Utilities" />
   </ItemGroup>
 
 </Project>

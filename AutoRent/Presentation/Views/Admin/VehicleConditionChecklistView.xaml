@@ -1,0 +1,889 @@
+<UserControl x:Class="Presentation.Views.Admin.VehicleConditionChecklistView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="850" d:DesignWidth="1200"
+             FontFamily="Manrope, Segoe UI"
+             Background="#F7F6F5">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AutoRent;component/Presentation/UI/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <SolidColorBrush x:Key="BrandMaroon" Color="#70000F"/>
+            <SolidColorBrush x:Key="BrandMaroonHover" Color="#8A0016"/>
+
+            <!-- Action buttons in header -->
+            <Style x:Key="PrimaryActionBtn" TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource BrandMaroon}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="18,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandMaroonHover}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Custom Header Style for DataGrid -->
+            <Style x:Key="ModernTableHeader" TargetType="{x:Type DataGridColumnHeader}">
+                <Setter Property="Background" Value="#F8F7F5"/>
+                <Setter Property="Foreground" Value="#5C5750"/>
+                <Setter Property="FontFamily" Value="Manrope, Segoe UI"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="12,12"/>
+                <Setter Property="BorderBrush" Value="#E8E5E1"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+
+            <Style x:Key="ModernTableHeaderCenter" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource ModernTableHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            </Style>
+
+            <!-- Custom Cell Style with TemplateBinding Padding -->
+            <Style x:Key="ModernTableCell" TargetType="{x:Type DataGridCell}">
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="BorderBrush" Value="#F0EEEB"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridCell}">
+                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#FBF4F5"/>
+                        <Setter Property="Foreground" Value="#70000F"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Custom Row Style -->
+            <Style x:Key="ModernTableRow" TargetType="{x:Type DataGridRow}">
+                <Setter Property="MinHeight" Value="48"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="#2B2927"/>
+                <Setter Property="BorderBrush" Value="#F0EEEB"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="AlternationIndex" Value="1">
+                        <Setter Property="Background" Value="#FCFBFA"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#F8F6F3"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Stat Card Style -->
+            <Style x:Key="StatCard" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E8E5E1"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="18,14"/>
+            </Style>
+
+            <!-- Checklist Item Card Style for Form -->
+            <Style x:Key="ChecklistCard" TargetType="Border">
+                <Setter Property="Background" Value="#FAF9F8"/>
+                <Setter Property="BorderBrush" Value="#E8E5E1"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="12,10"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- MAIN SCROLLABLE CONTENT -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="32,24,32,32">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Title & Top Action -->
+                    <RowDefinition Height="Auto"/> <!-- Stat Summary Cards -->
+                    <RowDefinition Height="Auto"/> <!-- Search & Filter Bar -->
+                    <RowDefinition Height="*"/>    <!-- DataGrid Table -->
+                    <RowDefinition Height="Auto"/> <!-- Pagination -->
+                </Grid.RowDefinitions>
+
+                <!-- ROW 0: TITLE & NEW BUTTON -->
+                <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
+                    <StackPanel DockPanel.Dock="Left">
+                        <TextBlock Text="Digital Vehicle Condition Checklist" FontSize="24" FontWeight="Bold" Foreground="#2B2927"/>
+                        <TextBlock Text="Pre-departure dispatch, post-return inspection, and 6-point multi-point safety &amp; roadworthiness audits."
+                                   FontSize="13" Foreground="#7A746D" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <Button x:Name="BtnNewChecklist" DockPanel.Dock="Right" Style="{StaticResource PrimaryActionBtn}" Click="BtnNewChecklist_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Record New Checklist" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </DockPanel>
+
+                <!-- ROW 1: STAT SUMMARY CARDS -->
+                <Grid Grid.Row="1" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Card 1: Total Checklists -->
+                    <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Total Checklists" FontSize="12" FontWeight="SemiBold" Foreground="#7A746D"/>
+                                <Border DockPanel.Dock="Right" Width="30" Height="30" CornerRadius="15" Background="#F1EFEF">
+                                    <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#70000F" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBlock x:Name="TxtStatTotal" Text="0" FontSize="26" FontWeight="Bold" Foreground="#2B2927" Margin="0,6,0,0"/>
+                            <TextBlock Text="Recorded inspections" FontSize="11" Foreground="#A09A94" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 2: Certified Roadworthy (Passed) -->
+                    <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Certified Roadworthy" FontSize="12" FontWeight="SemiBold" Foreground="#7A746D"/>
+                                <Border DockPanel.Dock="Right" Width="30" Height="30" CornerRadius="15" Background="#E6F4EA">
+                                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#137333" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBlock x:Name="TxtStatPassed" Text="0" FontSize="26" FontWeight="Bold" Foreground="#137333" Margin="0,6,0,0"/>
+                            <TextBlock Text="All 6 safety points passed" FontSize="11" Foreground="#A09A94" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 3: Defects Detected (Needs Attention) -->
+                    <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Defects Flagged" FontSize="12" FontWeight="SemiBold" Foreground="#7A746D"/>
+                                <Border DockPanel.Dock="Right" Width="30" Height="30" CornerRadius="15" Background="#FCE8E6">
+                                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#C5221F" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBlock x:Name="TxtStatFailed" Text="0" FontSize="26" FontWeight="Bold" Foreground="#C5221F" Margin="0,6,0,0"/>
+                            <TextBlock Text="Requires maintenance service" FontSize="11" Foreground="#A09A94" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 4: Fleet Under Maintenance -->
+                    <Border Grid.Column="6" Style="{StaticResource StatCard}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Fleet In Service" FontSize="12" FontWeight="SemiBold" Foreground="#7A746D"/>
+                                <Border DockPanel.Dock="Right" Width="30" Height="30" CornerRadius="15" Background="#FEF7E0">
+                                    <TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#B06000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBlock x:Name="TxtStatMaint" Text="0" FontSize="26" FontWeight="Bold" Foreground="#B06000" Margin="0,6,0,0"/>
+                            <TextBlock Text="Active maintenance status" FontSize="11" Foreground="#A09A94" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- ROW 2: SEARCH & FILTER BAR -->
+                <Border Grid.Row="2" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Search box -->
+                        <Border Grid.Column="0" Background="#F8F7F5" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="8" Padding="10,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#7A746D" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="TxtSearch" Grid.Column="1" Height="36" BorderThickness="0" Background="Transparent"
+                                         VerticalContentAlignment="Center" FontSize="12.5" TextChanged="Filter_Changed"/>
+                                <TextBlock Grid.Column="1" Text="Search plate, vehicle, inspector, or checklist ID..." FontSize="12.5"
+                                           Foreground="#A59F98" VerticalAlignment="Center" IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=TxtSearch}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <!-- Result Filter -->
+                        <ComboBox x:Name="CmbResultFilter" Grid.Column="2" Height="38" FontSize="12.5" SelectionChanged="Filter_Changed"/>
+
+                        <!-- Type Filter -->
+                        <ComboBox x:Name="CmbTypeFilter" Grid.Column="4" Height="38" FontSize="12.5" SelectionChanged="Filter_Changed"/>
+
+                        <!-- Reset Filter Button -->
+                        <Button x:Name="BtnResetFilter" Grid.Column="6" Content="Reset Filters" Style="{StaticResource OutlineButton}"
+                                Height="38" Padding="14,0" Click="BtnResetFilter_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- ROW 3: DATAGRID TABLE -->
+                <Border Grid.Row="3" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" ClipToBounds="True">
+                    <Grid>
+                        <DataGrid x:Name="DgChecklists" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserResizeRows="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="None"
+                                  BorderThickness="0" RowHeight="48" SelectionMode="Single"
+                                  ColumnHeaderStyle="{StaticResource ModernTableHeader}"
+                                  CellStyle="{StaticResource ModernTableCell}"
+                                  RowStyle="{StaticResource ModernTableRow}"
+                                  AlternationCount="2">
+                            <DataGrid.Columns>
+                                <!-- Checklist ID -->
+                                <DataGridTemplateColumn Header="CHECKLIST ID" Width="120" HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F7E9EB" BorderBrush="#E7C0C7" BorderThickness="1"
+                                                    CornerRadius="6" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayId}" FontWeight="Bold" FontSize="11.5" Foreground="#70000F" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Date & Time -->
+                                <DataGridTemplateColumn Header="INSPECTED DATE" Width="1.5*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DateDisplay}" FontWeight="SemiBold" FontSize="12" Foreground="#2B2927"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Vehicle -->
+                                <DataGridTemplateColumn Header="VEHICLE" Width="2.2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="30" Height="30" CornerRadius="6" Background="#F1EFEF" Margin="0,0,10,0">
+                                                    <TextBlock Text="&#xE804;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#70000F"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding VehiclePlate}" FontWeight="Bold" FontSize="12.5" Foreground="#70000F"/>
+                                                    <TextBlock Text="{Binding VehicleMake, StringFormat='{}{0} '}" FontSize="11.5" Foreground="#66605A"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Type -->
+                                <DataGridTemplateColumn Header="TYPE" Width="1.3*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding TypeBadgeBg}" CornerRadius="6" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ChecklistType}" FontSize="11.5" FontWeight="SemiBold" Foreground="{Binding TypeBadgeFg}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Inspector -->
+                                <DataGridTemplateColumn Header="INSPECTOR" Width="1.5*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#9E9892" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Inspector}" FontSize="12" FontWeight="SemiBold" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Odometer & Fuel -->
+                                <DataGridTemplateColumn Header="ODOMETER &amp; FUEL" Width="1.5*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding OdometerDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                                <TextBlock Text="{Binding FuelDisplay}" FontSize="11" Foreground="#7A746D" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Safety Score -->
+                                <DataGridTemplateColumn Header="SAFETY SCORE" Width="1.2*" HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding ScoreBgColor}" CornerRadius="6" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ScoreDisplay}" FontSize="11.5" FontWeight="Bold" Foreground="{Binding ScoreFgColor}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Result Status -->
+                                <DataGridTemplateColumn Header="RESULT" Width="140" HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Background="{Binding ResultBgColor}" BorderBrush="{Binding ResultBorderColor}" BorderThickness="1">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ResultIcon}" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                               Foreground="{Binding ResultFgColor}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding ResultUpper}" FontSize="11" FontWeight="Bold"
+                                                               Foreground="{Binding ResultFgColor}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Actions -->
+                                <DataGridTemplateColumn Header="ACTIONS" Width="170" HeaderStyle="{StaticResource ModernTableHeaderCenter}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <!-- View Certificate -->
+                                                <Button Style="{StaticResource OutlineButton}" Height="28" Padding="8,0" Margin="0,0,5,0"
+                                                        Tag="{Binding}" Click="BtnViewCertificate_Click" ToolTip="View digital inspection certificate">
+                                                    <TextBlock Text="&#xE890;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#70000F"/>
+                                                </Button>
+
+                                                <!-- Edit -->
+                                                <Button Style="{StaticResource OutlineButton}" Height="28" Padding="8,0" Margin="0,0,5,0"
+                                                        Tag="{Binding}" Click="BtnEditChecklist_Click" ToolTip="Edit checklist findings">
+                                                    <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#2B2927"/>
+                                                </Button>
+
+                                                <!-- Delete -->
+                                                <Button Style="{StaticResource DangerOutlineButton}" Height="28" Padding="8,0"
+                                                        Tag="{Binding}" Click="BtnDeleteChecklist_Click" ToolTip="Delete inspection log">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Empty State -->
+                        <Border x:Name="BorderEmptyState" Background="White" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,60">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#F7F5F3" HorizontalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="22" Foreground="#A59F98" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="No condition checklist records found" FontSize="15" FontWeight="Bold" Foreground="#2B2927" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                <TextBlock Text="Try adjusting your search query, status filter, or record a new checklist." FontSize="12.5" Foreground="#7A746D" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ROW 4: PAGINATION -->
+                <Border Grid.Row="4" Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="12" Padding="20,10" Margin="0,14,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock x:Name="TxtPaging" Grid.Column="0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="#7A746D"/>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="BtnPrev" Style="{StaticResource PageBtn}" Click="BtnPrev_Click" Margin="0,0,6,0">
+                                <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#7A746D"/>
+                            </Button>
+
+                            <ItemsControl x:Name="IcPages">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+
+                            <Button x:Name="BtnNext" Style="{StaticResource PageBtn}" Click="BtnNext_Click">
+                                <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#7A746D"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 1: DIGITAL CHECKLIST RECORDING / EDITING DIALOG          -->
+        <!-- ============================================================== -->
+        <Grid x:Name="ModalChecklistForm" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="100">
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="14"
+                    Width="760" MaxHeight="720" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" ShadowDepth="4" Direction="270" Opacity="0.25" Color="#000"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Modal Header -->
+                        <RowDefinition Height="*"/>    <!-- Scrollable Form Body -->
+                        <RowDefinition Height="Auto"/> <!-- Modal Footer -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Modal Header -->
+                    <Border Grid.Row="0" BorderBrush="#EFECE6" BorderThickness="0,0,0,1" Padding="24,18">
+                        <DockPanel LastChildFill="False">
+                            <StackPanel DockPanel.Dock="Left">
+                                <TextBlock x:Name="TxtModalTitle" Text="Digital Vehicle Condition Checklist" FontSize="17" FontWeight="Bold" Foreground="#2B2927"/>
+                                <TextBlock x:Name="TxtModalSubtitle" Text="Conduct multi-point inspection to certify vehicle roadworthiness" FontSize="12" Foreground="#7A746D" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource OutlineButton}" Width="32" Height="32" Padding="0" Click="BtnCloseModal_Click">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#7A746D"/>
+                            </Button>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Scrollable Form Body -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,16">
+                        <StackPanel>
+                            <!-- SECTION 1: VEHICLE & INSPECTION INFO -->
+                            <TextBlock Text="1. Vehicle &amp; Inspection Details" FontSize="13" FontWeight="Bold" Foreground="#70000F" Margin="0,0,0,10"/>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="1.2*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Vehicle Selection -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Vehicle to Inspect *" FontSize="11.5" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbModalVehicle" Height="36" FontSize="12.5" SelectionChanged="CmbModalVehicle_SelectionChanged"/>
+                                </StackPanel>
+
+                                <!-- Checklist Type -->
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Checklist Type *" FontSize="11.5" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbModalType" Height="36" FontSize="12.5"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.5*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="1.2*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Inspector Name -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Inspector Name *" FontSize="11.5" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="TxtModalInspector" Height="36" FontSize="12.5" VerticalContentAlignment="Center" Padding="8,0"/>
+                                </StackPanel>
+
+                                <!-- Odometer Reading (Numeric Only!) -->
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Odometer (km) *" FontSize="11.5" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="TxtModalOdometer" Height="36" FontSize="12.5" VerticalContentAlignment="Center" Padding="8,0"
+                                             PreviewTextInput="NumberOnly_PreviewTextInput"/>
+                                </StackPanel>
+
+                                <!-- Fuel Gauge -->
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="Fuel Gauge *" FontSize="11.5" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbModalFuel" Height="36" FontSize="12.5"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- SECTION 2: THE 6-POINT MULTI-POINT SAFETY CHECKLIST -->
+                            <DockPanel LastChildFill="False" Margin="0,4,0,10">
+                                <TextBlock Text="2. Multi-Point Condition &amp; Safety Checklist" FontSize="13" FontWeight="Bold" Foreground="#70000F" VerticalAlignment="Center"/>
+                                <Button DockPanel.Dock="Right" Content="Select All 6 Items" Style="{StaticResource OutlineButton}"
+                                        Height="26" Padding="10,0" FontSize="11" Click="BtnSelectAllChecks_Click"/>
+                            </DockPanel>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Column 1 Points -->
+                                <StackPanel Grid.Column="0">
+                                    <!-- Point 1: Exterior -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkExterior" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Exterior Body &amp; Glass" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="No unreported scratches, dents; clean windshield &amp; mirrors" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+
+                                    <!-- Point 2: Tires -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkTires" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Tires &amp; Wheels" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="Optimal pressure (32-35 PSI), ≥4mm tread depth, spare tire intact" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+
+                                    <!-- Point 3: Lights -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkLights" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Lights &amp; Signals" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="Headlamps, brake lights, reverse lights, turn indicators, hazards" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Column 2 Points -->
+                                <StackPanel Grid.Column="2">
+                                    <!-- Point 4: Interior -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkInterior" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Interior &amp; Cabin" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="Clean upholstery, seatbelts latching, gauges working, AC cooling" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+
+                                    <!-- Point 5: Fluids -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkFluids" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Engine &amp; Fluid Levels" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="Engine oil, radiator coolant, brake fluid, windshield washer level" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+
+                                    <!-- Point 6: Brakes & Emergency -->
+                                    <Border Style="{StaticResource ChecklistCard}">
+                                        <CheckBox x:Name="ChkBrakes" Checked="Checklist_Changed" Unchecked="Checklist_Changed" VerticalAlignment="Center">
+                                            <StackPanel Margin="6,0,0,0">
+                                                <TextBlock Text="Brakes &amp; Emergency Kit" FontWeight="Bold" FontSize="12" Foreground="#2B2927"/>
+                                                <TextBlock Text="Firm brake pedal, parking brake holds, tire jack, wrench, warning triangle" FontSize="11" Foreground="#7A746D" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- LIVE DYNAMIC ROADWORTHINESS BANNER -->
+                            <Border x:Name="BorderCheckStatus" Background="#E6F4EA" BorderBrush="#CEEAD6" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="TxtCheckStatusIcon" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                               Foreground="#137333" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtCheckStatusText" Grid.Column="1"
+                                               Text="✓ ALL 6 SAFETY POINTS PASSED — Vehicle certified roadworthy and ready for dispatch."
+                                               FontSize="12" FontWeight="SemiBold" Foreground="#137333" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- SECTION 3: INSPECTION FINDINGS & DEFECT NOTES -->
+                            <TextBlock Text="3. Inspector Findings &amp; Defect Notes" FontSize="13" FontWeight="Bold" Foreground="#70000F" Margin="0,0,0,6"/>
+                            <TextBox x:Name="TxtModalFindings" Height="68" AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" FontSize="12" Padding="8,6"/>
+                            <TextBlock Text="Note: Specific defect notes are required if any safety point above is unchecked."
+                                       FontSize="11" Foreground="#8C857B" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2" BorderBrush="#EFECE6" BorderThickness="0,1,0,0" Padding="24,14" Background="#FAF9F8">
+                        <DockPanel LastChildFill="False">
+                            <Button DockPanel.Dock="Left" Content="Cancel" Style="{StaticResource OutlineButton}"
+                                    Width="90" Height="36" Click="BtnCloseModal_Click"/>
+
+                            <Button x:Name="BtnSaveInspection" DockPanel.Dock="Right" Style="{StaticResource PrimaryActionBtn}"
+                                    Height="36" Padding="18,0" Click="BtnSaveInspection_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Save &amp; Certify Checklist" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 2: DIGITAL INSPECTION CERTIFICATE VIEWER / PRINTER       -->
+        <!-- ============================================================== -->
+        <Grid x:Name="ModalCertificateView" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="110">
+            <Border Background="White" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="14"
+                    Width="640" MaxHeight="720" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" ShadowDepth="4" Direction="270" Opacity="0.25" Color="#000"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" BorderBrush="#EFECE6" BorderThickness="0,0,0,1" Padding="24,16">
+                        <DockPanel LastChildFill="False">
+                            <StackPanel DockPanel.Dock="Left">
+                                <TextBlock Text="Digital Vehicle Inspection Certificate" FontSize="16" FontWeight="Bold" Foreground="#2B2927"/>
+                                <TextBlock x:Name="TxtCertSubtitle" Text="Official inspection log &amp; roadworthiness record" FontSize="11.5" Foreground="#7A746D" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource OutlineButton}" Width="32" Height="32" Padding="0" Click="BtnCloseCert_Click">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#7A746D"/>
+                            </Button>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Printable Certificate Canvas / Body -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="28,20">
+                        <StackPanel x:Name="PrintableCertificateArea" Background="White">
+                            <!-- Certificate Header Box -->
+                            <Border BorderBrush="#70000F" BorderThickness="2" CornerRadius="8" Padding="16,12" Margin="0,0,0,16" Background="#FCFBFB">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="AUTORENT VEHICLE SYSTEMS" FontSize="15" FontWeight="Bold" Foreground="#70000F"/>
+                                        <TextBlock Text="DIGITAL VEHICLE CONDITION CERTIFICATE" FontSize="11" FontWeight="SemiBold" Foreground="#5C5750" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" x:Name="BorderCertStamp" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtCertStamp" Text="CERTIFIED ROADWORTHY" FontSize="11.5" FontWeight="Bold"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- Key Specs Grid -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
+                                    <TextBlock Text="Certificate Reference" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertId" Text="#CK-0000" FontSize="13" FontWeight="Bold" Foreground="#2B2927"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
+                                    <TextBlock Text="Inspection Timestamp" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertDate" Text="Oct 28, 2026" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
+                                    <TextBlock Text="Vehicle Plate &amp; Unit" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertVehicle" Text="[ABC 1234] Toyota Vios" FontSize="12.5" FontWeight="Bold" Foreground="#70000F"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
+                                    <TextBlock Text="Checklist Type" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertType" Text="Pre-Rental Dispatch" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                    <TextBlock Text="Recorded Odometer" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertOdo" Text="28,100 km" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1">
+                                    <TextBlock Text="Fuel Gauge Level" FontSize="10.5" Foreground="#7A746D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtCertFuel" Text="Full (100%)" FontSize="12.5" FontWeight="SemiBold" Foreground="#2B2927"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Checklist Results Table -->
+                            <TextBlock Text="6-POINT SAFETY INSPECTION RESULTS" FontSize="11" FontWeight="Bold" Foreground="#70000F" Margin="0,0,0,8"/>
+                            <Border BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="6" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Grid Background="#F8F7F5" Height="28">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Inspection Item" FontSize="10.5" FontWeight="Bold" Foreground="#5C5750" VerticalAlignment="Center" Margin="10,0"/>
+                                        <TextBlock Grid.Column="1" Text="Status" FontSize="10.5" FontWeight="Bold" Foreground="#5C5750" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <!-- 1. Exterior -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="1. Exterior Body, Glass &amp; Mirrors" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP1" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Border BorderBrush="#F0EEEB" BorderThickness="0,0,0,1"/>
+
+                                    <!-- 2. Tires -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="2. Tires, Tread Depth &amp; Spare" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP2" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Border BorderBrush="#F0EEEB" BorderThickness="0,0,0,1"/>
+
+                                    <!-- 3. Lights -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="3. Lights, Indicators &amp; Signals" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP3" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Border BorderBrush="#F0EEEB" BorderThickness="0,0,0,1"/>
+
+                                    <!-- 4. Interior -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="4. Interior Cabin, Seats &amp; AC" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP4" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Border BorderBrush="#F0EEEB" BorderThickness="0,0,0,1"/>
+
+                                    <!-- 5. Fluids -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="5. Engine Oil &amp; Fluid Levels" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP5" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Border BorderBrush="#F0EEEB" BorderThickness="0,0,0,1"/>
+
+                                    <!-- 6. Brakes -->
+                                    <Grid Height="30" Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="6. Brakes &amp; Emergency Tools" FontSize="11.5" Foreground="#2B2927" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtCertP6" Grid.Column="1" Text="PASSED" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Inspector Findings Box -->
+                            <TextBlock Text="INSPECTOR FINDINGS &amp; RECOMMENDATIONS" FontSize="11" FontWeight="Bold" Foreground="#70000F" Margin="0,0,0,6"/>
+                            <Border Background="#F9F8F6" BorderBrush="#E8E5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,16">
+                                <TextBlock x:Name="TxtCertFindings" Text="No defects reported. Vehicle in spotless condition."
+                                           FontSize="11.5" Foreground="#383330" TextWrapping="Wrap" MinHeight="36"/>
+                            </Border>
+
+                            <!-- Sign-off info -->
+                            <DockPanel LastChildFill="False">
+                                <StackPanel DockPanel.Dock="Left">
+                                    <TextBlock Text="Certified By Inspector:" FontSize="10.5" Foreground="#7A746D"/>
+                                    <TextBlock x:Name="TxtCertInspector" Text="Jerome Lumbao" FontSize="12.5" FontWeight="Bold" Foreground="#2B2927"/>
+                                </StackPanel>
+                                <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                    <TextBlock Text="Verification Status:" FontSize="10.5" Foreground="#7A746D" TextAlignment="Right"/>
+                                    <TextBlock Text="Digitally Logged in System" FontSize="12" FontWeight="SemiBold" Foreground="#137333" TextAlignment="Right"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" BorderBrush="#EFECE6" BorderThickness="0,1,0,0" Padding="24,14" Background="#FAF9F8">
+                        <DockPanel LastChildFill="False">
+                            <Button DockPanel.Dock="Left" Content="Close" Style="{StaticResource OutlineButton}"
+                                    Width="90" Height="36" Click="BtnCloseCert_Click"/>
+
+                            <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryActionBtn}"
+                                    Height="36" Padding="18,0" Click="BtnPrintCert_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Print / Save Certificate" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
+

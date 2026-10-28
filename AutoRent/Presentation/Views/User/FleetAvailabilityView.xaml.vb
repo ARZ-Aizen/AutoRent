@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports System.Linq
 Imports System.Windows
 Imports System.Windows.Controls
@@ -228,7 +228,7 @@ Namespace Presentation.Views.User
         End Sub
 
         Private Sub BtnViewAllHistory_Click(sender As Object, e As RoutedEventArgs)
-            MessageBox.Show("Rental and maintenance service history is shown for each vehicle. Use the Maintenance Scheduler for full service records.", "Vehicle History Archive", MessageBoxButton.OK, MessageBoxImage.Information)
+            AlertUtil.ShowInformation("Rental and maintenance service history is shown for each vehicle. Use the Maintenance Scheduler for full service records.", "Vehicle History Archive", ViewHelpers.Owner(Me))
         End Sub
 
         Private Sub OpenVehicleDetails(vehicleId As Integer)
@@ -240,7 +240,7 @@ Namespace Presentation.Views.User
                     "WHERE v.[vehicle_id] = ?", Db.Int(vehicleId))
 
                 If dt.Rows.Count = 0 Then
-                    MessageBox.Show("Vehicle details could not be found.", "AutoRent", MessageBoxButton.OK, MessageBoxImage.Warning)
+                    AlertUtil.ShowWarning("Vehicle details could not be found.", "AutoRent", ViewHelpers.Owner(Me))
                     Return
                 End If
 
@@ -277,7 +277,7 @@ Namespace Presentation.Views.User
 
                 VehicleDetailsOverlay.Visibility = Visibility.Visible
             Catch ex As Exception
-                MessageBox.Show($"Could not open vehicle details: {ex.Message}", "AutoRent", MessageBoxButton.OK, MessageBoxImage.Error)
+                AlertUtil.ShowError($"Could not open vehicle details: {ex.Message}", "AutoRent", ViewHelpers.Owner(Me))
             End Try
         End Sub
 

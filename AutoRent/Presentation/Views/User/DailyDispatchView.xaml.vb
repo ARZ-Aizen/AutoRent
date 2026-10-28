@@ -1,4 +1,4 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Linq
 Imports System.Text
 Imports System.Windows
@@ -248,22 +248,19 @@ Namespace Presentation.Views.User
                 If licTable.Rows.Count > 0 Then
                     Dim lic = If(IsDBNull(licTable.Rows(0)("license_no")), "", Convert.ToString(licTable.Rows(0)("license_no")).Trim())
                     If String.IsNullOrWhiteSpace(lic) Then
-                        MessageBox.Show($"Cannot dispatch vehicle to {item.Customer}.{vbCrLf}{vbCrLf}" &
+                        AlertUtil.ShowWarning($"Cannot dispatch vehicle to {item.Customer}.{vbCrLf}{vbCrLf}" &
                                         "The customer does not have a verified driver's license on file." & vbCrLf &
                                         "Vehicles cannot be rented or dispatched without a valid driver's license." & vbCrLf &
                                         "Please update their customer profile under Customer Management before dispatching.",
-                                        "Driver License Required", MessageBoxButton.OK, MessageBoxImage.Warning)
+                                        "Driver License Required", ViewHelpers.Owner(Me))
                         Return
                     End If
                 End If
             End If
 
-            Dim confirm = MessageBox.Show($"Mark {item.DispatchType.ToLower()} handoff for {item.Customer} ({item.Plate}) as Completed?" & vbCrLf &
-                                          If(item.IsPickup, "Vehicle will be set to Rented and reservation set to Active.", "Vehicle will be returned to Available and reservation completed."),
-                                          "Complete Handoff",
-                                          MessageBoxButton.YesNo,
-                                          MessageBoxImage.Question)
-            If confirm <> MessageBoxResult.Yes Then Return
+            If Not AlertUtil.Confirm($"Mark {item.DispatchType.ToLower()} handoff for {item.Customer} ({item.Plate}) as Completed?" & vbCrLf &
+                                       If(item.IsPickup, "Vehicle will be set to Rented and reservation set to Active.", "Vehicle will be returned to Available and reservation completed."),
+                                       "Complete Handoff", ViewHelpers.Owner(Me)) Then Return
 
             Try
                 ClientRepository.CompleteDispatch(item.DbId, item.ReservationId, item.VehicleId, item.DispatchType)
@@ -274,53 +271,5 @@ Namespace Presentation.Views.User
 
             ReloadDispatch()
         End Sub
-
-        ' =========================
-        ' CSV EXPORT
-        ' =========================
-
-        Private Sub BtnExportCsv_Click(sender As Object, e As RoutedEventArgs)
-            If _filtered Is Nothing OrElse _filtered.Count = 0 Then
-                MessageBox.Show("There are no dispatch records to export.", "Export CSV", MessageBoxButton.OK, MessageBoxImage.Information)
-                Return
-            End If
-
-            Dim dialog As New SaveFileDialog() With {
-                .FileName = $"AutoRent_Dispatch_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
-                .DefaultExt = ".csv",
-                .Filter = "CSV documents (.csv)|*.csv"
-            }
-
-            If dialog.ShowDialog() = True Then
-                Try
-                    Dim sb As New StringBuilder()
-                    sb.AppendLine("Scheduled Time,Type,Customer,Vehicle,Plate,Branch,Status")
-
-                    For Each d In _filtered
-                        Dim time = EscapeCsv(d.Time)
-                        Dim t = EscapeCsv(d.DispatchType)
-                        Dim cust = EscapeCsv(d.Customer)
-                        Dim veh = EscapeCsv(d.Vehicle)
-                        Dim plate = EscapeCsv(d.Plate)
-                        Dim loc = EscapeCsv(d.Location)
-                        Dim status = EscapeCsv(d.StatusUpper)
-                        sb.AppendLine($"{time},{t},{cust},{veh},{plate},{loc},{status}")
-                    Next
-
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)
-                    MessageBox.Show($"Successfully exported {_filtered.Count} dispatch records to CSV.", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information)
-                Catch ex As Exception
-                    MessageBox.Show($"Could not export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error)
-                End Try
-            End If
-        End Sub
-
-        Private Function EscapeCsv(val As String) As String
-            If String.IsNullOrEmpty(val) Then Return """" & """"
-            If val.Contains(",") OrElse val.Contains("""") OrElse val.Contains(vbCr) OrElse val.Contains(vbLf) Then
-                Return """" & val.Replace("""", """""") & """"
-            End If
-            Return """" & val & """"
-        End Function
     End Class
 End Namespace

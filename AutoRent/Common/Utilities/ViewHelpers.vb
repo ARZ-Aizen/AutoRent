@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports System.Globalization
 Imports System.Windows
 
@@ -12,12 +12,27 @@ Namespace Common.Utilities
             Return Convert.ToString(row(column))
         End Function
 
+        Public Shared Function Str(row As DataRow, column As String) As String
+            If row Is Nothing OrElse IsDBNull(row(column)) Then Return String.Empty
+            Return Convert.ToString(row(column))
+        End Function
+
         Public Shared Function IntOf(row As DataRowView, column As String) As Integer
             If row Is Nothing OrElse IsDBNull(row(column)) Then Return 0
             Return Convert.ToInt32(row(column))
         End Function
 
+        Public Shared Function IntOf(row As DataRow, column As String) As Integer
+            If row Is Nothing OrElse IsDBNull(row(column)) Then Return 0
+            Return Convert.ToInt32(row(column))
+        End Function
+
         Public Shared Function DecOf(row As DataRowView, column As String) As Decimal
+            If row Is Nothing OrElse IsDBNull(row(column)) Then Return 0D
+            Return Convert.ToDecimal(row(column))
+        End Function
+
+        Public Shared Function DecOf(row As DataRow, column As String) As Decimal
             If row Is Nothing OrElse IsDBNull(row(column)) Then Return 0D
             Return Convert.ToDecimal(row(column))
         End Function
